@@ -8,9 +8,11 @@ require_once 'config/config.php';  // Aquí se incluyen configuraciones de base 
 // Incluir los controladores necesarios
 require_once('controller/AuthController.php');
 require_once('controller/PiscinaController.php');
+require_once('controller/MenuController.php');
 // Crear instancias de los controladores
 $authController = new AuthController();
 $piscinaController = new PiscinaController();
+$menuController = new MenuController();
 
 // Obtener la URL y el método de la solicitud (POST, GET, etc.)
 $requestMethod = $_SERVER['REQUEST_METHOD'];
@@ -25,7 +27,21 @@ if ($requestMethod == 'POST' && $requestUri == '/auth/login.php') {
     // Llamar al controlador de autenticación para hacer login
     $authController->login($username, $password);
 }
+if ($requestMethod == 'POST' && $requestUri == '/auth/menus.php') {
+    // Obtener los parámetros del formulario
+    $userId = $_POST['userId'];
+    
+    // Llamar al controlador de autenticación para obtener los menús
+    $authController->getMenus($userId); 
+}
 
+if($requestMethod == 'POST' && $requestUri == '/auth/perfiles.php') {
+    // Obtener los parámetros del formulario
+    $userId = $_POST['userId'];
+    
+    // Llamar al controlador de autenticación para obtener los perfiles del usuario
+    $authController->getUsuarioPerfiles($userId); 
+}
 // Ruta para crear una nueva piscina (POST)
 elseif ($requestMethod == 'POST' && $requestUri == '/piscinas') {
     // Llamar al controlador de piscinas para crear la piscina
@@ -37,6 +53,7 @@ elseif ($requestMethod == 'GET' && $requestUri == '/piscinas') {
     // Llamar al controlador de piscinas para obtener todas las piscinas
     $piscinaController->getPiscinas();
 }
+
 
 // Si la ruta no es válida, responder con un error 404
 else {

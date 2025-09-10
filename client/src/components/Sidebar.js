@@ -5,10 +5,10 @@ import * as MdIcons from "react-icons/md";
 import logo from "../assets/logos/logo.png";
 
 export default function Sidebar() {
-  const { menus, user } = useAuth();
+  const { menus, user } = useAuth(); // Obtén los menús y usuario desde el contexto
   const location = useLocation();
 
-  if (!user) return null;
+  if (!user) return null; // Si no hay usuario, no renderiza el Sidebar
 
   // Función que retorna el componente del icono dinámicamente
   const getIcon = (iconName) => {
@@ -21,22 +21,21 @@ export default function Sidebar() {
     <aside className="w-64 bg-gray-800 text-white min-h-screen p-4 flex flex-col">
       {/* Logo */}
       <div className="mb-6 flex flex-col items-center">
-   <div className="logoContainer">
-  <img src={logo} alt="Logo Camaronera" className="logoPrincipal" />
-  <div>
-    <h1 className="logoTitulo">Camaronera XYZ</h1>
-    <p className="logoSubtitulo">{user.tipo_usuario}</p>
-  </div>
-</div>
-
-      
+        <div className="logoContainer">
+          <img src={logo} alt="Logo Camaronera" className="logoPrincipal" />
+          <div>
+            <h1 className="logoTitulo">Camaronera XYZ</h1>
+            <p className="logoSubtitulo">{user.tipo_usuario}</p> {/* Muestra el tipo de usuario */}
+          </div>
+        </div>
       </div>
 
       {/* Menús */}
       <nav className="flex-1">
         <ul className="space-y-2">
           {menus.map((menu) => {
-            const IconComponent = getIcon(menu.icono);
+            const IconComponent = getIcon(menu.icono); // Obtener el icono correspondiente
+
             return (
               <li key={menu.id_menu}>
                 <Link
@@ -45,8 +44,8 @@ export default function Sidebar() {
                     location.pathname === menu.ruta ? "bg-gray-700" : ""
                   }`}
                 >
-                  {IconComponent && <IconComponent className="mr-2" />}
-                  {menu.nombre}
+                  {IconComponent && <IconComponent className="mr-2" />} {/* Mostrar icono si existe */}
+                  {menu.nombre} {/* Mostrar nombre del menú */}
                 </Link>
               </li>
             );

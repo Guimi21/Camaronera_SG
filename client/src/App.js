@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
@@ -17,11 +16,11 @@ import CicloProductivoForm from "./pages/Modulos/Form/CicloProductivoForm";
 
 // Redirección por defecto según tipo_usuario
 function DefaultModuleRedirect() {
-  const { user } = useAuth();
+  const { tipoUsuario } = useAuth();  // Accede a tipoUsuario desde el contexto
 
-  if (!user) return <Navigate to="/login" replace />;
+  if (!tipoUsuario) return <Navigate to="/login" replace />;
 
-  switch (user.tipo_usuario) {
+  switch (tipoUsuario) {
     case "Administrador":
       return <Navigate to="administrador" replace />;
     case "Digitador":

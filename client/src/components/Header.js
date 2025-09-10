@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FaUserCircle, FaSignOutAlt } from "react-icons/fa";
 
 export default function Header() {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuth(); // Accedemos a 'user', 'tipoUsuario' y 'logout' desde el contexto
   const navigate = useNavigate();
 
   // Función para manejar el logout y redirigir al login
@@ -20,9 +20,10 @@ export default function Header() {
       {/* Usuario */}
       <div className="flex items-center space-x-2">
         <FaUserCircle className="text-2xl text-gray-300" />
-        <span className="text-sm font-medium">Hola, {user.username}</span>
+        <span className="text-sm font-medium">Hola, {user}</span> {/* Mostrar el username del usuario */}
       </div>
 
+  
       {/* Botón de cerrar sesión alineado a la derecha */}
       <button
         onClick={handleLogout}
