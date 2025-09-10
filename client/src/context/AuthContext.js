@@ -1,43 +1,52 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import config from "../config";
 
-// Crear contexto
 const AuthContext = createContext();
 
 // Tiempo de inactividad (15 minutos)
 const INACTIVITY_TIME = 15 * 60 * 1000;
 let inactivityTimer = null;
 
-// Provider
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [perfiles, setPerfiles] = useState([]);
-  const [menus, setMenus] = useState([]);
+  const [tipoUsuario, setTipoUsuario] = useState(null);
+  const [menus, setMenus] = useState([]);  // Nuevo estado para los menús
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
   const { API_BASE_URL } = config;
 
   // Logout
   const logout = useCallback(() => {
-    console.log("Cerrando sesión");
     setUser(null);
-    setPerfiles([]);
-    setMenus([]);
+    setTipoUsuario(null);
+    setMenus([]);  // Limpiar menús al hacer logout
     setToken(null);
     localStorage.removeItem("authData");
     if (inactivityTimer) clearTimeout(inactivityTimer);
   }, []);
 
-  // Reiniciar timer de inactividad
   const resetInactivityTimer = useCallback(() => {
     if (inactivityTimer) clearTimeout(inactivityTimer);
     inactivityTimer = setTimeout(() => {
-      console.log("Sesión cerrada por inactividad");
       logout();
     }, INACTIVITY_TIME);
   }, [logout]);
 
-  // Verificar token al iniciar
+  // Función para obtener los menús según el perfil del usuario
+  const fetchMenus = async (userId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/get_menus.php?userId=${userId}`);
+      const data = await response.json();
+      if (response.ok) {
+        setMenus(data);  // Guardar los menús en el estado
+      } else {
+        console.error("Error al obtener los menús", data);
+      }
+    } catch (error) {
+      console.error("Error al obtener los menús:", error);
+    }
+  };
+
   const verifyToken = useCallback(async () => {
     const authData = localStorage.getItem("authData");
     if (!authData) {
@@ -47,124 +56,97 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const parsedData = JSON.parse(authData);
-
       if (!parsedData.token) {
         logout();
         return;
       }
 
       setToken(parsedData.token);
+      setUser(parsedData.usuario);
 
-      const response = await fetch(`${API_BASE_URL}/auth/verify`, {
-        headers: { Authorization: `Bearer ${parsedData.token}` },
-      });
-
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData.usuario);
-        setPerfiles(userData.perfiles);
-        setMenus(userData.menus);
-        resetInactivityTimer(); // reinicia timer
-      } else {
-        logout();
-      }
+      // Obtener los menús según el perfil del usuario
+      await fetchMenus(parsedData.usuario.id_usuario);  // Obtener menús con el ID de usuario
     } catch (error) {
-      console.error("Error verificando token:", error);
       logout();
     } finally {
       setLoading(false);
     }
-  }, [API_BASE_URL, logout, resetInactivityTimer]);
+  }, [API_BASE_URL, logout]);
 
-  // Ejecutar verifyToken al montar
   useEffect(() => {
     verifyToken();
   }, [verifyToken]);
 
-  // Escuchar actividad del usuario para reiniciar timer
   useEffect(() => {
     if (!token) return;
 
     const events = ["mousemove", "keydown", "click", "scroll"];
-    events.forEach(event => window.addEventListener(event, resetInactivityTimer));
+    events.forEach((event) => window.addEventListener(event, resetInactivityTimer));
 
     return () => {
-      events.forEach(event => window.removeEventListener(event, resetInactivityTimer));
+      events.forEach((event) => window.removeEventListener(event, resetInactivityTimer));
       if (inactivityTimer) clearTimeout(inactivityTimer);
     };
   }, [token, resetInactivityTimer]);
 
-  // Login
   const login = async (username, password) => {
     try {
-      console.log("Iniciando login para:", username);
+      // Imprimir los datos que se están enviando al backend
+      console.log("Enviando datos al backend:", { username, password });
 
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await fetch(`${API_BASE_URL}/auth/login.php`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        headers: {
+          "Content-Type": "application/json",  // Asegúrate de que el backend reciba JSON
+        },
+        body: JSON.stringify({ username, password }),  // Enviamos los datos como JSON
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Credenciales incorrectas");
+      // Imprimir la respuesta como texto para depuración
+      const responseText = await response.text();  // Obtener la respuesta como texto primero
+      console.log("Respuesta del backend (texto):", responseText);  // Ver la respuesta completa en consola
+
+      // Verificar si la respuesta no es un JSON válido
+      let jsonResponse;
+      try {
+        jsonResponse = JSON.parse(responseText);  // Intentamos convertir la respuesta en JSON
+        console.log("Respuesta del backend (JSON):", jsonResponse);  // Ver el JSON parseado
+      } catch (error) {
+        // Si ocurre un error al parsear JSON, mostrar más detalles
+        console.error("Error al parsear JSON:", error);
+        console.error("Contenido de la respuesta que no es un JSON válido:", responseText);
+        throw new Error("La respuesta no es un JSON válido.");
       }
 
-      const authData = await response.json();
+      if (!response.ok) {
+        // Si la respuesta no es OK (error en el backend), lanzar el error adecuado
+        throw new Error(jsonResponse.error || "Credenciales incorrectas");
+      }
 
-      setUser(authData.usuario);
-      setPerfiles(authData.perfiles);
-      setMenus(authData.menus);
-      setToken(authData.token);
+      // Si la respuesta es válida, continúa con la autenticación
+      setUser(jsonResponse.usuario);
+      setTipoUsuario(jsonResponse.tipo_usuario);
 
-      localStorage.setItem("authData", JSON.stringify(authData));
-
-      resetInactivityTimer(); // iniciar timer al login
+      // Guardar los datos del usuario en localStorage si quieres persistir la sesión
+      localStorage.setItem("userData", JSON.stringify(jsonResponse));
 
       return { success: true };
     } catch (error) {
-      console.error("Error en login:", error);
-      return { success: false, error: error.message || "Error al conectar con el servidor" };
+      console.error("Error en el login:", error);
+      return { success: false, error: error.message };
     }
-  };
-
-  // Fetch autenticado
-  const authFetch = async (url, options = {}) => {
-    if (!token) throw new Error("No hay token de autenticación");
-
-    const configFetch = {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        ...options.headers,
-      },
-    };
-
-    const response = await fetch(`${API_BASE_URL}${url}`, configFetch);
-
-    if (response.status === 401) {
-      logout();
-      throw new Error("Sesión expirada");
-    }
-
-    // Renovar timer al hacer peticiones
-    resetInactivityTimer();
-
-    return response;
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        perfiles,
-        menus,
+        tipoUsuario,
+        menus,  // Agregar los menús al contexto
         loading,
         token,
         login,
         logout,
-        authFetch,
         isAuthenticated: !!user,
       }}
     >
@@ -173,11 +155,8 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Hook personalizado
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error("useAuth debe ser usado dentro de un AuthProvider");
   return context;
 };
-
-export default AuthContext;

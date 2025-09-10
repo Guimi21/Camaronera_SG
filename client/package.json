@@ -20,7 +20,6 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "homepage": "https://guimiadmin.free.nf",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",

@@ -15,16 +15,17 @@ export default function Login() {
   const navigate = useNavigate();
 
   // ✅ Redirección segura usando useEffect
-useEffect(() => {
-  if (isAuthenticated) {
-    navigate("/layout");
-  }
-}, [isAuthenticated, navigate]);
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/layout");
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
 
+    // Verificar si los campos están vacíos
     if (!usuario || !password) {
       Swal.fire({
         icon: "warning",
@@ -36,8 +37,10 @@ useEffect(() => {
       return;
     }
 
+    // Llamar a la función login desde AuthContext
     const result = await login(usuario, password);
 
+    // Si la autenticación es exitosa
     if (result.success) {
       Swal.fire({
         icon: "success",
@@ -46,6 +49,7 @@ useEffect(() => {
         confirmButtonColor: "#2563eb",
       });
     } else {
+      // Si hubo error en el login, mostrar mensaje de error
       Swal.fire({
         icon: "error",
         title: "Error",
