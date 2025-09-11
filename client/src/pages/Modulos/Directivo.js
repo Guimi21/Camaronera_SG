@@ -36,26 +36,31 @@ export default function Directivo() {
   const [error, setError] = useState(null);
 
   // Función para normalizar los datos del backend al formato esperado por el frontend
-  const normalizeData = (backendData) => {
-    return backendData.map(item => ({
-      piscina: item.Piscina,
-      fecha_siembra: item["Fecha de siembra"],
-      biomasa_lbs: parseFloat(item.Biomasa) || 0,
-      consumo_balanceado_kg: parseFloat(item["Balanc Acum"]) || 0,
-      tca: parseFloat(item["Conv Alim"]) || 0,
-      supervivencia: parseFloat(item["sobrev actual %"]) || 0,
-      densidad_ha: parseFloat(item.Densidad) || 0,
-      poblacion_actual: parseFloat(item["Población actual"]) || 0,
-      observaciones: item.Observaciones,
-      tipo_siembra: item["Tipo Siembra"],
-      // Campos adicionales del backend por si son necesarios
-      has: parseFloat(item.Has) || 0,
-      dias_cultivo: parseInt(item["Dias cultivo"]) || 0,
-      siembra_larvas: item["Siembra / Larvas"],
-      peso: parseFloat(item.Peso) || 0,
-      inc_p: parseFloat(item["Inc.P"]) || 0
-    }));
-  };
+ const normalizeData = (backendData) => {
+  return backendData.map(item => ({
+    piscina: item.Piscina,
+    has: item.Has,  
+    fecha_siembra: item["Fecha de siembra"],
+    dias_cultivo: item["Dias cultivo"],
+    siembra_larvas: item["Siembra / Larvas"],
+    densidad_ha: item.Densidad,
+    tipo_siembra: item["Tipo Siembra"],
+    peso: item.Peso,
+    inc: item["Inc.P"],
+    biomasa_lbs: item["Biomasa Lbs"],
+    cantidad_balanceado_kg: item["Cantidad Balanceado"],
+    balnova22: item["35% Balnova 2,2"],
+    balnova12: item["35% Balnova 1,2 mm"],
+    balnova08: item["35% Balnova 0,8 mm"],
+    balanceado_acu: item["Balanceado Acumulado"],
+    conversion_alimenticia: item["Conversión Alimenticia"],
+    poblacion_actual: item["Población actual"],
+    supervivencia: item["Sobrev. Actual %"],
+    observaciones: item.Observaciones,
+    fecha_seguimiento: item["Fecha Seguimiento"]
+  }));
+};
+
 
   // Función para obtener datos generales del backend
   const fetchGeneralData = async (piscinaValue = "todas") => {
@@ -94,35 +99,6 @@ export default function Directivo() {
       console.error("Error fetching general data:", err);
       setError(err.message || "No se pudieron cargar los datos generales.");
       
-      // Datos de ejemplo como respaldo (ya normalizados)
-      const exampleData = [
-        {
-          piscina: "01",
-          fecha_siembra: "2025-09-01",
-          biomasa_lbs: 1200,
-          consumo_balanceado_kg: 500,
-          tca: 1.5,
-          supervivencia: 90,
-          densidad_ha: 1000,
-          poblacion_actual: 3000,
-          observaciones: "Todo en orden",
-          tipo_siembra: "directo"
-        },
-        {
-          piscina: "02",
-          fecha_siembra: "2025-09-02",
-          biomasa_lbs: 1500,
-          consumo_balanceado_kg: 600,
-          tca: 1.8,
-          supervivencia: 85,
-          densidad_ha: 1050,
-          poblacion_actual: 3200,
-          observaciones: "Buena producción",
-          tipo_siembra: "transferencia"
-        }
-      ];
-      setData(exampleData);
-      setFilteredGeneralData(exampleData);
     } finally {
       setLoading(false);
     }
@@ -139,14 +115,11 @@ export default function Directivo() {
         queryParams.append('piscina', filterParams.piscina);
       }
       
-      if (filterParams.startDate && filterParams.endDate) {
-        queryParams.append('startDate', filterParams.startDate);
-        queryParams.append('endDate', filterParams.endDate);
-      }
-      
-      if (filterParams.tipoSiembra && filterParams.tipoSiembra !== "todos") {
-        queryParams.append('tipoSiembra', filterParams.tipoSiembra);
-      }
+       if (filterParams.startDate && filterParams.endDate) {
+      queryParams.append('Date[start]', filterParams.startDate);
+      queryParams.append('Date[end]', filterParams.endDate);
+    }
+    
       
       const response = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php?${queryParams.toString()}`, {
         method: 'GET',
@@ -174,34 +147,6 @@ export default function Directivo() {
       console.error("Error fetching table data:", err);
       setError(err.message || "No se pudieron cargar los datos de la tabla.");
       
-      // Datos de ejemplo como respaldo (ya normalizados)
-      const exampleData = [
-        {
-          piscina: "01",
-          fecha_siembra: "2025-09-01",
-          biomasa_lbs: 1200,
-          consumo_balanceado_kg: 500,
-          tca: 1.5,
-          supervivencia: 90,
-          densidad_ha: 1000,
-          poblacion_actual: 3000,
-          observaciones: "Todo en orden",
-          tipo_siembra: "directo"
-        },
-        {
-          piscina: "02",
-          fecha_siembra: "2025-09-02",
-          biomasa_lbs: 1500,
-          consumo_balanceado_kg: 600,
-          tca: 1.8,
-          supervivencia: 85,
-          densidad_ha: 1050,
-          poblacion_actual: 3200,
-          observaciones: "Buena producción",
-          tipo_siembra: "transferencia"
-        }
-      ];
-      setFilteredTableData(exampleData);
     } finally {
       setLoadingTable(false);
     }
@@ -215,8 +160,8 @@ export default function Directivo() {
 
   // Cálculos de datos generales
   const totalPiscinas = filteredGeneralData.length;
-  const consumoTotalBalanceado = filteredGeneralData.reduce((total, item) => total + (item.consumo_balanceado_kg || 0), 0);
-  const tcaPromedio = totalPiscinas > 0 ? filteredGeneralData.reduce((total, item) => total + (item.tca || 0), 0) / totalPiscinas : 0;
+  const consumoTotalBalanceado = filteredGeneralData.reduce((total, item) => total + (item.cantidad_balanceado_kg || 0), 0);
+  const tcaPromedio = totalPiscinas > 0 ? filteredGeneralData.reduce((total, item) => total + (item.conversion_alimenticia || 0), 0) / totalPiscinas : 0;
   const porcentajeSupervivencia = totalPiscinas > 0 ? (filteredGeneralData.reduce((total, item) => total + (item.supervivencia || 0), 0) / totalPiscinas).toFixed(2) : 0;
   const biomasaTotal = filteredGeneralData.reduce((total, item) => total + (item.biomasa_lbs || 0), 0);
   const densidadPromedio = totalPiscinas > 0 ? (filteredGeneralData.reduce((total, item) => total + (item.densidad_ha || 0), 0) / totalPiscinas).toFixed(0) : 0;
@@ -265,7 +210,7 @@ export default function Directivo() {
     datasets: [
       {
         label: 'Tasa de Conversión Alimenticia (TCA)',
-        data: filteredGeneralData.map(item => item.tca || 0),
+        data: filteredGeneralData.map(item => item.conversion_alimenticia || 0),
         fill: false,
         borderColor: 'rgba(255, 159, 64, 1)',
         tension: 0.1,
@@ -310,9 +255,33 @@ export default function Directivo() {
 
   // Descargar los datos filtrados como Excel
   const handleDownload = () => {
-    const ws = XLSX.utils.json_to_sheet(filteredTableData);
+    // Preparar datos para Excel
+    const excelData = filteredTableData.map(item => ({
+      "Piscina": item.piscina,
+      "Has": item.has,
+      "Fecha Siembra": item.fecha_siembra,
+      "Días de Cultivo": item.dias_cultivo,
+      "Siembra/Larvas": item.siembra_larvas,
+      "Densidad (/ha)": item.densidad_ha,
+      "Tipo Siembra": item.tipo_siembra,
+      "Peso (g)": item.peso,
+      "Inc.P (%)": item.inc,
+      "Biomasa (lbs)": item.biomasa_lbs,
+      "Cantidad Balanceado (kg)": item.cantidad_balanceado_kg,
+      "35% Balnova 0,8 mm": item.balnova08,
+      "35% Balnova 1,2 mm": item.balnova12,
+      "35% Balnova 2,2": item.balnova22,
+      "Balanceado Acumulado": item.balanceado_acu,
+      "Conversión Alimenticia": item.conversion_alimenticia,
+      "Población Actual": item.poblacion_actual,
+      "Supervivencia (%)": item.supervivencia,
+      "Observaciones": item.observaciones,
+      "Fecha Seguimiento": item.fecha_seguimiento
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(excelData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Reporte");
+    XLSX.utils.book_append_sheet(wb, ws, "Reporte Producción");
     XLSX.writeFile(wb, "reporte_produccion.xlsx");
   };
 
@@ -489,8 +458,7 @@ export default function Directivo() {
                   className="border rounded p-2 text-sm"
                 >
                   <option value="piscina">Por Piscina</option>
-                  <option value="fecha">Por Fecha de Siembra</option>
-                  <option value="tipo_siembra">Por Tipo de Siembra</option>
+                  <option value="fecha">Por Fecha</option>
                 </select>
 
                 {/* Filtros específicos según el tipo seleccionado */}
@@ -512,6 +480,7 @@ export default function Directivo() {
 
                 {filters.filterType === "fecha" && (
                   <>
+                    <label className="text-sm font-medium">Desde:</label>
                     <input 
                       type="date" 
                       name="startDate" 
@@ -519,7 +488,7 @@ export default function Directivo() {
                       onChange={handleFilterChange} 
                       className="border rounded p-2 text-sm" 
                     />
-                    <span className="text-sm">a</span>
+                    <label className="text-sm font-medium">Hasta:</label>
                     <input 
                       type="date" 
                       name="endDate" 
@@ -530,20 +499,6 @@ export default function Directivo() {
                   </>
                 )}
 
-                {filters.filterType === "tipo_siembra" && (
-                  <>
-                    <select 
-                      name="tipoSiembra" 
-                      value={filters.tipoSiembra} 
-                      onChange={handleFilterChange} 
-                      className="border rounded p-2 text-sm"
-                    >
-                      <option value="todos">Todos los tipos</option>
-                      <option value="Postlarva PL12">Postlarva PL12</option>
-                      <option value="Postlarva PL15">Postlarva PL15</option>
-                    </select>
-                  </>
-                )}
                 
                 <button 
                   onClick={handleTableFilterSubmit} 
@@ -563,45 +518,71 @@ export default function Directivo() {
               </div>
             )}
 
-            {/* Tabla de Datos Filtrados */}
-            <div className="table-container overflow-x-auto bg-white rounded-lg shadow mb-4">
-              <table className="min-w-full">
-                <thead>
-                  <tr className="bg-blue-100">
-                    <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold">Piscina</th>
-                    <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold">Fecha Siembra</th>
-                    <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold">Biomasa (lbs)</th>
-                    <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold">Población Actual</th>
-                    <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold">Supervivencia (%)</th>
-                    <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold">Densidad (/ha)</th>
-                    <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold">Observaciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {!loadingTable && currentData.length > 0 ? (
-                    currentData.map((item, index) => (
-                      <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                        <td className="py-3 px-4 border-b">{item.piscina}</td>
-                        <td className="py-3 px-4 border-b">{item.fecha_siembra}</td>
-                        <td className="py-3 px-4 border-b">{item.biomasa_lbs.toLocaleString()}</td>
-                        <td className="py-3 px-4 border-b">{item.poblacion_actual.toLocaleString()}</td>
-                        <td className="py-3 px-4 border-b">{item.supervivencia.toFixed(2)}%</td>
-                        <td className="py-3 px-4 border-b">{item.densidad_ha.toLocaleString()}</td>
-                        <td className="py-3 px-4 border-b">{item.observaciones}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    !loadingTable && (
-                      <tr>
-                        <td colSpan="7" className="py-4 px-4 text-center text-gray-500">
-                          No hay datos disponibles con los filtros seleccionados
-                        </td>
-                      </tr>
-                    )
-                  )}
-                </tbody>
-              </table>
-            </div>
+         {/* Tabla de Datos Filtrados con scroll horizontal y vertical */}
+<div className="table-container mb-4 bg-white rounded-lg shadow overflow-hidden">
+  <div className="overflow-x-auto overflow-y-auto max-h-96 w-[60vw]">
+    <table className="min-w-full">
+      <thead className="sticky top-0 bg-blue-100 z-10">
+        <tr>
+          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Piscina</th>
+          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Has</th>
+          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Fecha Siembra</th>
+          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Dias Cultivo</th>
+          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Siembra Larvas</th>
+          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Densidad (/ha)</th>
+          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Tipo Siembra</th>
+          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Peso (g)</th>
+          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Inc.P (%)</th>
+          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Biomasa (lbs)</th>
+          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Cant. Balanceado (kg)</th>
+          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Balnova 0,8 mm</th>
+          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Balnova 1,2 mm</th>
+          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Balnova 2,2</th>
+          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Balanceado Acum.</th>
+          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Conv. Alimenticia</th>
+          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Población Actual</th>
+          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Supervivencia (%)</th>
+          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Observaciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {!loadingTable && currentData.length > 0 ? (
+          currentData.map((item, index) => (
+            <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.piscina}</td>
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.has}</td>
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.fecha_siembra}</td>
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.dias_cultivo}</td> 
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.siembra_larvas?.toLocaleString() || '0'}</td>
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.densidad_ha}</td>
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.tipo_siembra}</td>     
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.peso}</td>
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.inc}</td>
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.biomasa_lbs?.toLocaleString() || '0'}</td>
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.cantidad_balanceado_kg?.toLocaleString() || '0'}</td>
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.balnova08?.toLocaleString() || '0'}</td>
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.balnova12?.toLocaleString() || '0'}</td>
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.balnova22?.toLocaleString() || '0'}</td>
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.balanceado_acu?.toLocaleString() || '0'}</td>
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.conversion_alimenticia}</td>
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.poblacion_actual?.toLocaleString() || '0'}</td>
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.supervivencia}%</td>
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.observaciones}</td>
+            </tr>
+          ))
+        ) : (
+          !loadingTable && (
+            <tr>
+              <td colSpan="19" className="py-4 px-4 text-center text-gray-500">
+                No hay datos disponibles con los filtros seleccionados
+              </td>
+            </tr>
+          )
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
 
             {/* Paginación y botón de descarga */}
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -613,7 +594,7 @@ export default function Directivo() {
                 >
                   Anterior
                 </button>
-                <span className="text-sm text-gray-600">Página {currentPage}</span>
+                <span className="text-sm text-gray-600">Página {currentPage} de {Math.ceil(filteredTableData.length / itemsPerPage)}</span>
                 <button 
                   onClick={() => setCurrentPage(currentPage + 1)} 
                   disabled={currentPage * itemsPerPage >= filteredTableData.length || loadingTable}
@@ -621,6 +602,17 @@ export default function Directivo() {
                 >
                   Siguiente
                 </button>
+                
+                <select 
+                  value={itemsPerPage} 
+                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                  className="border rounded p-2 text-sm"
+                >
+                  <option value="5">5 por página</option>
+                  <option value="10">10 por página</option>
+                  <option value="20">20 por página</option>
+                  <option value="50">50 por página</option>
+                </select>
               </div>
 
               <div className="download-button">
