@@ -24,7 +24,7 @@ export default function Sidebar() {
         <div className="logoContainer">
           <img src={logo} alt="Logo Camaronera" className="logoPrincipal" />
           <div>
-            <h1 className="logoTitulo">Camaronera XYZ</h1>
+            <h1 className="logoTitulo">Camaron 360</h1>
             <p className="logoSubtitulo">{user.tipo_usuario}</p> {/* Muestra el tipo de usuario */}
           </div>
         </div>

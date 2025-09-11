@@ -3,64 +3,54 @@
 require_once __DIR__ . '/vendor/autoload.php';  // Asegúrate de que este sea el camino correcto hacia el autoload
 
 // Incluir la configuración global
-require_once 'config/config.php';  // Aquí se incluyen configuraciones de base de datos y otras variables globales
+require_once 'config/config.php'; 
 
-// Incluir los controladores necesarios
-require_once('controller/AuthController.php');
-require_once('controller/PiscinaController.php');
-require_once('controller/MenuController.php');
-// Crear instancias de los controladores
-$authController = new AuthController();
-$piscinaController = new PiscinaController();
-$menuController = new MenuController();
+// Incluir el controlador de autenticación (si no está autoloaded por Composer)
+require_once 'auth/login.php';  
+
+// Configuración de CORS
+header("Access-Control-Allow-Origin: http://localhost:3000");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Access-Control-Allow-Credentials: true");
+header('Content-Type: application/json');
+
+// Si la solicitud es OPTIONS (preflight), respondemos sin procesar
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(200);  // 200 OK
+    exit(0);  
+}
 
 // Obtener la URL y el método de la solicitud (POST, GET, etc.)
 $requestMethod = $_SERVER['REQUEST_METHOD'];
 $requestUri = $_SERVER['REQUEST_URI'];
 
-// Ruta para login (POST)
-if ($requestMethod == 'POST' && $requestUri == '/auth/login.php') {
-    // Obtener los parámetros del formulario
-    $username = $_POST['username'];
-    $password = $_POST['password'];
-    
-    // Llamar al controlador de autenticación para hacer login
-    $authController->login($username, $password);
-}
-if ($requestMethod == 'POST' && $requestUri == '/auth/menus.php') {
-    // Obtener los parámetros del formulario
-    $userId = $_POST['userId'];
-    
-    // Llamar al controlador de autenticación para obtener los menús
-    $authController->getMenus($userId); 
-}
+// Enrutador básico
+switch ($requestUri) {
+    case '/auth/login':  // Ruta de login (sin .php)
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Aquí solo incluimos login.php, ya que la lógica ya está en el archivo
+            require_once(__DIR__ . '/auth/login.php');
+        } else {
+            // Responder con un método incorrecto
+            header("HTTP/1.1 405 Method Not Allowed");
+            echo json_encode(['error' => 'Método no permitido.']);
+        }
+        break;
+           case '/module/cicloproductivo':  // Ruta para obtener los datos del ciclo productivo
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            // Incluir el archivo cicloproductivo.php
+            require_once(__DIR__ . '/module/cicloproductivo.php');
+        } else {
+            // Responder con un método incorrecto
+            header("HTTP/1.1 405 Method Not Allowed");
+            echo json_encode(['error' => 'Método no permitido.']);
+        }
+        break;
 
-if($requestMethod == 'POST' && $requestUri == '/auth/perfiles.php') {
-    // Obtener los parámetros del formulario
-    $userId = $_POST['userId'];
-    
-    // Llamar al controlador de autenticación para obtener los perfiles del usuario
-    $authController->getUsuarioPerfiles($userId); 
+    default:
+        // Si la ruta no es válida, responder con un error 404
+        header("HTTP/1.1 404 Not Found");
+        echo json_encode(['error' => 'Ruta no encontrada']);
 }
-// Ruta para crear una nueva piscina (POST)
-elseif ($requestMethod == 'POST' && $requestUri == '/piscinas') {
-    // Llamar al controlador de piscinas para crear la piscina
-    $piscinaController->createPiscina();
-}
-
-// Ruta para obtener todas las piscinas (GET)
-elseif ($requestMethod == 'GET' && $requestUri == '/piscinas') {
-    // Llamar al controlador de piscinas para obtener todas las piscinas
-    $piscinaController->getPiscinas();
-}
-
-
-// Si la ruta no es válida, responder con un error 404
-else {
-    header("HTTP/1.1 404 Not Found");
-    echo json_encode(['error' => 'Ruta no encontrada']);
-}
-
-// Mostrar mensaje de servidor iniciado correctamente
-
 ?>

@@ -23,20 +23,6 @@ export const AuthProvider = ({ children }) => {
     if (inactivityTimer) clearTimeout(inactivityTimer);
   }, []);
 
-  // Función para obtener los menús según el perfil del usuario
-  const fetchMenus = useCallback(async (userId) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/get_menus.php?userId=${userId}`);
-      const data = await response.json();
-      if (response.ok) {
-        setMenus(data);  // Guardar los menús en el estado
-      } else {
-        console.error("Error al obtener los menús", data);
-      }
-    } catch (error) {
-      console.error("Error al obtener los menús:", error);
-    }
-  }, [API_BASE_URL]); // API_BASE_URL es constante y no necesita ser parte de las dependencias.
 
   const verifyToken = useCallback(async () => {
     const authData = localStorage.getItem("authData");
@@ -56,14 +42,13 @@ export const AuthProvider = ({ children }) => {
       setUser(parsedData.usuario);
       setTipoUsuario(parsedData.tipo_usuario);  // Asegúrate de que 'tipo_usuario' se guarde aquí
 
-      // Obtener los menús según el perfil del usuario
-      await fetchMenus(parsedData.usuario.id_usuario);
+    
     } catch (error) {
       logout();
     } finally {
       setLoading(false);
     }
-  }, [logout, fetchMenus]); // Solo depende de `logout` y `fetchMenus`, no de `API_BASE_URL`.
+  }, [logout ]); // Solo depende de `logout` y `fetchMenus`, no de `API_BASE_URL`.
 
   useEffect(() => {
     verifyToken();

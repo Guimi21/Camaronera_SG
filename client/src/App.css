@@ -78,6 +78,7 @@ body {
   border-radius: 8px;
   text-decoration: none;
   color: #e5e7eb; /* gris claro */
+  border-color: #e5e7eb;
   font-weight: 500;
   transition: background 0.3s, color 0.3s;
 }
@@ -440,4 +441,240 @@ button[type="submit"]:disabled {
 /* Botón guardar piscina */
 .form-container button {
   margin-top: 0.5rem;
+}
+
+/*directivo dashboard.css*/
+
+/* TailwindCSS base styles */
+
+/* Personalizado para panel directo */
+/* Estilos generales */
+.panel-directivo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Contenedor de los gráficos */
+.chart-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Grid para los gráficos */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Grid flexible para diferentes tamaños de pantalla */
+  gap: 1.5rem;
+  width: 100%;
+}
+
+/* Filtros */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.filters label {
+  font-weight: 600;
+}
+
+.filters select,
+.filters input {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 180px;
+}
+
+.filters button {
+  padding: 0.5rem 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.filters button:hover {
+  background-color: #0056b3;
+}
+
+/* Tabla */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 2rem;
+}
+
+.table-container table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-container th,
+.table-container td {
+  padding: 0.75rem;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+.table-container th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+}
+
+/* Paginación */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.pagination button {
+  padding: 0.5rem 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.pagination button:hover {
+  background-color: #0056b3;
+}
+
+.pagination button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Botón de descarga */
+.download-button {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.download-button button {
+  padding: 0.75rem 1.5rem;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.download-button button:hover {
+  background-color: #218838;
+}
+
+.panel-directivo {
+  @apply p-6 bg-white rounded-lg shadow-md mb-6;
+}
+
+h1,
+h2 {
+  @apply font-bold text-gray-800;
+}
+
+.filters {
+  @apply flex items-center space-x-4;
+}
+
+.filters label {
+  @apply text-sm font-medium text-gray-600;
+}
+
+.filters select,
+.filters input {
+  @apply p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+.filters button {
+  @apply p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600;
+}
+
+.summary-item {
+  @apply bg-gray-50 p-4 rounded-md border-l-4 border-blue-500;
+}
+
+.summary-item p {
+  @apply text-sm text-gray-600;
+}
+
+.table-container {
+  @apply mt-4 overflow-x-auto;
+}
+
+table {
+  @apply min-w-full bg-white border-collapse;
+}
+
+table th,
+table td {
+  @apply px-4 py-2 border text-sm text-gray-700;
+}
+
+table th {
+  @apply bg-blue-50 font-semibold text-left;
+}
+
+.table-container .pagination {
+  @apply flex justify-between items-center mt-6;
+}
+
+.pagination button {
+  @apply p-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 disabled:bg-gray-300;
+}
+
+.download-button button {
+  @apply p-2 bg-green-500 text-white rounded-md hover:bg-green-600 mt-4;
+}
+
+.chart-container {
+  @apply mt-6 flex flex-col items-center bg-gray-50 p-4 rounded-lg shadow-lg;
+}
+
+.chart-container canvas {
+  @apply w-full h-64;
+}
+
+/* TailwindCSS para Panel Directivo */
+.chart-container {
+  @apply p-6 bg-white rounded-lg shadow-md mb-6;
+}
+
+h1,
+h2,
+h3 {
+  @apply font-bold text-gray-800;
+}
+
+.chart-container .mb-8 {
+  @apply mb-8;
+}
+
+.chart-container canvas {
+  @apply w-full h-64 sm:h-72 md:h-96;
+}
+
+h3 {
+  @apply text-lg font-semibold mb-4;
+}
+
+.chart-container .chart {
+  @apply w-full h-96 mb-6;
+}
+
+.chart-container .chart-title {
+  @apply mb-4 text-center font-medium text-gray-600;
 }
