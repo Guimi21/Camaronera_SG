@@ -3,7 +3,6 @@ import config from "../config";
 
 const AuthContext = createContext();
 
-const INACTIVITY_TIME = 15 * 60 * 1000;
 let inactivityTimer = null;
 
 export const AuthProvider = ({ children }) => {
@@ -25,7 +24,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Función para obtener los menús según el perfil del usuario
-  const fetchMenus = async (userId) => {
+  const fetchMenus = useCallback(async (userId) => {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/get_menus.php?userId=${userId}`);
       const data = await response.json();
@@ -37,7 +36,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Error al obtener los menús:", error);
     }
-  };
+  }, [API_BASE_URL]); // API_BASE_URL es constante y no necesita ser parte de las dependencias.
 
   const verifyToken = useCallback(async () => {
     const authData = localStorage.getItem("authData");
@@ -64,7 +63,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [API_BASE_URL, logout]);
+  }, [logout, fetchMenus]); // Solo depende de `logout` y `fetchMenus`, no de `API_BASE_URL`.
 
   useEffect(() => {
     verifyToken();
