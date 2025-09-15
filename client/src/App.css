@@ -1,63 +1,137 @@
-.App {
-  text-align: center;
+/* Variables CSS - Manteniendo tu paleta de colores */
+:root {
+  --primary: #2563eb;
+  --primary-dark: #1e40af;
+  --secondary: #3b82f6;
+  --secondary-dark: #1e3a8a;
+  --success: #16a34a;
+  --error: #dc2626;
+  --warning: #f59e0b;
+  --text: #374151;
+  --text-light: #6b7280;
+  --bg: #ffffff;
+  --shadow: rgba(0, 0, 0, 0.15);
+  --sidebar-width: 250px;
 }
 
-:root {
-  --primary: #2563eb;       /* Azul principal */
-  --primary-dark: #1e40af;  /* Azul más oscuro */
-  --secondary: #3b82f6;     /* Degradado inicial */
-  --secondary-dark: #1e3a8a;/* Degradado final */
-  --success: #16a34a;       /* Verde para éxito */
-  --error: #dc2626;         /* Rojo para error */
-  --warning: #f59e0b;       /* Amarillo para advertencia */
-  --text: #374151;          /* Gris oscuro para texto */
-  --text-light: #6b7280;    /* Gris claro */
-  --bg: #ffffff;            /* Fondo del formulario */
-  --shadow: rgba(0, 0, 0, 0.15);
+/* Reset y estilos base */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background-image: url('./assets/imagenes/fondoCamaronera.jpg'); 
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  background-image: url('./assets/imagenes/fondoCamaronera.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
 }
 
-/* Sidebar principal */
-.sidebar {
-  width: 250px;
+/* Layout principal */
+.layout {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  background-color: #1f2937; /* gris oscuro */
+  width: 100%;
+}
+
+/* Contenedor general */
+.container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Contenedor para Header y Sidebar */
+.layout-container {
+  display: flex;
+  flex: 1;
+  flex-direction: row;
+  width: 100%;
+}
+
+/* Header */
+header {
+  background: linear-gradient(to right, #1f2937, #111827, #000);
+  color: white;
+  padding: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* Contenedor principal: sidebar + contenido */
+.main-container {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+/* Sidebar para móviles - inicialmente oculto */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -100%;
+  min-height: 100vh;
+  background-color: #1f2937;
   color: white;
   display: flex;
   flex-direction: column;
   padding: 1rem;
-  transition: all 0.3s ease;
+  transition: left 0.3s ease;
   box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+  z-index: 50;
+  overflow-y: auto;
+}
+
+.sidebar.open {
+  left: 0;
+}
+.sidebar.close {
+  left: -100%;
 }
 
 /* Logo */
-.sidebar .logo {
+.logoContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #374151;
 }
 
-.sidebar .logo img {
-  width: 96px;
-  height: 96px;
+.logoPrincipal {
+  width: 70px;
+  height: 70px;
   object-fit: contain;
-  border-radius: 12px;
   margin-bottom: 0.5rem;
 }
 
-.sidebar .logo p {
-  font-size: 0.875rem;
-  color: #9ca3af; /* gris claro */
+.logoTitulo {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #ffffff;
+  text-align: center;
+}
+
+.logoSubtitulo {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  text-align: center;
 }
 
 /* Menú */
@@ -74,143 +148,66 @@ body {
 .sidebar nav ul li a {
   display: flex;
   align-items: center;
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
   border-radius: 8px;
   text-decoration: none;
-  color: #e5e7eb; /* gris claro */
-  border-color: #e5e7eb;
+  color: #e5e7eb;
   font-weight: 500;
   transition: background 0.3s, color 0.3s;
 }
 
-.sidebar nav ul li a span {
-  margin-right: 0.5rem;
-  display: flex;
-  align-items: center;
-}
-
-/* Hover */
 .sidebar nav ul li a:hover {
-  background-color: #374151; /* gris más claro */
+  background-color: #374151;
   color: #ffffff;
 }
 
-/* Activo */
 .sidebar nav ul li a.active {
-  background-color: #2563eb; /* azul principal */
+  background-color: #2563eb;
   color: #ffffff;
 }
 
-.logoPrincipal {
-  width: 85px;       /* Ancho */
-  height: 85px;      /* Alto */
-  object-fit: contain; /* Mantener proporciones sin deformar */
-  margin-bottom: 0.5rem; /* Separación abajo */
+/* Contenido principal */
+main {
+  flex: 1;
+  background-color: #f3f4f6;
+  padding: 1.5rem;
+  width: 100%;
+  overflow: auto;
+}
+
+/* Overlay para móviles cuando el sidebar está abierto */
+.overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 40;
+}
+
+.overlay.active {
   display: block;
 }
 
-.logoContainer {
-  display: flex;
-  align-items: center;
-  gap: 12px; /* espacio entre logo y texto */
-  margin-bottom: 1.5rem;
-}
-
-.logoTitulo {
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: #ffffff;
-}
-
-.logoSubtitulo {
-  font-size: 0.875rem;
-  color: #9ca3af; /* gris */
-}
-
-/* ====== app.css ====== */
-
-/* Estilo global para el header */
-header {
-  background: linear-gradient(to right, #1f2937, #111827, #000);
-  color: white;
-  padding: 1rem 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-}
-
-/* Título principal */
-header h1 {
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: 1px;
-  margin: 0;
-}
-
-/* Subtítulo */
-header p {
-  font-size: 0.85rem;
-  color: #9ca3af; /* gris claro */
-  margin: 0;
-}
-
-/* Contenedor usuario + botón */
-.header-user {
-  display: flex;
-  align-items: center;
-  margin-left: auto; /* Empuja a la derecha */
-  gap: 1rem; /* separación entre saludo y botón */
-}
-
-/* Saludo */
-.header-user span {
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-/* Botón de cerrar sesión */
-.logout-btn {
-  background-color: #dc2626; /* rojo-600 */
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-  transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.logout-btn:hover {
-  background-color: #b91c1c; /* rojo-700 */
-  transform: translateY(-2px);
-}
-
-
-/* Animación */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-15px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Formulario genérico */
+/* Formularios */
 .form-container, .login-form {
   background: var(--bg);
-  padding: 2rem;
-  border-radius: var(--border-radius);
-  box-shadow: 0 8px 20px var(--shadow);
-  width: 420px;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0px 4px 10px var(--shadow);
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
   animation: fadeIn 0.8s ease-in-out;
 }
 
-h2 {
-  text-align: center;
-  color: var(--primary-dark);
-  margin-bottom: 1.5rem;
+.form-group {
+  margin-bottom: 1.2rem;
+  position: relative;
 }
 
-/* Labels e inputs */
 label {
   display: block;
   margin-bottom: 0.5rem;
@@ -219,11 +216,10 @@ label {
 }
 
 input {
-  width: 400px;
+  width: 85%;
   padding: 0.75rem 1rem;
   border: 1px solid #d1d5db;
-  border-radius: var(--border-radius);
-  margin-bottom: 1.2rem;
+  border-radius: 8px;
   font-size: 1rem;
   transition: 0.3s;
 }
@@ -234,7 +230,6 @@ input:focus {
   outline: none;
 }
 
-/* Botones */
 button[type="submit"] {
   width: 100%;
   background: var(--primary);
@@ -242,7 +237,7 @@ button[type="submit"] {
   padding: 0.8rem;
   font-size: 1rem;
   font-weight: 600;
-  border-radius: var(--border-radius);
+  border-radius: 8px;
   border: none;
   cursor: pointer;
   transition: background 0.3s;
@@ -257,425 +252,241 @@ button[type="submit"]:disabled {
   cursor: not-allowed;
 }
 
-
-/* Formulario */
-.login-form {
-  background: var(--bg);
-  padding: 2rem;
-  border-radius: 16px;
-  box-shadow: 0px 8px 20px var(--shadow);
-  width: 420px;
-  animation: fadeIn 0.8s ease-in-out;
+/* Títulos */
+h2 {
+  text-align: center;
+  color: var(--primary-dark);
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+.panel-directivo {
+  overflow: auto;          /* Allow both vertical and horizontal scrolling */
+  max-height: 100vh;       /* Restrict the height to the viewport */
+  max-width: 80vw;        /* Restrict the width to the viewport */
+  padding: 2rem;           /* Add padding inside the panel */
+  box-sizing: border-box;  /* Ensure padding is included in the height and width calculation */
 }
 
 /* Animación */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-15px);
+  from { opacity: 0; transform: translateY(-15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Media Queries - Enfoque mobile-first */
+
+/* Tabletas */
+@media (min-width: 768px) {
+  .layout-container {
+    flex-direction: row;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .sidebar {
+    position: relative;
+    left: 0;
+    width: var(--sidebar-width);
+  }
+
+  .main-container {
+    flex-direction: row;
+  }
+
+  .overlay {
+    display: none !important;
+  }
+
+  header p {
+    display: block;
   }
 }
 
-/* Título */
-.login-form h2 {
-  font-size: 1.8rem;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 1.5rem;
-  color: var(--primary-dark);
+/* Escritorios pequeños */
+@media (min-width: 1024px) {
+  .sidebar {
+    width: 280px;
+  }
+
+  .form-container, .login-form {
+    padding: 2rem;
+  }
+
+  .panel-directivo {
+    padding: 2rem;
+  }
 }
 
-/* Labels */
-.login-form label {
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 0.5rem;
-  display: block;
+/* Escritorios grandes */
+@media (min-width: 1280px) {
+  .logoPrincipal {
+    width: 85px;
+    height: 85px;
+  }
+
+  .logoTitulo {
+    font-size: 1.25rem;
+  }
+
+  header {
+    padding: 1rem 2rem;
+  }
+
+  main {
+    padding: 2rem;
+  }
 }
 
-/* Inputs */
-/* Inputs */
-.login-form input {
-  width: 95%;
-  padding: 0.75rem 1rem; /* un poco más de padding para coincidir con altura del botón */
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  margin-bottom: 1.2rem;
-  font-size: 1rem;
-  transition: 0.3s;
-  box-sizing: border-box;
+/* Ajustes para pantallas muy pequeñas */
+@media (max-width: 360px) {
+  header {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+
+  .header-user {
+    margin-left: 0;
+    justify-content: center;
+  }
+
+  .form-container, .login-form {
+    padding: 1rem;
+  }
+
+  input {
+    padding: 0.6rem 0.8rem;
+  }
 }
 
-/* Botón ver contraseña ya está centrado con transform */
-
-
-.login-form input:focus {
-  border-color: var(--primary);
-  outline: none;
-  box-shadow: 0 0 6px rgba(37, 99, 235, 0.4);
-}
-
-/* Botón principal */
-.login-form button[type="submit"] {
-  width: 100%;
-  background: var(--primary);
-  color: white;
-  padding: 0.8rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.login-form button[type="submit"]:hover {
-  background: var(--primary-dark);
-}
-
-.login-form button[type="submit"]:disabled {
-  background: #93c5fd;
-  cursor: not-allowed;
-}
-
-/* Botón ver contraseña */
-.toggle-password {
-  position: absolute;
-  right: 12px;
-  top: 36px;
-  cursor: pointer;
-  color: var(--text-light);
-  transition: color 0.2s;
-}
-
-.toggle-password:hover {
-  color: var(--text);
-}
-
-/* Texto enlace */
-.login-form .link-text {
-  text-align: center;
-  margin-top: 1rem;
-  font-size: 0.9rem;
-  color: var(--text-light);
-}
-
-.login-form .link-text button {
-  background: none;
-  border: none;
-  color: var(--primary);
-  cursor: pointer;
-  font-weight: 600;
-  transition: color 0.2s;
-}
-
-.login-form .link-text button:hover {
-  text-decoration: underline;
-  color: var(--primary-dark);
-}
-/* Contenedor principal: sidebar a la izquierda y contenido a la derecha */
-.layout {
-  display: flex;
-  width: 100vw; /* ancho completo de la ventana */
-  height: 100vh; /* altura completa de la ventana */
-  overflow: hidden;
-}
-
-/* Sidebar */
-.layout .sidebar {
-  width: 250px; /* ancho fijo */
-  background-color: #1f2937; /* gris oscuro */
-  color: white;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 1rem;
-}
-
-/* Contenedor principal: header + main */
-.layout .main-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Header */
-.layout .main-container header {
-  background-color: #ffffff;
-  padding: 1rem;
-  width: 100%;
-  height: 15vh;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  z-index: 10;
-}
-
-/* Main: ocupa el espacio restante */
-.layout .main-container main {
-  flex: 1;
-  background-color: #f3f4f6; /* gris claro */
-  padding: 1.5rem;
-  overflow: auto; /* scroll si contenido grande */
-}
-
-
-/* Contenedor del formulario de piscina */
-.form-container {
-  max-width: 500px;
-  margin: 2rem auto;
-  background: var(--bg);
-  border-radius: var(--border-radius);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-  padding: 2rem;
-  animation: fadeIn 0.8s ease-in-out;
-}
-
-/* Campos del formulario */
-.form-container input {
-  margin-bottom: 1rem;
-  margin-right: auto;
-}
-
-/* Botón guardar piscina */
-.form-container button {
-  margin-top: 0.5rem;
-}
-
-/*directivo dashboard.css*/
-
-/* TailwindCSS base styles */
-
-/* Personalizado para panel directo */
-/* Estilos generales */
-.panel-directivo {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-/* Contenedor de los gráficos */
-.chart-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 1rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Grid para los gráficos */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Grid flexible para diferentes tamaños de pantalla */
-  gap: 1.5rem;
-  width: 100%;
-}
-
-/* Filtros */
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.filters label {
-  font-weight: 600;
-}
-
-.filters select,
-.filters input {
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  width: 180px;
-}
-
-.filters button {
-  padding: 0.5rem 1rem;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.filters button:hover {
-  background-color: #0056b3;
-}
-
-/* Tabla */
+/* Responsive Table Styling */
 .table-container {
-  width: 100%;
-  overflow-x: auto;
-  margin-bottom: 2rem;
-}
-
-.table-container table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.table-container th,
-.table-container td {
-  padding: 0.75rem;
-  text-align: left;
-  border: 1px solid #ddd;
-}
-
-.table-container th {
-  background-color: #f8f9fa;
-  font-weight: bold;
-}
-
-/* Paginación */
-.pagination {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.pagination button {
-  padding: 0.5rem 1rem;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.pagination button:hover {
-  background-color: #0056b3;
-}
-
-.pagination button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-/* Botón de descarga */
-.download-button {
-  display: flex;
-  justify-content: center;
-  margin-top: 1rem;
-}
-
-.download-button button {
-  padding: 0.75rem 1.5rem;
-  background-color: #28a745;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.download-button button:hover {
-  background-color: #218838;
-}
-
-.panel-directivo {
-  @apply p-6 bg-white rounded-lg shadow-md mb-6;
-}
-
-h1,
-h2 {
-  @apply font-bold text-gray-800;
-}
-
-.filters {
-  @apply flex items-center space-x-4;
-}
-
-.filters label {
-  @apply text-sm font-medium text-gray-600;
-}
-
-.filters select,
-.filters input {
-  @apply p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500;
-}
-
-.filters button {
-  @apply p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600;
-}
-
-.summary-item {
-  @apply bg-gray-50 p-4 rounded-md border-l-4 border-blue-500;
-}
-
-.summary-item p {
-  @apply text-sm text-gray-600;
-}
-
-.table-container {
-  @apply mt-4 overflow-x-auto;
+  max-width: 100%;
+  overflow-x: auto; /* Allow horizontal scrolling */
 }
 
 table {
-  @apply min-w-full bg-white border-collapse;
+  width: 100%; /* Make sure the table takes full width of its container */
+  table-layout: auto; /* Let the table adjust its column width based on content */
 }
 
 table th,
 table td {
-  @apply px-4 py-2 border text-sm text-gray-700;
+  padding: 0.75rem;
+  text-align: left;
+  white-space: nowrap; /* Prevent text wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-table th {
-  @apply bg-blue-50 font-semibold text-left;
+/* For mobile screens, ensure it doesn't overflow */
+@media (max-width: 768px) {
+  .table-container {
+    width: 100%; /* Make sure the container is 100% wide */
+    overflow-x: auto; /* Enable horizontal scrolling */
+  }
+
+  table {
+    width: 100%;
+    min-width: 1000px; /* Ensure the table can take as much space as needed */
+  }
+
+  /* Optional: Adjust text size for mobile for better readability */
+  table th, table td {
+    font-size: 0.875rem; /* Smaller text for mobile */
+  }
 }
 
-.table-container .pagination {
-  @apply flex justify-between items-center mt-6;
+/* Estilo para el <select> */
+select {
+  border: 1px solid #d1d5db;            /* Bordes gris claro */
+  border-radius: 8px;                    /* Bordes redondeados */
+  padding: 0.75rem 1rem;                 /* Relleno interno */
+  font-size: 0.875rem;                   /* Tamaño de fuente */
+  background-color: #ffffff;             /* Fondo blanco */
+  color: #374151;                        /* Color del texto */
+  transition: all 0.3s ease;             /* Transición suave al enfocar o cambiar */
+  width: 100%;                           /* Ocupa el 100% del contenedor */
+  max-width: 300px;                      /* Máxima anchura para evitar que se expanda demasiado */
 }
 
-.pagination button {
-  @apply p-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 disabled:bg-gray-300;
+/* Estado cuando el <select> está enfocado */
+select:focus {
+  border-color: var(--primary);          /* Color de borde cuando está enfocado */
+  box-shadow: 0 0 6px rgba(37, 99, 235, 0.4);  /* Efecto de sombra para resaltar */
+  outline: none;                         /* Quitar el borde predeterminado de enfoque */
 }
 
-.download-button button {
-  @apply p-2 bg-green-500 text-white rounded-md hover:bg-green-600 mt-4;
+/* Estilo para las opciones dentro del select */
+option {
+  padding: 0.75rem 1rem;                 /* Relleno interno de cada opción */
+  font-size: 1rem;                       /* Tamaño de fuente */
+  background-color: #ffffff;             /* Fondo blanco */
+  color: #374151;                        /* Color del texto */
 }
 
-.chart-container {
-  @apply mt-6 flex flex-col items-center bg-gray-50 p-4 rounded-lg shadow-lg;
+/* Estilo para cuando se pasa el ratón por encima de una opción */
+option:hover {
+  background-color: #f3f4f6;             /* Fondo gris claro al pasar el ratón */
+  color: #2563eb;                        /* Color de texto cuando se pasa el ratón */
 }
 
-.chart-container canvas {
-  @apply w-full h-64;
+/* Asegurar que el select se vea bien en pantallas móviles */
+@media (max-width: 768px) {
+  select {
+    width: 100%;  /* Asegura que ocupe todo el espacio disponible en pantallas pequeñas */
+    padding: 0.6rem 0.8rem;  /* Reduce el padding en pantallas pequeñas */
+  }
+}
+/* Estilo para el botón */
+button {
+  background-color: #2563eb;              /* Fondo azul (color primario) */
+  color: white;                           /* Color de texto blanco */
+  padding: 0.75rem 1.25rem;               /* Relleno interno */
+  font-size: 0.875rem;                    /* Tamaño de fuente */
+  border-radius: 8px;                     /* Bordes redondeados */
+  border: none;                           /* Sin bordes */
+  cursor: pointer;                       /* Apunta al hacer clic */
+  transition: background-color 0.3s ease, transform 0.2s ease; /* Transición suave */
+  width: auto;                            /* Ajusta el tamaño según el contenido */
 }
 
-/* TailwindCSS para Panel Directivo */
-.chart-container {
-  @apply p-6 bg-white rounded-lg shadow-md mb-6;
+/* Estado de hover del botón */
+button:hover {
+  background-color: #1e40af;              /* Fondo azul oscuro cuando se pasa el ratón */
+  transform: scale(1.05);                  /* Ligero aumento de tamaño al pasar el ratón */
 }
 
-h1,
-h2,
-h3 {
-  @apply font-bold text-gray-800;
+/* Estado deshabilitado del botón */
+button:disabled {
+  background-color: #93c5fd;              /* Fondo azul claro cuando está deshabilitado */
+  cursor: not-allowed;                    /* Cambia el cursor cuando está deshabilitado */
+  opacity: 0.6;                           /* Reduce la opacidad para indicar que está deshabilitado */
+}
+button svg {
+  width: 20px;                            /* Ajusta el tamaño del icono */
+  height: 20px;                           /* Ajusta el tamaño del icono */
+  stroke: white;                          /* Establece el color del icono a blanco */
+}
+/* Asegurarse que el botón sea responsivo en pantallas pequeñas */
+@media (max-width: 768px) {
+  button {
+    width: 100%;  /* Hace que el botón ocupe el 100% del ancho en pantallas pequeñas */
+    padding: 0.75rem;  /* Ajusta el relleno en pantallas más pequeñas */
+  }
 }
 
-.chart-container .mb-8 {
-  @apply mb-8;
+/* CSS para ocultar y mostrar el menú en pantallas móviles */
+@media (max-width: 768px) {
+  .sm\\:hidden {
+    display: none;
+  }
+
+  .sm\\:inline {
+    display: inline;
+  }
+
+  /* Modificar el tamaño del icono de usuario */
+  .text-2xl {
+    font-size: 2rem;
+  }
 }
 
-.chart-container canvas {
-  @apply w-full h-64 sm:h-72 md:h-96;
-}
-
-h3 {
-  @apply text-lg font-semibold mb-4;
-}
-
-.chart-container .chart {
-  @apply w-full h-96 mb-6;
-}
-
-.chart-container .chart-title {
-  @apply mb-4 text-center font-medium text-gray-600;
-}

@@ -37,10 +37,11 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Rutas públicas */}
-          <Route path="/" element={<Home />} />
-          <Route path="/home" element={<Home />} />
+          {/* Ruta pública de login */}
           <Route path="/login" element={<Login />} />
+
+          {/* Ruta pública de Home */}
+          <Route path="/home" element={<Home />} />  {/* Añadida la ruta para Home */}
 
           {/* Rutas protegidas con Layout */}
           <Route
@@ -64,8 +65,8 @@ function App() {
             <Route path="form/ciclo" element={<CicloProductivoForm />} />
           </Route>
 
-          {/* Redirección por defecto */}
-          <Route path="*" element={<Home />} />
+          {/* Redirección a login si no hay ninguna ruta válida */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
     </AuthProvider>

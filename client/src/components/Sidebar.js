@@ -5,36 +5,36 @@ import * as MdIcons from "react-icons/md";
 import logo from "../assets/logos/logo.png";
 
 export default function Sidebar() {
-  const { menus, user } = useAuth(); // Obtén los menús y usuario desde el contexto
+  const { menus, user } = useAuth(); // Get menus and user from context
   const location = useLocation();
 
-  if (!user) return null; // Si no hay usuario, no renderiza el Sidebar
+  if (!user) return null; // If there's no user, do not render the Sidebar
 
-  // Función que retorna el componente del icono dinámicamente
+  // Function that returns the icon component dynamically
   const getIcon = (iconName) => {
-    if (FaIcons[iconName]) return FaIcons[iconName]; // Busca en FontAwesome
-    if (MdIcons[iconName]) return MdIcons[iconName]; // Busca en Material Design
-    return null; // Si no existe
+    if (FaIcons[iconName]) return FaIcons[iconName]; // Search in FontAwesome
+    if (MdIcons[iconName]) return MdIcons[iconName]; // Search in Material Design
+    return null; // If it doesn't exist
   };
 
   return (
-    <aside className="w-64 bg-gray-800 text-white min-h-screen p-4 flex flex-col">
+    <aside className="sidebar w-full md:w-64 bg-gray-800 text-white p-4">
       {/* Logo */}
       <div className="mb-6 flex flex-col items-center">
         <div className="logoContainer">
           <img src={logo} alt="Logo Camaronera" className="logoPrincipal" />
           <div>
             <h1 className="logoTitulo">Camaron 360</h1>
-            <p className="logoSubtitulo">{user.tipo_usuario}</p> {/* Muestra el tipo de usuario */}
+            <p className="logoSubtitulo">{user.tipo_usuario}</p> {/* Display user type */}
           </div>
         </div>
       </div>
 
-      {/* Menús */}
+      {/* Menus */}
       <nav className="flex-1">
         <ul className="space-y-2">
           {menus.map((menu) => {
-            const IconComponent = getIcon(menu.icono); // Obtener el icono correspondiente
+            const IconComponent = getIcon(menu.icono); // Get the corresponding icon
 
             return (
               <li key={menu.id_menu}>
@@ -44,8 +44,8 @@ export default function Sidebar() {
                     location.pathname === menu.ruta ? "bg-gray-700" : ""
                   }`}
                 >
-                  {IconComponent && <IconComponent className="mr-2" />} {/* Mostrar icono si existe */}
-                  {menu.nombre} {/* Mostrar nombre del menú */}
+                  {IconComponent && <IconComponent className="mr-2" />} {/* Display icon if exists */}
+                  {menu.nombre} {/* Display menu name */}
                 </Link>
               </li>
             );

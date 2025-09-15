@@ -84,23 +84,13 @@ try {
 
     // Continuar con la consulta
     $query .= " GROUP BY 
-        p.codigo, 
-        p.hectareas, 
-        sc.fecha_siembra, 
-        sc.cantidad_por_hectarea,
-        sc.tipo_siembra,
-        s.dias_cultivo,
-        sc.cantidad_larvas,
-        s.peso_promedio,
-        s.incremento_peso,
-        s.biomasa_lbs,
-        cbd.cantidad,
-        cbd.balanceado_acumulado,
-        cbd.convercio_alimenticia,
-        s.poblacion_actual,
-        s.indice_supervivencia,
-        s.observaciones,
-        s.fecha
+       p.codigo, 
+    p.hectareas, 
+    sc.fecha_siembra, 
+    sc.cantidad_por_hectarea,
+    sc.tipo_siembra,
+    s.dias_cultivo,
+    sc.cantidad_larvas
     ORDER BY 
         s.fecha";
 

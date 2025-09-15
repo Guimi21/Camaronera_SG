@@ -26,8 +26,7 @@ export default function Directivo() {
     filterType: "piscina",
     piscinaTable: "todas",
     startDate: "",
-    endDate: "",
-    tipoSiembra: "todos"
+    endDate: ""
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -36,31 +35,30 @@ export default function Directivo() {
   const [error, setError] = useState(null);
 
   // Función para normalizar los datos del backend al formato esperado por el frontend
- const normalizeData = (backendData) => {
-  return backendData.map(item => ({
-    piscina: item.Piscina,
-    has: item.Has,  
-    fecha_siembra: item["Fecha de siembra"],
-    dias_cultivo: item["Dias cultivo"],
-    siembra_larvas: item["Siembra / Larvas"],
-    densidad_ha: item.Densidad,
-    tipo_siembra: item["Tipo Siembra"],
-    peso: item.Peso,
-    inc: item["Inc.P"],
-    biomasa_lbs: item["Biomasa Lbs"],
-    cantidad_balanceado_kg: item["Cantidad Balanceado"],
-    balnova22: item["35% Balnova 2,2"],
-    balnova12: item["35% Balnova 1,2 mm"],
-    balnova08: item["35% Balnova 0,8 mm"],
-    balanceado_acu: item["Balanceado Acumulado"],
-    conversion_alimenticia: item["Conversión Alimenticia"],
-    poblacion_actual: item["Población actual"],
-    supervivencia: item["Sobrev. Actual %"],
-    observaciones: item.Observaciones,
-    fecha_seguimiento: item["Fecha Seguimiento"]
-  }));
-};
-
+  const normalizeData = (backendData) => {
+    return backendData.map(item => ({
+      piscina: item.Piscina,
+      has: item.Has,  
+      fecha_siembra: item["Fecha de siembra"],
+      dias_cultivo: item["Dias cultivo"],
+      siembra_larvas: item["Siembra / Larvas"],
+      densidad_ha: item.Densidad,
+      tipo_siembra: item["Tipo Siembra"],
+      peso: item.Peso,
+      inc: item["Inc.P"],
+      biomasa_lbs: item["Biomasa Lbs"],
+      cantidad_balanceado_kg: item["Cantidad Balanceado"],
+      balnova22: item.Balnova22,
+      balnova12: item.Balnova12,
+      balnova08: item.Balnova08,
+      balanceado_acu: item["Balanceado Acumulado"],
+      conversion_alimenticia: item["Conversión Alimenticia"],
+      poblacion_actual: item["Población actual"],
+      supervivencia: item["Sobrev. Actual %"],
+      observaciones: item.Observaciones,
+      fecha_seguimiento: item["Fecha Seguimiento"]
+    }));
+  };
 
   // Función para obtener datos generales del backend
   const fetchGeneralData = async (piscinaValue = "todas") => {
@@ -104,23 +102,24 @@ export default function Directivo() {
     }
   };
 
-  // Función para obtener datos de tabla con filtros específicos
   const fetchTableData = async (filterParams = {}) => {
     try {
       setLoadingTable(true);
       
       const queryParams = new URLSearchParams();
-      
+
+      // Filtro de piscina (si no es "todas")
       if (filterParams.piscina && filterParams.piscina !== "todas") {
         queryParams.append('piscina', filterParams.piscina);
       }
+
+      // Filtro de fecha (si se han establecido las fechas)
+      if (filterParams.startDate && filterParams.endDate) {
+        queryParams.append('startDate', filterParams.startDate);
+        queryParams.append('endDate', filterParams.endDate);
+      }
       
-       if (filterParams.startDate && filterParams.endDate) {
-      queryParams.append('Date[start]', filterParams.startDate);
-      queryParams.append('Date[end]', filterParams.endDate);
-    }
-    
-      
+      // Hacer la llamada GET con los parámetros de la URL
       const response = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php?${queryParams.toString()}`, {
         method: 'GET',
         credentials: 'include',
@@ -235,22 +234,20 @@ export default function Directivo() {
   // Aplicar filtros para la tabla
   const handleTableFilterSubmit = () => {
     const filterParams = {};
-    
-    if (filters.filterType === "piscina" && filters.piscinaTable !== "todas") {
+
+    // Siempre aplicar filtro de piscina (si no es "todas")
+    if (filters.piscinaTable !== "todas") {
       filterParams.piscina = filters.piscinaTable;
     }
-    
-    if (filters.filterType === "fecha" && filters.startDate && filters.endDate) {
+
+    // Si se han establecido fechas, agregar filtro de fecha
+    if (filters.startDate && filters.endDate) {
       filterParams.startDate = filters.startDate;
       filterParams.endDate = filters.endDate;
     }
-    
-    if (filters.filterType === "tipo_siembra" && filters.tipoSiembra !== "todos") {
-      filterParams.tipoSiembra = filters.tipoSiembra;
-    }
-    
+
+    // Llamada a la función para obtener los datos con los filtros aplicados
     fetchTableData(filterParams);
-    setCurrentPage(1);
   };
 
   // Descargar los datos filtrados como Excel
@@ -294,7 +291,7 @@ export default function Directivo() {
   const uniquePiscinas = [...new Set(data.map(item => item.piscina))].sort();
 
   return (
-    <div className="panel-directivo p-6 bg-gray-50 min-h-screen">
+    <div className="panel-directivo bg-white rounded-lg shadow-md p-4 sm:p-6 lg:p-8 max-w-full">
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h1 className="text-2xl font-bold mb-2 text-blue-800">Panel Directivo</h1>
         <p className="text-gray-600 mb-6">Aquí se muestran reportes y estadísticas para los directivos.</p>
@@ -312,201 +309,61 @@ export default function Directivo() {
           </div>
         )}
 
-        {/* Filtro para Datos Generales */}
-        <div className="filters mb-6 bg-blue-50 p-4 rounded-lg">
-          <h3 className="text-lg font-semibold mb-3 text-blue-800">Filtro para Datos Generales</h3>
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="text-sm font-medium">Piscina:</label>
-            <select 
-              name="piscinaGeneral" 
-              value={filters.piscinaGeneral} 
-              onChange={handleFilterChange}
-              className="border rounded p-2 text-sm"
-            >
-              <option value="todas">Todas las Piscinas</option>
-              {uniquePiscinas.map(piscina => (
-                <option key={piscina} value={piscina}>Piscina {piscina}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
         {/* Mostrar contenido solo si no está cargando */}
         {!loading && (
           <>
-            {/* Gráficos principales */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-2 text-blue-800">Porcentaje de Supervivencia</h3>
-                <div className="h-64">
-                  <Doughnut 
-                    data={supervivenciaData} 
-                    options={{ 
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: 'bottom'
-                        }
-                      }
-                    }} 
-                  />
-                </div>
-              </div>
-              
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-2 text-blue-800">Biomasa por Piscina (lbs)</h3>
-                <div className="h-64">
-                  <Bar 
-                    data={biomasaPorPiscinaData} 
-                    options={{ 
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          display: false
-                        }
-                      }
-                    }} 
-                  />
-                </div>
-              </div>
-              
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-2 text-blue-800">Densidad por Piscina (/ha)</h3>
-                <div className="h-64">
-                  <Bar 
-                    data={densidadData} 
-                    options={{ 
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          display: false
-                        }
-                      }
-                    }} 
-                  />
-                </div>
-              </div>
-              
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-2 text-blue-800">TCA por Piscina</h3>
-                <div className="h-64">
-                  <Line 
-                    data={tcaData} 
-                    options={{ 
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          display: false
-                        }
-                      }
-                    }} 
-                  />
-                </div>
-              </div>
-            </div>
-
-            
-            {/* Resumen de datos generales - Estilo similar al ejemplo */}
-            <div className="datos-generales mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-gradient-to-r from-blue-500 to-blue-700 p-6 rounded-lg shadow text-white">
-                <h4 className="font-medium text-sm opacity-80">SUPERVIVENCIA PROMEDIO</h4>
-                <p className="text-3xl font-bold mt-2">{porcentajeSupervivencia}%</p>
-              </div>
-              
-              <div className="bg-gradient-to-r from-green-500 to-green-700 p-6 rounded-lg shadow text-white">
-                <h4 className="font-medium text-sm opacity-80">BIOMASA TOTAL</h4>
-                <p className="text-3xl font-bold mt-2">{biomasaTotal.toLocaleString()} lbs</p>
-              </div>
-              
-              <div className="bg-gradient-to-r from-purple-500 to-purple-700 p-6 rounded-lg shadow text-white">
-                <h4 className="font-medium text-sm opacity-80">DENSIDAD PROMEDIO</h4>
-                <p className="text-3xl font-bold mt-2">{densidadPromedio}/ha</p>
-              </div>
-            </div>
-
-            {/* Información adicional de resumen */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-                <h4 className="font-medium text-gray-500 text-sm">Total Piscinas</h4>
-                <p className="text-xl font-bold text-blue-700">{totalPiscinas}</p>
-              </div>
-              <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-                <h4 className="font-medium text-gray-500 text-sm">Consumo Balanceado</h4>
-                <p className="text-xl font-bold text-blue-700">{consumoTotalBalanceado.toLocaleString()} kg</p>
-              </div>
-              <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-                <h4 className="font-medium text-gray-500 text-sm">TCA Promedio</h4>
-                <p className="text-xl font-bold text-blue-700">{tcaPromedio.toFixed(2)}</p>
-              </div>
-              <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-                <h4 className="font-medium text-gray-500 text-sm">Población Total</h4>
-                <p className="text-xl font-bold text-blue-700">
-                  {filteredGeneralData.reduce((total, item) => total + (item.poblacion_actual || 0), 0).toLocaleString()}
-                </p>
-              </div>
-            </div>
-
             {/* Filtros para la tabla */}
             <div className="filtros-tabla mb-6 bg-gray-50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold mb-3 text-blue-800">Filtros para Tabla Detallada</h3>
               <div className="flex flex-wrap items-center gap-3">
-                <label className="text-sm font-medium">Tipo de Búsqueda:</label>
-                <select 
-                  name="filterType" 
-                  value={filters.filterType} 
-                  onChange={handleFilterChange} 
-                  className="border rounded p-2 text-sm"
-                >
-                  <option value="piscina">Por Piscina</option>
-                  <option value="fecha">Por Fecha</option>
-                </select>
+                {/* Filtro de Piscina */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium mb-1">Medicion:</label>
+                  <select 
+                    name="piscinaTable" 
+                    value={filters.piscinaTable} 
+                    onChange={handleFilterChange} 
+                    className="border rounded p-2 text-sm"
+                  >
+                    <option value="todas">Todas las Piscinas</option>
+                    {uniquePiscinas.map(piscina => (
+                      <option key={piscina} value={piscina}>Piscina {piscina}</option>
+                    ))}
+                  </select>
+                </div>
 
-                {/* Filtros específicos según el tipo seleccionado */}
-                {filters.filterType === "piscina" && (
-                  <>
-                    <select 
-                      name="piscinaTable" 
-                      value={filters.piscinaTable} 
-                      onChange={handleFilterChange} 
-                      className="border rounded p-2 text-sm"
-                    >
-                      <option value="todas">Todas las Piscinas</option>
-                      {uniquePiscinas.map(piscina => (
-                        <option key={piscina} value={piscina}>Piscina {piscina}</option>
-                      ))}
-                    </select>
-                  </>
-                )}
-
-                {filters.filterType === "fecha" && (
-                  <>
-                    <label className="text-sm font-medium">Desde:</label>
-                    <input 
-                      type="date" 
-                      name="startDate" 
-                      value={filters.startDate} 
-                      onChange={handleFilterChange} 
-                      className="border rounded p-2 text-sm" 
-                    />
-                    <label className="text-sm font-medium">Hasta:</label>
-                    <input 
-                      type="date" 
-                      name="endDate" 
-                      value={filters.endDate} 
-                      onChange={handleFilterChange} 
-                      className="border rounded p-2 text-sm" 
-                    />
-                  </>
-                )}
-
+                {/* Filtro de Fecha */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium mb-1">Desde:</label>
+                  <input 
+                    type="date" 
+                    name="startDate" 
+                    value={filters.startDate} 
+                    onChange={handleFilterChange} 
+                    className="border rounded p-2 text-sm" 
+                  />
+                </div>
                 
-                <button 
-                  onClick={handleTableFilterSubmit} 
-                  className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 transition"
-                  disabled={loadingTable}
-                >
-                  {loadingTable ? 'Cargando...' : 'Aplicar Filtro'}
-                </button>
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium mb-1">Hasta:</label>
+                  <input 
+                    type="date" 
+                    name="endDate" 
+                    value={filters.endDate} 
+                    onChange={handleFilterChange} 
+                    className="border rounded p-2 text-sm" 
+                  />
+                </div>
+
+                <div className="flex items-end">
+                  <button 
+                    onClick={handleTableFilterSubmit} 
+                    className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 transition"
+                    disabled={loadingTable}
+                  >
+                    {loadingTable ? 'Cargando...' : 'Aplicar Filtro'}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -518,9 +375,9 @@ export default function Directivo() {
               </div>
             )}
 
-         {/* Tabla de Datos Filtrados con scroll horizontal y vertical */}
-<div className="table-container mb-4 bg-white rounded-lg shadow overflow-hidden">
-  <div className="overflow-x-auto overflow-y-auto max-h-96 w-[60vw]">
+            {/* Tabla de Datos Filtrados con scroll horizontal y vertical */}
+   <div className="table-container mb-4 bg-white rounded-lg shadow overflow-hidden">
+  <div className="overflow-x-auto max-w-full">
     <table className="min-w-full">
       <thead className="sticky top-0 bg-blue-100 z-10">
         <tr>
@@ -552,10 +409,10 @@ export default function Directivo() {
               <td className="py-3 px-4 border-b whitespace-nowrap">{item.piscina}</td>
               <td className="py-3 px-4 border-b whitespace-nowrap">{item.has}</td>
               <td className="py-3 px-4 border-b whitespace-nowrap">{item.fecha_siembra}</td>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.dias_cultivo}</td> 
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.dias_cultivo}</td>
               <td className="py-3 px-4 border-b whitespace-nowrap">{item.siembra_larvas?.toLocaleString() || '0'}</td>
               <td className="py-3 px-4 border-b whitespace-nowrap">{item.densidad_ha}</td>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.tipo_siembra}</td>     
+              <td className="py-3 px-4 border-b whitespace-nowrap">{item.tipo_siembra}</td>
               <td className="py-3 px-4 border-b whitespace-nowrap">{item.peso}</td>
               <td className="py-3 px-4 border-b whitespace-nowrap">{item.inc}</td>
               <td className="py-3 px-4 border-b whitespace-nowrap">{item.biomasa_lbs?.toLocaleString() || '0'}</td>
@@ -573,7 +430,7 @@ export default function Directivo() {
         ) : (
           !loadingTable && (
             <tr>
-              <td colSpan="19" className="py-4 px-4 text-center text-gray-500">
+              <td colSpan="10" className="py-4 px-4 text-center text-gray-500">
                 No hay datos disponibles con los filtros seleccionados
               </td>
             </tr>
@@ -583,6 +440,8 @@ export default function Directivo() {
     </table>
   </div>
 </div>
+
+
 
             {/* Paginación y botón de descarga */}
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
