@@ -47,7 +47,6 @@ export default function Directivo() {
       peso: item.Peso,
       inc: item["Inc.P"],
       biomasa_lbs: item["Biomasa Lbs"],
-      cantidad_balanceado_kg: item["Cantidad Balanceado"],
       balnova22: item.Balnova22,
       balnova12: item.Balnova12,
       balnova08: item.Balnova08,
@@ -154,7 +153,6 @@ export default function Directivo() {
   // Cargar datos iniciales al montar el componente
   useEffect(() => {
     fetchGeneralData();
-    fetchTableData({});
   }, []);
 
   // Cálculos de datos generales
@@ -264,7 +262,6 @@ export default function Directivo() {
       "Peso (g)": item.peso,
       "Inc.P (%)": item.inc,
       "Biomasa (lbs)": item.biomasa_lbs,
-      "Cantidad Balanceado (kg)": item.cantidad_balanceado_kg,
       "35% Balnova 0,8 mm": item.balnova08,
       "35% Balnova 1,2 mm": item.balnova12,
       "35% Balnova 2,2": item.balnova22,
@@ -318,7 +315,7 @@ export default function Directivo() {
               <div className="flex flex-wrap items-center gap-3">
                 {/* Filtro de Piscina */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Medicion:</label>
+                  <label className="text-sm font-medium mb-1">Muestras:</label>
                   <select 
                     name="piscinaTable" 
                     value={filters.piscinaTable} 
@@ -331,10 +328,10 @@ export default function Directivo() {
                     ))}
                   </select>
                 </div>
-
+                <label className="text-sm font-medium mb-1">Fecha de Muestra:</label>
                 {/* Filtro de Fecha */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Desde:</label>
+                  <label className="text-sm font-medium mb-1">Muestra Desde:</label>
                   <input 
                     type="date" 
                     name="startDate" 
@@ -345,7 +342,7 @@ export default function Directivo() {
                 </div>
                 
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Hasta:</label>
+                  <label className="text-sm font-medium mb-1">Muestra Hasta:</label>
                   <input 
                     type="date" 
                     name="endDate" 
@@ -391,7 +388,6 @@ export default function Directivo() {
           <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Peso (g)</th>
           <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Inc.P (%)</th>
           <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Biomasa (lbs)</th>
-          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Cant. Balanceado (kg)</th>
           <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Balnova 0,8 mm</th>
           <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Balnova 1,2 mm</th>
           <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Balnova 2,2</th>
@@ -400,6 +396,8 @@ export default function Directivo() {
           <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Población Actual</th>
           <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Supervivencia (%)</th>
           <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Observaciones</th>
+           <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Fecha Muestra</th>
+         
         </tr>
       </thead>
       <tbody>
@@ -425,6 +423,7 @@ export default function Directivo() {
               <td className="py-3 px-4 border-b whitespace-nowrap">{item.poblacion_actual?.toLocaleString() || '0'}</td>
               <td className="py-3 px-4 border-b whitespace-nowrap">{item.supervivencia}%</td>
               <td className="py-3 px-4 border-b whitespace-nowrap">{item.observaciones}</td>
+               <td className="py-3 px-4 border-b whitespace-nowrap">{item.fecha_seguimiento}</td>
             </tr>
           ))
         ) : (
@@ -468,9 +467,8 @@ export default function Directivo() {
                   className="border rounded p-2 text-sm"
                 >
                   <option value="5">5 por página</option>
-                  <option value="10">10 por página</option>
-                  <option value="20">20 por página</option>
-                  <option value="50">50 por página</option>
+                
+                
                 </select>
               </div>
 
