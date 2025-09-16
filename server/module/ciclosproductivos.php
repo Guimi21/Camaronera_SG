@@ -37,71 +37,106 @@ try {
     // Crear la consulta base
     $query = "
     SELECT
-        p.codigo AS 'Piscina',
-        p.hectareas AS 'Has',
-        sc.fecha_siembra AS 'Fecha de siembra',
-        s.dias_cultivo AS 'Dias cultivo',
-        sc.cantidad_larvas AS 'Siembra / Larvas',
-        sc.cantidad_por_hectarea AS 'Densidad',
-        sc.tipo_siembra AS 'Tipo Siembra',
-        s.peso_promedio AS 'Peso',
-        s.incremento_peso AS 'Inc.P',
-        s.biomasa_lbs AS 'Biomasa Lbs',
-        cbd.cantidad AS 'Cantidad Balanceado',
-        cbd.balanceado_acumulado AS 'Balanceado Acumulado',
-        cbd.convercio_alimenticia AS 'Conversión Alimenticia',
-        s.poblacion_actual AS 'Población actual',
-        s.indice_supervivencia AS 'Sobrev. Actual %',
-        s.observaciones AS 'Observaciones',
-        s.fecha AS 'Fecha Seguimiento',
-        SUM(CASE WHEN tb.nombre = '35% Balnova 2,2 mm' THEN cbd.cantidad ELSE 0 END) AS 'Balnova22',
-        SUM(CASE WHEN tb.nombre = '35% Balnova 1,2 mm' THEN cbd.cantidad ELSE 0 END) AS 'Balnova12',
-        SUM(CASE WHEN tb.nombre = '35% Balnova 0,8 mm' THEN cbd.cantidad ELSE 0 END) AS 'Balnova08'
-    FROM
-        ciclo_productivo cp
-        INNER JOIN piscina p ON cp.id_piscina = p.id_piscina
-        INNER JOIN siembra_cosecha sc ON cp.id_siembra_cosecha = sc.id_siembra_cosecha
-        INNER JOIN seguimiento s ON s.id_piscina = p.id_piscina
-        INNER JOIN consumo_balanceado_detalle cbd ON cbd.id_seguimiento = s.id_seguimiento
-        LEFT JOIN tipo_balanceado tb ON cbd.id_tipo_balanceado = tb.id_tipo_balanceado
-    WHERE
-        cp.estado = 'EN_CURSO'  
-    ";
+    p.codigo AS 'Piscina',
+    p.hectareas AS 'Has',
+    sc.fecha_siembra AS 'Fecha de siembra',
+    s.dias_cultivo AS 'Dias cultivo',
+    sc.cantidad_larvas AS 'Siembra / Larvas',
+    sc.cantidad_por_hectarea AS 'Densidad',
+    sc.tipo_siembra AS 'Tipo Siembra',
+    s.peso_promedio AS 'Peso',
+    s.incremento_peso AS 'Inc.P',
+    s.biomasa_lbs AS 'Biomasa Lbs',
+    COALESCE(SUM(CASE WHEN tb.nombre = 'Balnova 2,2 mm' THEN cbd.cantidad ELSE 0 END), 0) AS 'Balnova22',
+    COALESCE(SUM(CASE WHEN tb.nombre = 'Balnova 1,2 mm' THEN cbd.cantidad ELSE 0 END), 0) AS 'Balnova12',
+    COALESCE(SUM(CASE WHEN tb.nombre = 'Balnova 0,8 mm' THEN cbd.cantidad ELSE 0 END), 0) AS 'Balnova08',
+    MAX(cbd.balanceado_acumulado) AS 'Balanceado Acumulado',
+    MAX(cbd.convercio_alimenticia) AS 'Conversión Alimenticia',
+    s.poblacion_actual AS 'Población actual',
+    s.indice_supervivencia AS 'Sobrev. Actual %',
+    s.observaciones AS 'Observaciones',
+    s.fecha AS 'Fecha Seguimiento'
+FROM
+    piscina p
+    INNER JOIN ciclo_productivo cp ON cp.id_piscina = p.id_piscina
+    INNER JOIN siembra_cosecha sc ON cp.id_siembra_cosecha = sc.id_siembra_cosecha
+    INNER JOIN (
+        SELECT
+            s.id_piscina,
+            s.id_seguimiento,
+            s.dias_cultivo,
+            s.peso_promedio,
+            s.incremento_peso,
+            s.biomasa_lbs,
+            s.poblacion_actual,
+            s.indice_supervivencia,
+            s.observaciones,
+            s.fecha
+        FROM seguimiento s
+        WHERE s.id_piscina IN (SELECT id_piscina FROM ciclo_productivo WHERE estado = 'EN_CURSO')
+    ) s ON s.id_piscina = p.id_piscina
+    LEFT JOIN (
+        SELECT
+            cbd.id_seguimiento,
+            cbd.id_tipo_balanceado,
+            SUM(cbd.cantidad) AS cantidad,
+            MAX(cbd.balanceado_acumulado) AS balanceado_acumulado,
+            MAX(cbd.convercio_alimenticia) AS convercio_alimenticia
+        FROM consumo_balanceado_detalle cbd
+        GROUP BY cbd.id_seguimiento, cbd.id_tipo_balanceado
+    ) cbd ON cbd.id_seguimiento = s.id_seguimiento
+    LEFT JOIN tipo_balanceado tb ON cbd.id_tipo_balanceado = tb.id_tipo_balanceado
+";
 
+    // Condiciones dinámicas para el WHERE
+    $whereCondition = " WHERE 1 = 1 ";
+
+    // Aplicar filtros de piscina y fechas
     $params = [];
-
-    // Aplicar filtros si están presentes
     if ($filters['piscina']) {
-        $query .= " AND p.codigo = ?";
+        // Si se filtra por piscina específica, no aplicar la fecha máxima, traer todos los registros
+        $whereCondition .= " AND p.codigo = ?";
         $params[] = $filters['piscina'];
-    }
-
-    if ($filters['startDate'] && $filters['endDate']) {
-        $query .= " AND s.fecha BETWEEN ? AND ?";
-        $params[] = $filters['startDate'];
-        $params[] = $filters['endDate'];
+    } else {
+        // Si piscina es 'todas', manejar los filtros de fecha
+        if ($filters['startDate'] && $filters['endDate']) {
+            $whereCondition .= " AND s.fecha BETWEEN ? AND ?";
+            $params[] = $filters['startDate'];
+            $params[] = $filters['endDate'];
+        } else {
+            // Si no hay filtro de fecha, traer solo la última fecha de seguimiento por piscina
+            $whereCondition .= " AND s.fecha = (SELECT MAX(fecha) FROM seguimiento WHERE id_piscina = p.id_piscina)";
+        }
     }
 
     // Continuar con la consulta
-    $query .= " GROUP BY 
-       p.codigo, 
-    p.hectareas, 
-    sc.fecha_siembra, 
+    $query .= $whereCondition . "
+    GROUP BY
+    p.codigo,
+    p.hectareas,
+    sc.fecha_siembra,
     sc.cantidad_por_hectarea,
     sc.tipo_siembra,
     s.dias_cultivo,
-    sc.cantidad_larvas
-    ORDER BY 
-        s.fecha";
+    sc.cantidad_larvas,
+    s.peso_promedio,
+    s.incremento_peso,
+    s.biomasa_lbs,
+    s.poblacion_actual,
+    s.indice_supervivencia,
+    s.observaciones,
+    s.fecha
+ORDER BY 
+    s.fecha";
 
     // Preparar y ejecutar la consulta
     $stmt = $conn->prepare($query);
-    
+
     // Vincular parámetros
     foreach ($params as $key => $value) {
         $stmt->bindValue($key + 1, $value);
     }
-    
+
     $stmt->execute();
 
     // Obtener los resultados
