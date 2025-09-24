@@ -11,6 +11,8 @@ export const AuthProvider = ({ children }) => {
   const [menus, setMenus] = useState([]);  // Menús del usuario
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
+  const [grupoEmpresarial, setGrupoEmpresarial] = useState(null); // Agregamos estado para el grupo empresarial
+  const [compania, setCompania] = useState(null); // Agregamos estado para la empresa
   const { API_BASE_URL } = config;
 
   // Logout
@@ -19,10 +21,11 @@ export const AuthProvider = ({ children }) => {
     setTipoUsuario(null); // Limpiar tipoUsuario al hacer logout
     setMenus([]);  // Limpiar menús al hacer logout
     setToken(null);
+    setGrupoEmpresarial(null); // Limpiar grupo empresarial
+    setCompania(null); // Limpiar compañía
     localStorage.removeItem("authData");
     if (inactivityTimer) clearTimeout(inactivityTimer);
   }, []);
-
 
   const verifyToken = useCallback(async () => {
     const authData = localStorage.getItem("authData");
@@ -41,14 +44,14 @@ export const AuthProvider = ({ children }) => {
       setToken(parsedData.token);
       setUser(parsedData.usuario);
       setTipoUsuario(parsedData.tipo_usuario);  // Asegúrate de que 'tipo_usuario' se guarde aquí
-
-    
+      setGrupoEmpresarial(parsedData.grupo_empresarial); // Guardamos grupo empresarial
+      setCompania(parsedData.compania); // Guardamos compañía
     } catch (error) {
       logout();
     } finally {
       setLoading(false);
     }
-  }, [logout ]); // Solo depende de `logout` y `fetchMenus`, no de `API_BASE_URL`.
+  }, [logout]);
 
   useEffect(() => {
     verifyToken();
@@ -79,6 +82,8 @@ export const AuthProvider = ({ children }) => {
       setUser(jsonResponse.usuario);
       setTipoUsuario(jsonResponse.tipo_usuario);  // Asegúrate de almacenar el tipo de usuario aquí
       setMenus(jsonResponse.menus);
+      setGrupoEmpresarial(jsonResponse.grupo_empresarial); // Guardamos grupo empresarial
+      setCompania(jsonResponse.compania); // Guardamos compañía
       localStorage.setItem("userData", JSON.stringify(jsonResponse));
 
       return { success: true };
@@ -91,10 +96,12 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
-        tipoUsuario,  // Ahora también proporcionamos tipoUsuario
+        tipoUsuario, 
         menus,
         loading,
         token,
+        grupoEmpresarial, 
+        compania, 
         login,
         logout,
         isAuthenticated: !!user,

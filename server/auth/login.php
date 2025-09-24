@@ -32,7 +32,13 @@ $username = $data->username;
 $password = $data->password;
 
 // Verificar si las credenciales son correctas (esto debe hacerlo con tu base de datos)
-$query = "SELECT id_usuario, username, password_hash, tipo_usuario FROM usuario WHERE username = :username";
+$query = "SELECT u.id_usuario, u.username, u.password_hash, u.tipo_usuario, uc.id_compania, c.nombre AS compania_nombre, c.id_grupo_empresarial, ge.nombre AS grupo_empresarial_nombre 
+          FROM usuario u
+          JOIN usuario_compania uc ON u.id_usuario = uc.id_usuario
+          JOIN compania c ON uc.id_compania = c.id_compania
+          LEFT JOIN grupo_empresarial ge ON c.id_grupo_empresarial = ge.id_grupo_empresarial
+          WHERE u.username = :username";
+
 $stmt = $conn->prepare($query);
 $stmt->bindParam(':username', $username);
 $stmt->execute();
@@ -51,7 +57,7 @@ if (!$user || $user['password_hash'] !== $password) {
 
 // Obtener los menús asociados al perfil del usuario
 $query_menus = "
-    SELECT DISTINCT m.id_menu, m.nombre, m.ruta, m.icono, m.estado, modu.nombre as modulo
+    SELECT DISTINCT m.id_menu, m.nombre, m.ruta, m.icono, m.estado, modu.nombre AS modulo
     FROM menu m 
     JOIN modulo modu ON m.id_modulo = modu.id_modulo
     JOIN menu_perfil mp ON m.id_menu = mp.id_menu 
@@ -67,10 +73,12 @@ $stmt_menus->execute();
 
 $menus = $stmt_menus->fetchAll(PDO::FETCH_ASSOC);
 
-// Respuesta con los datos del usuario y los menús
+// Respuesta con los datos del usuario, el grupo empresarial, la compañía y los menús
 $response = [
     'usuario' => $user['username'],
     'tipo_usuario' => $user['tipo_usuario'],
+    'grupo_empresarial' => $user['grupo_empresarial_nombre'],  // Nombre del grupo empresarial
+    'compania' => $user['compania_nombre'],  // Nombre de la compañía
     'menus' => $menus  // Agregar los menús a la respuesta
 ];
 

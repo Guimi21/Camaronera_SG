@@ -29,7 +29,7 @@ export default function Directivo() {
     endDate: ""
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
   const [loading, setLoading] = useState(true);
   const [loadingTable, setLoadingTable] = useState(false);
   const [error, setError] = useState(null);
@@ -280,6 +280,7 @@ export default function Directivo() {
   };
 
   // Paginación
+  
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentData = filteredTableData.slice(indexOfFirstItem, indexOfLastItem);
@@ -337,7 +338,7 @@ export default function Directivo() {
                     name="startDate" 
                     value={filters.startDate} 
                     onChange={handleFilterChange} 
-                    className="border rounded p-2 text-sm" 
+                    className="border rounded p-2 text-sm dateInput" 
                   />
                 </div>
                 
@@ -348,7 +349,7 @@ export default function Directivo() {
                     name="endDate" 
                     value={filters.endDate} 
                     onChange={handleFilterChange} 
-                    className="border rounded p-2 text-sm" 
+                    className="border rounded p-2 text-sm dateInput" 
                   />
                 </div>
 
