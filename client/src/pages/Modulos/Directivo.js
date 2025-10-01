@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Bar, Pie, Line, Doughnut } from 'react-chartjs-2';
 import * as XLSX from "xlsx";
 import config from "../../config";
@@ -17,6 +18,7 @@ ChartJS.register(
 );
 
 export default function Directivo() {
+  const navigate = useNavigate();
   const { API_BASE_URL } = config;
   const [data, setData] = useState([]);
   const [filteredGeneralData, setFilteredGeneralData] = useState([]);
@@ -153,6 +155,7 @@ export default function Directivo() {
   // Cargar datos iniciales al montar el componente
   useEffect(() => {
     fetchGeneralData();
+    fetchTableData();
   }, []);
 
   // Cálculos de datos generales
@@ -355,7 +358,10 @@ export default function Directivo() {
 
                 <div className="flex items-end">
                   <button 
-                    onClick={handleTableFilterSubmit} 
+                    onClick={() => {
+                      setCurrentPage(1);
+                      handleTableFilterSubmit();
+                    }}
                     className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 transition"
                     disabled={loadingTable}
                   >
@@ -374,75 +380,71 @@ export default function Directivo() {
             )}
 
             {/* Tabla de Datos Filtrados con scroll horizontal y vertical */}
-   <div className="table-container mb-4 bg-white rounded-lg shadow overflow-hidden">
-  <div className="overflow-x-auto max-w-full">
-    <table className="min-w-full">
-      <thead className="sticky top-0 bg-blue-100 z-10">
-        <tr>
-          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Piscina</th>
-          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Has</th>
-          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Fecha Siembra</th>
-          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Dias Cultivo</th>
-          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Siembra Larvas</th>
-          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Densidad (/ha)</th>
-          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Tipo Siembra</th>
-          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Peso (g)</th>
-          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Inc.P (%)</th>
-          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Biomasa (lbs)</th>
-          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Balnova 0,8 mm</th>
-          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Balnova 1,2 mm</th>
-          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Balnova 2,2</th>
-          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Balanceado Acum.</th>
-          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Conv. Alimenticia</th>
-          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Población Actual</th>
-          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Supervivencia (%)</th>
-          <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Observaciones</th>
-           <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Fecha Muestra</th>
-         
-        </tr>
-      </thead>
-      <tbody>
-        {!loadingTable && currentData.length > 0 ? (
-          currentData.map((item, index) => (
-            <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.piscina}</td>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.has}</td>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.fecha_siembra}</td>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.dias_cultivo}</td>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.siembra_larvas?.toLocaleString() || '0'}</td>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.densidad_ha}</td>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.tipo_siembra}</td>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.peso}</td>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.inc}</td>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.biomasa_lbs?.toLocaleString() || '0'}</td>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.cantidad_balanceado_kg?.toLocaleString() || '0'}</td>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.balnova08?.toLocaleString() || '0'}</td>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.balnova12?.toLocaleString() || '0'}</td>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.balnova22?.toLocaleString() || '0'}</td>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.balanceado_acu?.toLocaleString() || '0'}</td>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.conversion_alimenticia}</td>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.poblacion_actual?.toLocaleString() || '0'}</td>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.supervivencia}%</td>
-              <td className="py-3 px-4 border-b whitespace-nowrap">{item.observaciones}</td>
-               <td className="py-3 px-4 border-b whitespace-nowrap">{item.fecha_seguimiento}</td>
-            </tr>
-          ))
-        ) : (
-          !loadingTable && (
-            <tr>
-              <td colSpan="10" className="py-4 px-4 text-center text-gray-500">
-                No hay datos disponibles con los filtros seleccionados
-              </td>
-            </tr>
-          )
-        )}
-      </tbody>
-    </table>
-  </div>
-</div>
-
-
-
+            <div className="table-container mb-4 bg-white rounded-lg shadow overflow-hidden">
+              <div className="overflow-x-auto max-w-full">
+                <table className="min-w-full">
+                  <thead className="sticky top-0 bg-blue-100 z-10">
+                    <tr>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Piscina</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Has</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Fecha Siembra</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Dias Cultivo</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Siembra Larvas</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Densidad (/ha)</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Tipo Siembra</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Peso (g)</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Inc.P (%)</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Biomasa (lbs)</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Balnova 0,8 mm</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Balnova 1,2 mm</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Balnova 2,2</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Balanceado Acum.</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Conv. Alimenticia</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Población Actual</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Supervivencia (%)</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Observaciones</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Fecha Seguimiento</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {!loadingTable && currentData.length > 0 ? (
+                      currentData.map((item, index) => (
+                        <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.piscina}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.has}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.fecha_siembra}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.dias_cultivo}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.siembra_larvas?.toLocaleString() || '0'}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.densidad_ha}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.tipo_siembra}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.peso}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.inc}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.biomasa_lbs?.toLocaleString() || '0'}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.balnova08?.toLocaleString() || '0'}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.balnova12?.toLocaleString() || '0'}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.balnova22?.toLocaleString() || '0'}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.balanceado_acu?.toLocaleString() || '0'}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.conversion_alimenticia}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.poblacion_actual?.toLocaleString() || '0'}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.supervivencia}%</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.observaciones}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.fecha_seguimiento}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      !loadingTable && (
+                        <tr>
+                          <td colSpan="10" className="py-4 px-4 text-center text-gray-500">
+                            No hay datos disponibles con los filtros seleccionados
+                          </td>
+                        </tr>
+                      )
+                    )}
+                  </tbody>
+                </table>
+              </div>            
+            </div>
+            
             {/* Paginación y botón de descarga */}
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
               <div className="pagination flex items-center gap-2">
@@ -468,23 +470,42 @@ export default function Directivo() {
                   className="border rounded p-2 text-sm"
                 >
                   <option value="5">5 por página</option>
-                
-                
+                  <option value="10">10 por página</option>
+                  <option value="15">15 por página</option>
+                  <option value="20">25 por página</option>
+                  <option value="50">50 por página</option>
                 </select>
               </div>
 
-              <div className="download-button">
-                <button 
-                  onClick={handleDownload}
-                  className="bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-700 transition"
-                  disabled={loadingTable || filteredTableData.length === 0}
+              {/* Botón para agregar nuevo registro */}
+              <button
+                onClick={() => navigate('/layout/form/ciclo')}
+                className="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-blue-700 transition-colors duration-200"
+                title="Agregar nuevo registro"
+              >
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className="h-5 w-5" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Descargar Reporte en Excel
-                </button>
-              </div>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Agregar Seguimiento
+              </button>
+
+              {/* Botón de descarga */}
+              <button 
+                onClick={handleDownload}
+                className="bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-700 transition"
+                disabled={loadingTable || filteredTableData.length === 0}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Descargar Reporte en Excel
+              </button>
             </div>
           </>
         )}

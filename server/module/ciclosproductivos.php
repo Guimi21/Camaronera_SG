@@ -40,26 +40,27 @@ try {
         p.codigo AS 'Piscina',
         p.hectareas AS 'Has',
         cp.fecha_siembra AS 'Fecha de siembra',
-        cp.dias_cultivo AS 'Dias cultivo',
+        s.dias_cultivo AS 'Dias cultivo',
         cp.cantidad_siembra AS 'Siembra / Larvas',
-        cp.cantidad_por_hectarea AS 'Densidad',
+        cp.densidad AS 'Densidad',
         cp.tipo_siembra AS 'Tipo Siembra',
-        cp.peso_promedio AS 'Peso',
-        cp.incremento_peso AS 'Inc.P',
-        cp.biomasa_lbs AS 'Biomasa Lbs',
+        s.peso_promedio AS 'Peso',
+        s.incremento_peso AS 'Inc.P',
+        s.biomasa_lbs AS 'Biomasa Lbs',
         COALESCE(SUM(CASE WHEN tb.nombre = 'Balnova 2,2 mm' THEN cb.cantidad ELSE 0 END), 0) AS 'Balnova22',
         COALESCE(SUM(CASE WHEN tb.nombre = 'Balnova 1,2 mm' THEN cb.cantidad ELSE 0 END), 0) AS 'Balnova12',
         COALESCE(SUM(CASE WHEN tb.nombre = 'Balnova 0,8 mm' THEN cb.cantidad ELSE 0 END), 0) AS 'Balnova08',
-        MAX(cb.balanceado_acumulado) AS 'Balanceado Acumulado',
-        MAX(cb.convercion_alimenticia) AS 'Conversión Alimenticia',
-        cp.poblacion_actual AS 'Población actual',
-        cp.indice_supervivencia AS 'Sobrev. Actual %',
-        cp.observaciones AS 'Observaciones',
-        cp.fecha_muestra AS 'Fecha Muestra'
+        s.balanceado_acumulado AS 'Balanceado Acumulado',
+        s.convercion_alimenticia AS 'Conversión Alimenticia',
+        s.poblacion_actual AS 'Población actual',
+        s.indice_supervivencia AS 'Sobrev. Actual %',
+        s.observaciones AS 'Observaciones',
+        s.fecha_seguimiento AS 'Fecha Seguimiento'
     FROM
         piscina p
         INNER JOIN ciclo_productivo cp ON cp.id_piscina = p.id_piscina
-        LEFT JOIN consumo_balanceado cb ON cp.id_ciclo = cb.id_ciclo
+        LEFT JOIN seguimiento s ON cp.id_ciclo = s.id_ciclo
+        LEFT JOIN consumo_balanceado cb ON s.id_seguimiento = cb.id_seguimiento
         LEFT JOIN tipo_balanceado tb ON cb.id_tipo_balanceado = tb.id_tipo_balanceado
     ";
 
@@ -75,12 +76,15 @@ try {
     } else {
         // Si piscina es 'todas', manejar los filtros de fecha
         if ($filters['startDate'] && $filters['endDate']) {
-            $whereCondition .= " AND s.fecha BETWEEN ? AND ?";
+            $whereCondition .= " AND s.fecha_seguimiento BETWEEN ? AND ?";
             $params[] = $filters['startDate'];
             $params[] = $filters['endDate'];
         } else {
             // Si no hay filtro de fecha, traer solo la última fecha de seguimiento por piscina
-            $whereCondition .= " AND s.fecha = (SELECT MAX(fecha) FROM seguimiento WHERE id_ciclo IN (SELECT id_ciclo FROM ciclo_productivo WHERE id_piscina = p.id_piscina))";
+            $whereCondition .= " AND s.fecha_seguimiento = (
+                SELECT MAX(fecha_seguimiento)
+                FROM seguimiento
+                WHERE id_ciclo IN (SELECT id_ciclo FROM ciclo_productivo WHERE id_piscina = p.id_piscina))";
         }
     }
 
@@ -93,15 +97,15 @@ try {
         cp.tipo_siembra,
         s.dias_cultivo,
         cp.cantidad_siembra,
-        cp.peso_promedio,
-        cp.incremento_peso,
-        cp.biomasa_lbs,
-        cp.poblacion_actual,
-        cp.indice_supervivencia,
-        cp.observaciones,
-        cp.fecha_muestra
+        s.peso_promedio,
+        s.incremento_peso,
+        s.biomasa_lbs,
+        s.poblacion_actual,
+        s.indice_supervivencia,
+        s.observaciones,
+        s.fecha_seguimiento
     ORDER BY 
-        cp.fecha_muestra, p.codigo";
+        s.fecha_seguimiento, p.id_piscina;";
 
     // Preparar y ejecutar la consulta
     $stmt = $conn->prepare($query);
