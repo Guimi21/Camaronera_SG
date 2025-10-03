@@ -117,9 +117,6 @@ export default function Directivo() {
         
         setAvailablePiscinas(uniquePiscinas);
         
-        // Log para verificar el orden de las piscinas
-        console.log('Piscinas ordenadas por id_piscina:', uniquePiscinas);
-        
         // Resetear filtros de piscina si la piscina seleccionada ya no está disponible
         if (filters.piscinaTable !== "todas" && !uniquePiscinas.includes(filters.piscinaTable)) {
           setFilters(prev => ({ ...prev, piscinaTable: "todas" }));
@@ -469,7 +466,7 @@ export default function Directivo() {
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.has}</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.fecha_siembra}</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.dias_cultivo}</td>
-                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.siembra_larvas?.toLocaleString() || '0'}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.siembra_larvas ? parseInt(item.siembra_larvas) : 0}</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.densidad_ha}</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.tipo_siembra}</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.peso}</td>
@@ -480,7 +477,7 @@ export default function Directivo() {
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.balnova22?.toLocaleString() || '0'}</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.balanceado_acu?.toLocaleString() || '0'}</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.conversion_alimenticia}</td>
-                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.poblacion_actual?.toLocaleString() || '0'}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.poblacion_actual ? parseInt(item.poblacion_actual) : 0}</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.supervivencia}%</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.observaciones}</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.fecha_seguimiento}</td>

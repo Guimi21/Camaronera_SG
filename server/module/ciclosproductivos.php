@@ -119,9 +119,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->bindValue(1, $input['id_ciclo']);
         $stmt->bindValue(2, $input['dias_cultivo'] ?? null);
         $stmt->bindValue(3, $input['peso'] ?? null);
-        $stmt->bindValue(4, $input['inc'] ?? null);
+        $stmt->bindValue(4, $input['incremento_peso'] ?? null);
         $stmt->bindValue(5, $input['biomasa_lbs'] ?? null);
-        $stmt->bindValue(6, $input['balanceado_acu'] ?? null);
+        $stmt->bindValue(6, $input['balanceado_acumulado'] ?? null);
         $stmt->bindValue(7, $input['conversion_alimenticia'] ?? null);
         $stmt->bindValue(8, $input['poblacion_actual'] ?? null);
         $stmt->bindValue(9, $input['supervivencia'] ?? null);
@@ -217,6 +217,68 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 // Manejar solicitudes GET (código existente)
 try {
+    // Verificar si se solicita el último seguimiento de un ciclo específico
+    if (isset($_GET['id_ciclo']) && isset($_GET['ultimo'])) {
+        $id_ciclo = $_GET['id_ciclo'];
+        
+        // Log para debugging
+        error_log("Buscando último seguimiento para ciclo ID: " . $id_ciclo);
+        
+        // Consulta de prueba para ver si hay algún seguimiento en la tabla
+        $testQuery = "SELECT COUNT(*) as total FROM seguimiento WHERE id_ciclo = ?";
+        $testStmt = $conn->prepare($testQuery);
+        $testStmt->bindValue(1, $id_ciclo);
+        $testStmt->execute();
+        $testResult = $testStmt->fetch(PDO::FETCH_ASSOC);
+        error_log("Total de seguimientos para este ciclo: " . $testResult['total']);
+        
+        // Consulta simplificada para obtener el último seguimiento del ciclo
+        $queryUltimo = "
+        SELECT 
+            s.peso_promedio as peso,
+            s.balanceado_acumulado,
+            s.fecha_seguimiento,
+            s.id_seguimiento,
+            s.id_ciclo
+        FROM 
+            seguimiento s 
+        WHERE 
+            s.id_ciclo = ?
+        ORDER BY 
+            s.fecha_seguimiento DESC 
+        LIMIT 1
+        ";
+        
+        error_log("Query SQL: " . $queryUltimo);
+        
+        $stmtUltimo = $conn->prepare($queryUltimo);
+        if (!$stmtUltimo) {
+            error_log("Error preparando consulta: " . implode(', ', $conn->errorInfo()));
+        }
+        
+        $stmtUltimo->bindValue(1, $id_ciclo);
+        $executeResult = $stmtUltimo->execute();
+        
+        if (!$executeResult) {
+            error_log("Error ejecutando consulta: " . implode(', ', $stmtUltimo->errorInfo()));
+        }
+        
+        $ultimoSeguimiento = $stmtUltimo->fetchAll(PDO::FETCH_ASSOC);
+        
+        error_log("Resultados encontrados: " . count($ultimoSeguimiento));
+        error_log("Datos del último seguimiento: " . json_encode($ultimoSeguimiento));
+        
+        $response = [
+            'success' => true,
+            'data' => $ultimoSeguimiento,
+            'total' => count($ultimoSeguimiento)
+        ];
+        
+        echo json_encode($response);
+        http_response_code(200);
+        exit();
+    }
+    
     // Obtener filtros de los parámetros de la consulta
     $filters = [
         'piscina' => isset($_GET['piscina']) && $_GET['piscina'] !== 'todas' ? $_GET['piscina'] : null,

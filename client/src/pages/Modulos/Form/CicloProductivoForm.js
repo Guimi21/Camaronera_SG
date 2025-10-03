@@ -12,23 +12,29 @@ export default function CicloProductivoForm() {
     id_ciclo: '', // Reemplaza los campos de ciclo_productivo
     dias_cultivo: '',
     peso: '',
-    inc: '',
-    biomasa_lbs: '',
+    incremento_peso: '',
+    biomasa_lbs: '', // Calculado automáticamente
     balnova08: '',
     balnova12: '',
     balnova22: '',
-    balanceado_acu: '',
-    conversion_alimenticia: '',
-    poblacion_actual: '',
+    balanceado_acumulado: '',
+    conversion_alimenticia: '', // Calculado automáticamente
+    poblacion_actual: '', // Calculado automáticamente
     supervivencia: '',
     observaciones: '',
     fecha_seguimiento: ''
   });
   
   const [ciclosDisponibles, setCiclosDisponibles] = useState([]);
+  const [ultimoSeguimiento, setUltimoSeguimientoState] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingCiclos, setLoadingCiclos] = useState(true);
   const [error, setError] = useState('');
+
+  // Wrapper para trackear cambios en ultimoSeguimiento
+  const setUltimoSeguimiento = (valor) => {
+    setUltimoSeguimientoState(valor);
+  };
 
   // Función para cargar los ciclos productivos disponibles
   const fetchCiclosDisponibles = async () => {
@@ -67,6 +73,43 @@ export default function CicloProductivoForm() {
     }
   };
 
+  // Función para obtener el último seguimiento de un ciclo productivo
+  const fetchUltimoSeguimiento = async (idCiclo) => {
+    if (!idCiclo) {
+      setUltimoSeguimiento(null);
+      return;
+    }
+
+    try {
+      const url = `${API_BASE_URL}/module/ciclosproductivos.php?id_ciclo=${idCiclo}&ultimo=true`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success && result.data && result.data.length > 0) {
+        // Obtener el seguimiento más reciente (el primero en la lista ordenada por fecha desc)
+        setUltimoSeguimiento(result.data[0]);
+      } else {
+        // No hay seguimientos previos para este ciclo
+        setUltimoSeguimiento(null);
+      }
+    } catch (err) {
+      console.error("❌ Error al obtener último seguimiento:", err.message);
+      setUltimoSeguimiento(null);
+    }
+  };
+
   // Cargar ciclos disponibles al montar el componente
   useEffect(() => {
     if (idCompania) {
@@ -76,22 +119,337 @@ export default function CicloProductivoForm() {
     }
   }, [idCompania]);
 
+  // Monitor para cambios en ultimoSeguimiento
+  useEffect(() => {
+    // Monitoring changes in ultimoSeguimiento for automatic recalculations
+  }, [ultimoSeguimiento]);
+
+  // Efecto para detectar cambios en el ciclo seleccionado y preparar recálculos
+  useEffect(() => {
+    if (formData.id_ciclo && formData.id_ciclo !== '') {
+      // El fetchUltimoSeguimiento se ejecutará automáticamente en handleChange
+      // Los useEffect de cálculos se ejecutarán cuando ultimoSeguimiento cambie
+    }
+  }, [formData.id_ciclo]);
+
+  // Efecto para recalcular días de cultivo cuando cambien los datos relevantes
+  useEffect(() => {
+    if (formData.id_ciclo && formData.fecha_seguimiento && ciclosDisponibles.length > 0) {
+      const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == formData.id_ciclo);
+      if (cicloSeleccionado) {
+        const diasCultivo = calcularDiasCultivo(cicloSeleccionado.fecha_siembra, formData.fecha_seguimiento);
+        if (diasCultivo !== formData.dias_cultivo) {
+          setFormData(prev => ({
+            ...prev,
+            dias_cultivo: diasCultivo
+          }));
+        }
+      }
+    }
+  }, [formData.id_ciclo, formData.fecha_seguimiento, ciclosDisponibles]);
+
+  // Efecto para recalcular incremento de peso cuando cambien los datos relevantes
+  useEffect(() => {
+    if (formData.peso) {
+      const pesoAnterior = ultimoSeguimiento ? ultimoSeguimiento.peso : null;
+      const incrementoPeso = calcularIncrementoPeso(formData.peso, pesoAnterior);
+      if (incrementoPeso !== formData.incremento_peso) {
+        setFormData(prev => ({
+          ...prev,
+          incremento_peso: incrementoPeso
+        }));
+      }
+    } else if (formData.incremento_peso !== '') {
+      // Si no hay peso, limpiar el incremento
+      setFormData(prev => ({
+        ...prev,
+        incremento_peso: ''
+      }));
+    }
+  }, [formData.peso, ultimoSeguimiento]);
+
+  // Efecto para recalcular balanceado acumulado cuando cambien los datos relevantes
+  useEffect(() => {
+    // Solo calcular si hay al menos un valor de balanceado ingresado
+    if (formData.balnova08 || formData.balnova12 || formData.balnova22) {
+      const balanceadoAnterior = ultimoSeguimiento ? ultimoSeguimiento.balanceado_acumulado : 0;
+      const balanceadoAcumulado = calcularBalanceadoAcumulado(
+        formData.balnova08,
+        formData.balnova12, 
+        formData.balnova22,
+        balanceadoAnterior
+      );
+      
+      if (balanceadoAcumulado !== formData.balanceado_acumulado) {
+        setFormData(prev => ({
+          ...prev,
+          balanceado_acumulado: balanceadoAcumulado
+        }));
+      }
+    } else if (formData.balanceado_acumulado !== '') {
+      // Si no hay valores de consumo, limpiar el acumulado
+      setFormData(prev => ({
+        ...prev,
+        balanceado_acumulado: ''
+      }));
+    }
+  }, [formData.balnova08, formData.balnova12, formData.balnova22, ultimoSeguimiento]);
+
+  // Efecto para recalcular población actual cuando cambien los datos relevantes
+  useEffect(() => {
+    if (formData.supervivencia && formData.id_ciclo && ciclosDisponibles.length > 0) {
+      const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == formData.id_ciclo);
+      if (cicloSeleccionado && cicloSeleccionado.cantidad_siembra) {
+        const poblacionActual = calcularPoblacionActual(formData.supervivencia, cicloSeleccionado.cantidad_siembra);
+        if (poblacionActual !== formData.poblacion_actual) {
+          setFormData(prev => ({
+            ...prev,
+            poblacion_actual: poblacionActual
+          }));
+        }
+      }
+    } else if (formData.poblacion_actual !== '') {
+      // Si no hay supervivencia, limpiar la población
+      setFormData(prev => ({
+        ...prev,
+        poblacion_actual: ''
+      }));
+    }
+  }, [formData.supervivencia, formData.id_ciclo, ciclosDisponibles]);
+
+  // Efecto para recalcular biomasa cuando cambien los datos relevantes
+  useEffect(() => {
+    if (formData.peso && formData.poblacion_actual) {
+      const biomasa = calcularBiomasa(formData.peso, formData.poblacion_actual);
+      if (biomasa !== formData.biomasa_lbs) {
+        setFormData(prev => ({
+          ...prev,
+          biomasa_lbs: biomasa
+        }));
+      }
+    } else if (formData.biomasa_lbs !== '') {
+      // Si no hay peso o población, limpiar la biomasa
+      setFormData(prev => ({
+        ...prev,
+        biomasa_lbs: ''
+      }));
+    }
+  }, [formData.peso, formData.poblacion_actual]);
+
+  // Efecto para recalcular conversión alimenticia cuando cambien los datos relevantes
+  useEffect(() => {
+    if (formData.balanceado_acumulado && formData.biomasa_lbs) {
+      const conversionAlimenticia = calcularConversionAlimenticia(formData.balanceado_acumulado, formData.biomasa_lbs);
+      if (conversionAlimenticia !== formData.conversion_alimenticia) {
+        setFormData(prev => ({
+          ...prev,
+          conversion_alimenticia: conversionAlimenticia
+        }));
+      }
+    } else if (formData.conversion_alimenticia !== '') {
+      // Si no hay balanceado o biomasa, limpiar la conversión
+      setFormData(prev => ({
+        ...prev,
+        conversion_alimenticia: ''
+      }));
+    }
+  }, [formData.balanceado_acumulado, formData.biomasa_lbs]);
+
+  // Función para calcular días de cultivo
+  const calcularDiasCultivo = (fechaSiembra, fechaSeguimiento) => {
+    if (!fechaSiembra || !fechaSeguimiento) return '';
+    
+    const fechaSiembraDate = new Date(fechaSiembra);
+    const fechaSeguimientoDate = new Date(fechaSeguimiento);
+    
+    if (fechaSeguimientoDate < fechaSiembraDate) return 0;
+    
+    const diferenciaMilisegundos = fechaSeguimientoDate - fechaSiembraDate;
+    const diferenciaDias = Math.floor(diferenciaMilisegundos / (1000 * 60 * 60 * 24));
+    
+    return diferenciaDias;
+  };
+
+  // Función para calcular incremento de peso
+  const calcularIncrementoPeso = (pesoActual, pesoAnterior) => {
+    if (!pesoActual) return '';
+    
+    // Si no hay peso anterior (primer seguimiento del ciclo), el incremento es el peso actual
+    if (pesoAnterior === null || pesoAnterior === undefined) {
+      const pesoActualNum = parseFloat(pesoActual);
+      return isNaN(pesoActualNum) ? '' : pesoActualNum.toFixed(2);
+    }
+    
+    const pesoActualNum = parseFloat(pesoActual);
+    const pesoAnteriorNum = parseFloat(pesoAnterior);
+    
+    if (isNaN(pesoActualNum) || isNaN(pesoAnteriorNum)) return '';
+    
+    const incremento = pesoActualNum - pesoAnteriorNum;
+    return incremento.toFixed(2);
+  };
+
+  // Función para calcular balanceado acumulado
+  const calcularBalanceadoAcumulado = (balnova08, balnova12, balnova22, balanceadoAnterior) => {
+    // Convertir valores a números, usando 0 si están vacíos o no son válidos
+    const val08 = (balnova08 === '' || balnova08 === null || balnova08 === undefined) ? 0 : parseFloat(balnova08) || 0;
+    const val12 = (balnova12 === '' || balnova12 === null || balnova12 === undefined) ? 0 : parseFloat(balnova12) || 0;
+    const val22 = (balnova22 === '' || balnova22 === null || balnova22 === undefined) ? 0 : parseFloat(balnova22) || 0;
+    const valAnterior = (balanceadoAnterior === null || balanceadoAnterior === undefined) ? 0 : parseFloat(balanceadoAnterior) || 0;
+    
+    const sumaActual = val08 + val12 + val22;
+    const acumuladoTotal = valAnterior + sumaActual;
+    
+    return acumuladoTotal.toFixed(2);
+  };
+
+  // Función para calcular población actual
+  const calcularPoblacionActual = (supervivencia, cantidadSiembra) => {
+    if (!supervivencia || !cantidadSiembra) return '';
+    
+    const supervivenciaNum = parseFloat(supervivencia);
+    const cantidadSiembraNum = parseFloat(cantidadSiembra);
+    
+    if (isNaN(supervivenciaNum) || isNaN(cantidadSiembraNum)) return '';
+    
+    // Convertir supervivencia de porcentaje a decimal (dividir entre 100)
+    const supervivenciaDecimal = supervivenciaNum / 100;
+    const poblacionActual = cantidadSiembraNum * supervivenciaDecimal;
+    
+    return Math.round(poblacionActual); // Redondeamos porque son individuos
+  };
+
+  // Función para calcular biomasa en libras
+  const calcularBiomasa = (pesoGramos, poblacionActual) => {
+    if (!pesoGramos || !poblacionActual) return '';
+    
+    const pesoGramosNum = parseFloat(pesoGramos);
+    const poblacionActualNum = parseFloat(poblacionActual);
+    
+    if (isNaN(pesoGramosNum) || isNaN(poblacionActualNum)) return '';
+    
+    // Convertir peso de gramos a libras (1 libra = 454 gramos)
+    const pesoLibras = pesoGramosNum / 454;
+    const biomasaLbs = pesoLibras * poblacionActualNum;
+    
+    return biomasaLbs.toFixed(2); // Redondeamos a 2 decimales
+  };
+
+  // Función para calcular conversión alimenticia
+  const calcularConversionAlimenticia = (balanceadoAcumulado, biomasaLbs) => {
+    if (!balanceadoAcumulado || !biomasaLbs) return '';
+    
+    const balanceadoNum = parseFloat(balanceadoAcumulado);
+    const biomasaNum = parseFloat(biomasaLbs);
+    
+    if (isNaN(balanceadoNum) || isNaN(biomasaNum) || biomasaNum === 0) return '';
+    
+    const conversionAlimenticia = balanceadoNum / biomasaNum;
+    
+    return conversionAlimenticia.toFixed(3); // Redondeamos a 3 decimales para mayor precisión
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     
-    // Log para debugging cuando se selecciona un ciclo
+    // Actualizar el estado del formulario
+    const newFormData = {
+      ...formData,
+      [name]: value
+    };
+    
+    // Manejar cambio de ciclo productivo
     if (name === 'id_ciclo') {
-      console.log('Ciclo seleccionado ID:', value);
-      const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo === value);
+      const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == value);
+      
       if (cicloSeleccionado) {
-        console.log('Datos del ciclo seleccionado:', cicloSeleccionado);
+        // Obtener el último seguimiento del ciclo seleccionado
+        fetchUltimoSeguimiento(value);
+        
+        // Calcular días de cultivo si también hay fecha de seguimiento
+        if (newFormData.fecha_seguimiento) {
+          const diasCultivo = calcularDiasCultivo(cicloSeleccionado.fecha_siembra, newFormData.fecha_seguimiento);
+          newFormData.dias_cultivo = diasCultivo;
+        }
+        
+        // Resetear valores calculados cuando se cambia de ciclo
+        // Se recalcularán automáticamente en los useEffect cuando se obtenga el último seguimiento
+        newFormData.balanceado_acumulado = '';
+        newFormData.incremento_peso = '';
+        
+        // Si ya hay un peso ingresado, necesitamos recalcular el incremento después de obtener el nuevo seguimiento
+        // Esto se hará automáticamente en el useEffect cuando cambie ultimoSeguimiento
       }
     }
     
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    // Si se cambia la fecha de seguimiento y hay un ciclo seleccionado, recalcular días de cultivo
+    if (name === 'fecha_seguimiento' && newFormData.id_ciclo) {
+      const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == newFormData.id_ciclo);
+      if (cicloSeleccionado) {
+        const diasCultivo = calcularDiasCultivo(cicloSeleccionado.fecha_siembra, value);
+        newFormData.dias_cultivo = diasCultivo;
+      }
+    }
+    
+    // Si se cambia el peso, calcular incremento de peso y biomasa
+    if (name === 'peso') {
+      const pesoAnterior = ultimoSeguimiento ? ultimoSeguimiento.peso : null;
+      const incrementoPeso = calcularIncrementoPeso(value, pesoAnterior);
+      newFormData.incremento_peso = incrementoPeso;
+
+      // Si también hay población actual, calcular biomasa
+      if (newFormData.poblacion_actual) {
+        const biomasa = calcularBiomasa(value, newFormData.poblacion_actual);
+        newFormData.biomasa_lbs = biomasa;
+
+        // Si también hay balanceado acumulado, calcular conversión alimenticia
+        if (newFormData.balanceado_acumulado) {
+          const conversionAlimenticia = calcularConversionAlimenticia(newFormData.balanceado_acumulado, biomasa);
+          newFormData.conversion_alimenticia = conversionAlimenticia;
+        }
+      }
+    }
+    
+    // Si se cambia algún valor de balanceado, recalcular el acumulado
+    if (name === 'balnova08' || name === 'balnova12' || name === 'balnova22') {
+      const balanceadoAnterior = ultimoSeguimiento ? ultimoSeguimiento.balanceado_acumulado : 0;
+      const balanceadoAcumulado = calcularBalanceadoAcumulado(
+        name === 'balnova08' ? value : newFormData.balnova08,
+        name === 'balnova12' ? value : newFormData.balnova12,
+        name === 'balnova22' ? value : newFormData.balnova22,
+        balanceadoAnterior
+      );
+      newFormData.balanceado_acumulado = balanceadoAcumulado;
+
+      // Si también hay biomasa, calcular conversión alimenticia
+      if (newFormData.biomasa_lbs) {
+        const conversionAlimenticia = calcularConversionAlimenticia(balanceadoAcumulado, newFormData.biomasa_lbs);
+        newFormData.conversion_alimenticia = conversionAlimenticia;
+      }
+    }
+
+    // Si se cambia la supervivencia, calcular población actual y biomasa
+    if (name === 'supervivencia' && newFormData.id_ciclo) {
+      const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == newFormData.id_ciclo);
+      if (cicloSeleccionado && cicloSeleccionado.cantidad_siembra) {
+        const poblacionActual = calcularPoblacionActual(value, cicloSeleccionado.cantidad_siembra);
+        newFormData.poblacion_actual = poblacionActual;
+
+        // Si también hay peso, calcular biomasa
+        if (newFormData.peso) {
+          const biomasa = calcularBiomasa(newFormData.peso, poblacionActual);
+          newFormData.biomasa_lbs = biomasa;
+
+          // Si también hay balanceado acumulado, calcular conversión alimenticia
+          if (newFormData.balanceado_acumulado) {
+            const conversionAlimenticia = calcularConversionAlimenticia(newFormData.balanceado_acumulado, biomasa);
+            newFormData.conversion_alimenticia = conversionAlimenticia;
+          }
+        }
+      }
+    }
+    
+    setFormData(newFormData);
   };
 
   const handleSubmit = async (e) => {
@@ -102,6 +460,13 @@ export default function CicloProductivoForm() {
     // Validar que se haya seleccionado un ciclo
     if (!formData.id_ciclo) {
       setError('Debes seleccionar un ciclo productivo');
+      setLoading(false);
+      return;
+    }
+
+    // Validar que se haya ingresado la fecha de seguimiento
+    if (!formData.fecha_seguimiento) {
+      setError('Debes ingresar la fecha de seguimiento');
       setLoading(false);
       return;
     }
@@ -128,8 +493,6 @@ export default function CicloProductivoForm() {
         id_compania: idCompania
       };
       
-      console.log('Enviando datos:', dataToSend); // Log para debugging
-      
       const response = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php`, {
         method: 'POST',
         headers: {
@@ -139,7 +502,6 @@ export default function CicloProductivoForm() {
       });
 
       const result = await response.json();
-      console.log('Respuesta del servidor:', result); // Log para debugging
       
       if (response.ok && result.success) {
         // Redirigir de vuelta al panel directivo con mensaje de éxito
@@ -227,24 +589,43 @@ export default function CicloProductivoForm() {
             </div>
 
             {/* Información de seguimiento */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Días de Cultivo
+                  Fecha de Seguimiento *
                 </label>
                 <input
-                  type="number"
-                  name="dias_cultivo"
-                  value={formData.dias_cultivo}
+                  type="date"
+                  name="fecha_seguimiento"
+                  value={formData.fecha_seguimiento}
                   onChange={handleChange}
+                  required
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ej: 120"
                 />
+                <p className="text-sm text-gray-500 mt-1">
+                  Selecciona la fecha del seguimiento
+                </p>
               </div>
             </div>
 
             {/* Información de producción */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Días de Cultivo <span className="text-blue-600 text-xs">(Calculado automáticamente)</span>
+                </label>
+                <input
+                  type="text"
+                  name="dias_cultivo"
+                  value={formData.dias_cultivo}
+                  readOnly
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
+                  placeholder="Se calcula automáticamente"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Calculado desde la fecha de siembra hasta la fecha de seguimiento
+                </p>
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -259,50 +640,31 @@ export default function CicloProductivoForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Ej: 15.5"
                 />
+                <p className="text-sm text-gray-500 mt-1">
+                  {ultimoSeguimiento 
+                    ? `Peso anterior: ${ultimoSeguimiento.peso}g` 
+                    : formData.id_ciclo 
+                      ? "Buscando último seguimiento..."
+                      : "Selecciona un ciclo primero"
+                  }
+                </p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Inc.P (%)
+                  Incremento Peso (g) <span className="text-blue-600 text-xs">(Calculado automáticamente)</span>
                 </label>
                 <input
-                  type="number"
-                  step="0.01"
-                  name="inc"
-                  value={formData.inc}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ej: 2.5"
+                  type="text"
+                  name="incremento_peso"
+                  value={formData.incremento_peso}
+                  readOnly
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
+                  placeholder="Se calcula automáticamente"
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Biomasa (lbs)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="biomasa_lbs"
-                  value={formData.biomasa_lbs}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ej: 5000"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Población Actual
-                </label>
-                <input
-                  type="number"
-                  name="poblacion_actual"
-                  value={formData.poblacion_actual}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ej: 140000"
-                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Diferencia entre el peso actual y el peso del último seguimiento
+                </p>
               </div>
 
               <div>
@@ -318,11 +680,60 @@ export default function CicloProductivoForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Ej: 93.33"
                 />
+                <p className="text-sm text-gray-500 mt-1">
+                  {formData.id_ciclo && ciclosDisponibles.length > 0
+                    ? (() => {
+                        const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == formData.id_ciclo);
+                        if (cicloSeleccionado && cicloSeleccionado.cantidad_siembra) {
+                          return `Cantidad siembra: ${parseInt(cicloSeleccionado.cantidad_siembra).toLocaleString()} individuos`;
+                        } else if (cicloSeleccionado) {
+                          return "Ciclo seleccionado, pero no hay datos de cantidad de siembra";
+                        } else {
+                          return "Ciclo no encontrado";
+                        }
+                      })()
+                    : "Selecciona un ciclo primero para ver la cantidad de siembra"
+                  }
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Población Actual <span className="text-blue-600 text-xs">(Calculado automáticamente)</span>
+                </label>
+                <input
+                  type="text"
+                  name="poblacion_actual"
+                  value={formData.poblacion_actual}
+                  readOnly
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
+                  placeholder="Se calcula automáticamente"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Cantidad de siembra × (Supervivencia % ÷ 100)
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Biomasa (lbs) <span className="text-blue-600 text-xs">(Calculado automáticamente)</span>
+                </label>
+                <input
+                  type="text"
+                  name="biomasa_lbs"
+                  value={formData.biomasa_lbs}
+                  readOnly
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
+                  placeholder="Se calcula automáticamente"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  (Peso en g ÷ 454) × Población actual
+                </p>
               </div>
             </div>
 
             {/* Información de alimentación */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Balnova 0.8 mm
@@ -336,6 +747,9 @@ export default function CicloProductivoForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Ej: 500"
                 />
+                <p className="text-sm text-gray-500 mt-1">
+                  Cantidad consumida en este seguimiento
+                </p>
               </div>
 
               <div>
@@ -351,11 +765,14 @@ export default function CicloProductivoForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Ej: 750"
                 />
+                <p className="text-sm text-gray-500 mt-1">
+                  Cantidad consumida en este seguimiento
+                </p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Balnova 2.2
+                  Balnova 2.2 mm
                 </label>
                 <input
                   type="number"
@@ -366,52 +783,46 @@ export default function CicloProductivoForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Ej: 1000"
                 />
+                <p className="text-sm text-gray-500 mt-1">
+                  Cantidad consumida en este seguimiento
+                </p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Balanceado Acum.
+                  Balanceado Acumulado <span className="text-blue-600 text-xs">(Calculado automáticamente)</span>
                 </label>
                 <input
-                  type="number"
-                  step="0.01"
-                  name="balanceado_acu"
-                  value={formData.balanceado_acu}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ej: 2250"
+                  type="text"
+                  name="balanceado_acumulado"
+                  value={formData.balanceado_acumulado}
+                  readOnly
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
+                  placeholder="Se calcula automáticamente"
                 />
+                <p className="text-sm text-gray-500 mt-1">
+                  {ultimoSeguimiento && ultimoSeguimiento.balanceado_acumulado 
+                    ? `Acumulado anterior: ${ultimoSeguimiento.balanceado_acumulado} + consumo actual`
+                    : "Suma del consumo actual (primer seguimiento del ciclo)"
+                  }
+                </p>
               </div>
-            </div>
 
-            {/* Información adicional */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Conversión Alimenticia
+                  Conversión Alimenticia <span className="text-blue-600 text-xs">(Calculado automáticamente)</span>
                 </label>
                 <input
-                  type="number"
-                  step="0.01"
+                  type="text"
                   name="conversion_alimenticia"
                   value={formData.conversion_alimenticia}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ej: 1.45"
+                  readOnly
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
+                  placeholder="Se calcula automáticamente"
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fecha de Seguimiento
-                </label>
-                <input
-                  type="date"
-                  name="fecha_seguimiento"
-                  value={formData.fecha_seguimiento}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Balanceado acumulado ÷ Biomasa (lbs)
+                </p>
               </div>
             </div>
 
