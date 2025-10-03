@@ -4,7 +4,7 @@ require_once(__DIR__ . '/../helpers/response.php');
 
 // Configuración de CORS
 header("Access-Control-Allow-Origin: " . BASE_URL);
-header("Access-Control-Allow-Methods: GET, OPTIONS");  
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");  
 header("Access-Control-Allow-Headers: Content-Type, Authorization");  
 header("Access-Control-Allow-Credentials: true");  
 header('Content-Type: application/json');  
@@ -26,12 +26,203 @@ if (!isset($conn)) {
     exit();
 }
 
+// Manejar solicitudes POST para crear registros de seguimiento
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    try {
+        // Obtener datos del cuerpo de la solicitud
+        $input = json_decode(file_get_contents('php://input'), true);
+        
+        if (!$input) {
+            $response = [
+                'success' => false,
+                'message' => 'Datos no válidos'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+
+        // Validar campos requeridos
+        if (!isset($input['id_ciclo']) || empty($input['id_ciclo'])) {
+            $response = [
+                'success' => false,
+                'message' => 'ID de ciclo requerido'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+
+        if (!isset($input['id_usuario']) || empty($input['id_usuario'])) {
+            $response = [
+                'success' => false,
+                'message' => 'ID de usuario requerido'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+
+        if (!isset($input['id_compania']) || empty($input['id_compania'])) {
+            $response = [
+                'success' => false,
+                'message' => 'ID de compañía requerido'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+
+        // Insertar nuevo registro de seguimiento
+        $insertQuery = "
+        INSERT INTO seguimiento (
+            id_ciclo,
+            dias_cultivo,
+            peso_promedio,
+            incremento_peso,
+            biomasa_lbs,
+            balanceado_acumulado,
+            convercion_alimenticia,
+            poblacion_actual,
+            indice_supervivencia,
+            observaciones,
+            fecha_seguimiento,
+            id_compania,
+            id_usuario_crea,
+            id_usuario_actualiza
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ";
+
+        // Verificar que el ciclo productivo existe (validación de seguridad)
+        $cicloQuery = "SELECT id_ciclo FROM ciclo_productivo WHERE id_ciclo = ? AND id_compania = ?";
+        $cicloStmt = $conn->prepare($cicloQuery);
+        $cicloStmt->bindValue(1, $input['id_ciclo']);
+        $cicloStmt->bindValue(2, $input['id_compania']);
+        $cicloStmt->execute();
+        $cicloExists = $cicloStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$cicloExists) {
+            $response = [
+                'success' => false,
+                'message' => 'Ciclo productivo no encontrado o no pertenece a su compañía'
+            ];
+            echo json_encode($response);
+            http_response_code(404);
+            exit();
+        }
+
+        // Log para debugging
+        error_log("Creando seguimiento para ciclo ID: " . $input['id_ciclo'] . " por usuario ID: " . $input['id_usuario'] . " en compañía ID: " . $input['id_compania']);
+        error_log("Datos recibidos: " . json_encode($input));
+        
+        $stmt = $conn->prepare($insertQuery);
+        $stmt->bindValue(1, $input['id_ciclo']);
+        $stmt->bindValue(2, $input['dias_cultivo'] ?? null);
+        $stmt->bindValue(3, $input['peso'] ?? null);
+        $stmt->bindValue(4, $input['inc'] ?? null);
+        $stmt->bindValue(5, $input['biomasa_lbs'] ?? null);
+        $stmt->bindValue(6, $input['balanceado_acu'] ?? null);
+        $stmt->bindValue(7, $input['conversion_alimenticia'] ?? null);
+        $stmt->bindValue(8, $input['poblacion_actual'] ?? null);
+        $stmt->bindValue(9, $input['supervivencia'] ?? null);
+        $stmt->bindValue(10, $input['observaciones'] ?? null);
+        $stmt->bindValue(11, $input['fecha_seguimiento'] ?? date('Y-m-d'));
+        $stmt->bindValue(12, $input['id_compania']);
+        $stmt->bindValue(13, $input['id_usuario']);
+        $stmt->bindValue(14, $input['id_usuario']); // Mismo usuario para crea y actualiza en inserción
+
+        if ($stmt->execute()) {
+            $seguimientoId = $conn->lastInsertId();
+            
+            // Insertar registros de balanceado si están presentes
+            if (!empty($input['balnova08']) || !empty($input['balnova12']) || !empty($input['balnova22'])) {
+                error_log("Insertando registros de balanceado para seguimiento ID: " . $seguimientoId);
+                $balanceadoQuery = "
+                INSERT INTO consumo_balanceado (
+                    id_seguimiento, 
+                    id_tipo_balanceado, 
+                    cantidad, 
+                    id_compania, 
+                    id_usuario_crea, 
+                    id_usuario_actualiza
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                ";
+                $balanceadoStmt = $conn->prepare($balanceadoQuery);
+                
+                try {
+                    // Balnova 2.2mm (asumiendo id_tipo_balanceado = 1)
+                    if (!empty($input['balnova22'])) {
+                        $balanceadoStmt->execute([
+                            $seguimientoId, 
+                            1, 
+                            $input['balnova22'], 
+                            $input['id_compania'], 
+                            $input['id_usuario'], 
+                            $input['id_usuario']
+                        ]);
+                        error_log("Insertado Balnova 2.2mm: " . $input['balnova22']);
+                    }
+                    // Balnova 1.2mm (asumiendo id_tipo_balanceado = 2)
+                    if (!empty($input['balnova12'])) {
+                        $balanceadoStmt->execute([
+                            $seguimientoId, 
+                            2, 
+                            $input['balnova12'], 
+                            $input['id_compania'], 
+                            $input['id_usuario'], 
+                            $input['id_usuario']
+                        ]);
+                        error_log("Insertado Balnova 1.2mm: " . $input['balnova12']);
+                    }
+                    // Balnova 0.8mm (asumiendo id_tipo_balanceado = 3)
+                    if (!empty($input['balnova08'])) {
+                        $balanceadoStmt->execute([
+                            $seguimientoId, 
+                            3, 
+                            $input['balnova08'], 
+                            $input['id_compania'], 
+                            $input['id_usuario'], 
+                            $input['id_usuario']
+                        ]);
+                        error_log("Insertado Balnova 0.8mm: " . $input['balnova08']);
+                    }
+                } catch (Exception $balanceadoError) {
+                    error_log("Error al insertar balanceado: " . $balanceadoError->getMessage());
+                    // No fallar toda la operación si hay error en balanceado
+                }
+            }
+
+            $response = [
+                'success' => true,
+                'message' => 'Registro de seguimiento creado exitosamente',
+                'data' => ['id_seguimiento' => $seguimientoId]
+            ];
+            echo json_encode($response);
+            http_response_code(201);
+        } else {
+            throw new Exception("Error al insertar el registro");
+        }
+
+    } catch (Exception $e) {
+        error_log("Error al crear seguimiento: " . $e->getMessage());
+        $response = [
+            'success' => false,
+            'message' => 'Error al crear el registro de seguimiento'
+        ];
+        echo json_encode($response);
+        http_response_code(500);
+    }
+    exit();
+}
+
+// Manejar solicitudes GET (código existente)
 try {
     // Obtener filtros de los parámetros de la consulta
     $filters = [
         'piscina' => isset($_GET['piscina']) && $_GET['piscina'] !== 'todas' ? $_GET['piscina'] : null,
         'startDate' => isset($_GET['startDate']) && !empty($_GET['startDate']) ? $_GET['startDate'] : null,
-        'endDate' => isset($_GET['endDate']) && !empty($_GET['endDate']) ? $_GET['endDate'] : null
+        'endDate' => isset($_GET['endDate']) && !empty($_GET['endDate']) ? $_GET['endDate'] : null,
+        'id_compania' => isset($_GET['id_compania']) && !empty($_GET['id_compania']) ? $_GET['id_compania'] : null
     ];
 
     // Crear la consulta base
@@ -69,6 +260,12 @@ try {
 
     // Aplicar filtros de piscina y fechas
     $params = [];
+    
+    // FILTRO OBLIGATORIO: Solo mostrar datos de la compañía del usuario autenticado
+    if ($filters['id_compania']) {
+        $whereCondition .= " AND s.id_compania = ?";
+        $params[] = $filters['id_compania'];
+    }
     if ($filters['piscina']) {
         // Si se filtra por piscina específica
         $whereCondition .= " AND p.codigo = ?";
@@ -105,7 +302,7 @@ try {
         s.observaciones,
         s.fecha_seguimiento
     ORDER BY 
-        s.fecha_seguimiento, p.id_piscina;";
+        p.id_piscina, s.fecha_seguimiento desc;";
 
     // Preparar y ejecutar la consulta
     $stmt = $conn->prepare($query);

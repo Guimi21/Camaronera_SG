@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Bar, Pie, Line, Doughnut } from 'react-chartjs-2';
 import * as XLSX from "xlsx";
 import config from "../../config";
+import { useAuth } from "../../context/AuthContext";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, LineElement, PointElement } from 'chart.js';
 
 ChartJS.register(
@@ -20,9 +21,11 @@ ChartJS.register(
 export default function Directivo() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
+  const { idCompania } = useAuth(); // Obtener ID de compañía del usuario autenticado
   const [data, setData] = useState([]);
   const [filteredGeneralData, setFilteredGeneralData] = useState([]);
   const [filteredTableData, setFilteredTableData] = useState([]);
+  const [availablePiscinas, setAvailablePiscinas] = useState([]); // Piscinas disponibles para el usuario
   const [filters, setFilters] = useState({
     piscinaGeneral: "todas",
     filterType: "piscina",
@@ -63,6 +66,13 @@ export default function Directivo() {
 
   // Función para obtener datos generales del backend
   const fetchGeneralData = async (piscinaValue = "todas") => {
+    // Verificar que el usuario tenga idCompania antes de hacer la petición
+    if (!idCompania) {
+      setError("No se pudo obtener la información de la compañía del usuario.");
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       
@@ -70,6 +80,9 @@ export default function Directivo() {
       if (piscinaValue !== "todas") {
         queryParams.append('piscina', piscinaValue);
       }
+      
+      // Agregar el id_compania del usuario autenticado
+      queryParams.append('id_compania', idCompania);
       
       const response = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php?${queryParams.toString()}`, {
         method: 'GET',
@@ -89,6 +102,32 @@ export default function Directivo() {
         const normalizedData = normalizeData(result.data);
         setData(normalizedData);
         setFilteredGeneralData(normalizedData);
+        
+        // Actualizar piscinas disponibles (únicas) para el usuario de esta compañía
+        // Preservar el orden que viene del backend (ordenado por id_piscina)
+        const uniquePiscinas = [];
+        const seenPiscinas = new Set();
+        
+        normalizedData.forEach(item => {
+          if (!seenPiscinas.has(item.piscina)) {
+            uniquePiscinas.push(item.piscina);
+            seenPiscinas.add(item.piscina);
+          }
+        });
+        
+        setAvailablePiscinas(uniquePiscinas);
+        
+        // Log para verificar el orden de las piscinas
+        console.log('Piscinas ordenadas por id_piscina:', uniquePiscinas);
+        
+        // Resetear filtros de piscina si la piscina seleccionada ya no está disponible
+        if (filters.piscinaTable !== "todas" && !uniquePiscinas.includes(filters.piscinaTable)) {
+          setFilters(prev => ({ ...prev, piscinaTable: "todas" }));
+        }
+        if (filters.piscinaGeneral !== "todas" && !uniquePiscinas.includes(filters.piscinaGeneral)) {
+          setFilters(prev => ({ ...prev, piscinaGeneral: "todas" }));
+        }
+        
         setError(null);
       } else {
         throw new Error(result.message || "Error al obtener datos generales");
@@ -104,6 +143,13 @@ export default function Directivo() {
   };
 
   const fetchTableData = async (filterParams = {}) => {
+    // Verificar que el usuario tenga idCompania antes de hacer la petición
+    if (!idCompania) {
+      setError("No se pudo obtener la información de la compañía del usuario.");
+      setLoadingTable(false);
+      return;
+    }
+
     try {
       setLoadingTable(true);
       
@@ -119,6 +165,9 @@ export default function Directivo() {
         queryParams.append('startDate', filterParams.startDate);
         queryParams.append('endDate', filterParams.endDate);
       }
+      
+      // Agregar el id_compania del usuario autenticado
+      queryParams.append('id_compania', idCompania);
       
       // Hacer la llamada GET con los parámetros de la URL
       const response = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php?${queryParams.toString()}`, {
@@ -154,9 +203,15 @@ export default function Directivo() {
 
   // Cargar datos iniciales al montar el componente
   useEffect(() => {
-    fetchGeneralData();
-    fetchTableData();
-  }, []);
+    // Solo cargar datos si el usuario tiene idCompania
+    if (idCompania) {
+      fetchGeneralData();
+      fetchTableData();
+    } else {
+      // Si no hay idCompania, limpiar las piscinas disponibles
+      setAvailablePiscinas([]);
+    }
+  }, [idCompania]); // Agregar idCompania como dependencia
 
   // Cálculos de datos generales
   const totalPiscinas = filteredGeneralData.length;
@@ -288,9 +343,6 @@ export default function Directivo() {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentData = filteredTableData.slice(indexOfFirstItem, indexOfLastItem);
 
-  // Obtener lista única de piscinas para los filtros
-  const uniquePiscinas = [...new Set(data.map(item => item.piscina))].sort();
-
   return (
     <div className="panel-directivo bg-white rounded-lg shadow-md p-4 sm:p-6 lg:p-8 max-w-full">
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -325,9 +377,12 @@ export default function Directivo() {
                     value={filters.piscinaTable} 
                     onChange={handleFilterChange} 
                     className="border rounded p-2 text-sm"
+                    disabled={loading || availablePiscinas.length === 0}
                   >
-                    <option value="todas">Todas las Piscinas</option>
-                    {uniquePiscinas.map(piscina => (
+                    <option value="todas">
+                      {loading ? "Cargando piscinas..." : "Todas las Piscinas"}
+                    </option>
+                    {availablePiscinas.map(piscina => (
                       <option key={piscina} value={piscina}>Piscina {piscina}</option>
                     ))}
                   </select>

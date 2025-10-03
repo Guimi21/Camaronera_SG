@@ -76,9 +76,11 @@ $menus = $stmt_menus->fetchAll(PDO::FETCH_ASSOC);
 // Respuesta con los datos del usuario, el grupo empresarial, la compañía y los menús
 $response = [
     'usuario' => $user['username'],
+    'id_usuario' => $user['id_usuario'],  // ID del usuario
     'tipo_usuario' => $user['tipo_usuario'],
     'grupo_empresarial' => $user['grupo_empresarial_nombre'],  // Nombre del grupo empresarial
     'compania' => $user['compania_nombre'],  // Nombre de la compañía
+    'id_compania' => $user['id_compania'],  // ID de la compañía del usuario
     'menus' => $menus  // Agregar los menús a la respuesta
 ];
 

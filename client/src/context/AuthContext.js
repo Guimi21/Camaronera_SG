@@ -13,6 +13,8 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [grupoEmpresarial, setGrupoEmpresarial] = useState(null); // Agregamos estado para el grupo empresarial
   const [compania, setCompania] = useState(null); // Agregamos estado para la empresa
+  const [idCompania, setIdCompania] = useState(null); // Agregamos estado para el ID de la compañía
+  const [idUsuario, setIdUsuario] = useState(null); // Agregamos estado para el ID del usuario
   const { API_BASE_URL } = config;
 
   // Logout
@@ -23,6 +25,8 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setGrupoEmpresarial(null); // Limpiar grupo empresarial
     setCompania(null); // Limpiar compañía
+    setIdCompania(null); // Limpiar ID compañía
+    setIdUsuario(null); // Limpiar ID usuario
     localStorage.removeItem("authData");
     if (inactivityTimer) clearTimeout(inactivityTimer);
   }, []);
@@ -46,6 +50,8 @@ export const AuthProvider = ({ children }) => {
       setTipoUsuario(parsedData.tipo_usuario);  // Asegúrate de que 'tipo_usuario' se guarde aquí
       setGrupoEmpresarial(parsedData.grupo_empresarial); // Guardamos grupo empresarial
       setCompania(parsedData.compania); // Guardamos compañía
+      setIdCompania(parsedData.id_compania); // Guardamos ID compañía
+      setIdUsuario(parsedData.id_usuario); // Guardamos ID usuario
     } catch (error) {
       logout();
     } finally {
@@ -84,7 +90,9 @@ export const AuthProvider = ({ children }) => {
       setMenus(jsonResponse.menus);
       setGrupoEmpresarial(jsonResponse.grupo_empresarial); // Guardamos grupo empresarial
       setCompania(jsonResponse.compania); // Guardamos compañía
-      localStorage.setItem("userData", JSON.stringify(jsonResponse));
+      setIdCompania(jsonResponse.id_compania); // Guardamos ID compañía
+      setIdUsuario(jsonResponse.id_usuario); // Guardamos ID usuario
+      localStorage.setItem("authData", JSON.stringify(jsonResponse));
 
       return { success: true };
     } catch (error) {
@@ -101,7 +109,9 @@ export const AuthProvider = ({ children }) => {
         loading,
         token,
         grupoEmpresarial, 
-        compania, 
+        compania,
+        idCompania, // Agregamos idCompania al context
+        idUsuario, // Agregamos idUsuario al context
         login,
         logout,
         isAuthenticated: !!user,

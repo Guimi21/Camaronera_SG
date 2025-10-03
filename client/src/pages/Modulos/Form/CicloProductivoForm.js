@@ -1,19 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import config from '../../../config';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function CicloProductivoForm() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
+  const { idCompania, idUsuario } = useAuth();
   
   const [formData, setFormData] = useState({
-    piscina: '',
-    has: '',
-    fecha_siembra: '',
+    id_ciclo: '', // Reemplaza los campos de ciclo_productivo
     dias_cultivo: '',
-    siembra_larvas: '',
-    densidad_ha: '',
-    tipo_siembra: '',
     peso: '',
     inc: '',
     biomasa_lbs: '',
@@ -28,11 +25,69 @@ export default function CicloProductivoForm() {
     fecha_seguimiento: ''
   });
   
+  const [ciclosDisponibles, setCiclosDisponibles] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingCiclos, setLoadingCiclos] = useState(true);
   const [error, setError] = useState('');
+
+  // Función para cargar los ciclos productivos disponibles
+  const fetchCiclosDisponibles = async () => {
+    if (!idCompania) {
+      setError("No se pudo obtener la información de la compañía del usuario.");
+      setLoadingCiclos(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/module/ciclos.php?id_compania=${idCompania}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setCiclosDisponibles(result.data);
+        setError('');
+      } else {
+        throw new Error(result.message || "Error al obtener ciclos productivos");
+      }
+    } catch (err) {
+      console.error("Error fetching ciclos:", err);
+      setError(err.message || "No se pudieron cargar los ciclos productivos.");
+    } finally {
+      setLoadingCiclos(false);
+    }
+  };
+
+  // Cargar ciclos disponibles al montar el componente
+  useEffect(() => {
+    if (idCompania) {
+      fetchCiclosDisponibles();
+    } else {
+      setLoadingCiclos(false);
+    }
+  }, [idCompania]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
+    // Log para debugging cuando se selecciona un ciclo
+    if (name === 'id_ciclo') {
+      console.log('Ciclo seleccionado ID:', value);
+      const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo === value);
+      if (cicloSeleccionado) {
+        console.log('Datos del ciclo seleccionado:', cicloSeleccionado);
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -44,26 +99,58 @@ export default function CicloProductivoForm() {
     setLoading(true);
     setError('');
 
+    // Validar que se haya seleccionado un ciclo
+    if (!formData.id_ciclo) {
+      setError('Debes seleccionar un ciclo productivo');
+      setLoading(false);
+      return;
+    }
+
+    // Validar que el usuario esté autenticado
+    if (!idUsuario) {
+      setError('No se pudo obtener la información del usuario autenticado');
+      setLoading(false);
+      return;
+    }
+
+    // Validar que se tenga la información de la compañía
+    if (!idCompania) {
+      setError('No se pudo obtener la información de la compañía del usuario');
+      setLoading(false);
+      return;
+    }
+
     try {
+      // Agregar el id_usuario e id_compania a los datos del formulario
+      const dataToSend = {
+        ...formData,
+        id_usuario: idUsuario,
+        id_compania: idCompania
+      };
+      
+      console.log('Enviando datos:', dataToSend); // Log para debugging
+      
       const response = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(dataToSend)
       });
 
       const result = await response.json();
+      console.log('Respuesta del servidor:', result); // Log para debugging
       
-      if (response.ok) {
+      if (response.ok && result.success) {
         // Redirigir de vuelta al panel directivo con mensaje de éxito
         navigate('/layout/directivo', { 
-          state: { message: 'Registro creado exitosamente' } 
+          state: { message: 'Registro de seguimiento creado exitosamente' } 
         });
       } else {
-        setError(result.message || 'Error al crear el registro');
+        setError(result.message || `Error al crear el registro (Status: ${response.status})`);
       }
     } catch (err) {
+      console.error('Error completo:', err);
       setError('Error de conexión. Por favor, inténtalo de nuevo.');
     } finally {
       setLoading(false);
@@ -80,10 +167,10 @@ export default function CicloProductivoForm() {
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-blue-800 mb-2">
-              Nuevo Registro de Ciclo Productivo
+              Nuevo Registro de Seguimiento
             </h1>
             <p className="text-gray-600">
-              Completa todos los campos para agregar un nuevo registro a la tabla de producción.
+              Selecciona un ciclo productivo existente y completa los campos de seguimiento para agregar un nuevo registro.
             </p>
           </div>
 
@@ -93,54 +180,54 @@ export default function CicloProductivoForm() {
             </div>
           )}
 
+          {!loadingCiclos && ciclosDisponibles.length === 0 && !error && (
+            <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+              <p><strong>No hay ciclos productivos disponibles.</strong></p>
+              <p className="text-sm mt-1">
+                Para agregar registros de seguimiento, primero debes crear ciclos productivos en el sistema.
+              </p>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Información básica */}
+            {/* Selección de Ciclo Productivo */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Seleccionar Ciclo Productivo *
+              </label>
+              {loadingCiclos ? (
+                <div className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                  Cargando ciclos productivos...
+                </div>
+              ) : (
+                <select
+                  name="id_ciclo"
+                  value={formData.id_ciclo}
+                  onChange={handleChange}
+                  required
+                  disabled={ciclosDisponibles.length === 0}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
+                >
+                  <option value="">
+                    {ciclosDisponibles.length === 0 
+                      ? "No hay ciclos productivos disponibles" 
+                      : "Seleccionar piscina y fecha de siembra"
+                    }
+                  </option>
+                  {ciclosDisponibles.map(ciclo => (
+                    <option key={ciclo.id_ciclo} value={ciclo.id_ciclo}>
+                      Piscina {ciclo.codigo_piscina} - Siembra: {new Date(ciclo.fecha_siembra).toLocaleDateString('es-ES')} ({ciclo.hectareas} has, {ciclo.tipo_siembra}, Densidad: {ciclo.densidad}/ha)
+                    </option>
+                  ))}
+                </select>
+              )}
+              <p className="text-sm text-gray-500 mt-1">
+                Selecciona el ciclo productivo al cual deseas agregar datos de seguimiento
+              </p>
+            </div>
+
+            {/* Información de seguimiento */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Piscina *
-                </label>
-                <input
-                  type="text"
-                  name="piscina"
-                  value={formData.piscina}
-                  onChange={handleChange}
-                  required
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ej: P-01"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Hectáreas (Has) *
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="has"
-                  value={formData.has}
-                  onChange={handleChange}
-                  required
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ej: 2.5"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fecha de Siembra *
-                </label>
-                <input
-                  type="date"
-                  name="fecha_siembra"
-                  value={formData.fecha_siembra}
-                  onChange={handleChange}
-                  required
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Días de Cultivo
@@ -154,56 +241,10 @@ export default function CicloProductivoForm() {
                   placeholder="Ej: 120"
                 />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Siembra de Larvas *
-                </label>
-                <input
-                  type="number"
-                  name="siembra_larvas"
-                  value={formData.siembra_larvas}
-                  onChange={handleChange}
-                  required
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ej: 150000"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Densidad (/ha) *
-                </label>
-                <input
-                  type="number"
-                  name="densidad_ha"
-                  value={formData.densidad_ha}
-                  onChange={handleChange}
-                  required
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ej: 60000"
-                />
-              </div>
             </div>
 
             {/* Información de producción */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tipo de Siembra
-                </label>
-                <select
-                  name="tipo_siembra"
-                  value={formData.tipo_siembra}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Seleccionar tipo</option>
-                  <option value="Directa">Directa</option>
-                  <option value="Pre-cría">Pre-cría</option>
-                  <option value="Mixta">Mixta</option>
-                </select>
-              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -392,7 +433,7 @@ export default function CicloProductivoForm() {
             <div className="flex flex-col sm:flex-row gap-4 pt-6">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || loadingCiclos || ciclosDisponibles.length === 0}
                 className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
@@ -413,7 +454,7 @@ export default function CicloProductivoForm() {
               <button
                 type="button"
                 onClick={handleCancel}
-                disabled={loading}
+                disabled={loading || loadingCiclos}
                 className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
