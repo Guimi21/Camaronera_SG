@@ -1,9 +1,9 @@
 <?php
-//define('BASE_URL', 'https://camaron360.com');
-//define('DB_HOST', 'localhost');
-//define('DB_USER', 'guimialc_root');
-//define('DB_PASS', 'bdCamaronera360'); // Cambia esto por tu contraseña de MySQL
-//define('DB_NAME', 'guimialc_sg_camaronera'); 
+// define('BASE_URL', 'https://camaron360.com');
+// define('DB_HOST', 'localhost');
+// define('DB_USER', 'guimialc_root');
+// define('DB_PASS', 'bdCamaronera360'); // Cambia esto por tu contraseña de MySQL
+// define('DB_NAME', 'guimialc_sg_camaronera'); 
 
 define('BASE_URL', 'http://localhost:3000'); // Cambia esto a la URL de tu servidor
 define('DB_HOST', 'localhost');
