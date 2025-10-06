@@ -5,21 +5,8 @@ require_once __DIR__ . '/vendor/autoload.php';  // Asegúrate de que este sea el
 // Incluir la configuración global
 require_once 'config/config.php'; 
 
-// Incluir el controlador de autenticación (si no está autoloaded por Composer)
-require_once 'auth/login.php';  
-
-// Configuración de CORS
-header("Access-Control-Allow-Origin: " . BASE_URL);
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-header("Access-Control-Allow-Credentials: true");
-header('Content-Type: application/json');
-
-// Si la solicitud es OPTIONS (preflight), respondemos sin procesar
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    http_response_code(200);  // 200 OK
-    exit(0);  
-}
+// Incluir configuración CORS centralizada
+require_once 'helpers/cors.php';
 
 // Obtener la URL y el método de la solicitud (POST, GET, etc.)
 $requestMethod = $_SERVER['REQUEST_METHOD'];
