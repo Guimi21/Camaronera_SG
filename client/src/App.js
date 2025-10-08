@@ -9,6 +9,7 @@ import Home from "./pages/Home";
 import Administrador from "./pages/Modulos/Administrador";
 import Digitador from "./pages/Modulos/Digitador";
 import Directivo from "./pages/Modulos/Directivo";
+import MonitoreoPiscinas from "./pages/Modulos/MonitoreoPiscinas";
 
 // Formularios
 import PiscinaForm from "./pages/Modulos/Form/PiscinaForm";
@@ -63,6 +64,9 @@ function App() {
             {/* Formularios */}
             <Route path="form/piscina" element={<PiscinaForm />} />
             <Route path="form/ciclo" element={<CicloProductivoForm />} />
+
+            {/* Dashboard - Monitoreo */}
+            <Route path="dashboard/monitoreo-piscinas" element={<MonitoreoPiscinas />} />
           </Route>
 
           {/* Redirección a login si no hay ninguna ruta válida */}

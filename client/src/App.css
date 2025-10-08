@@ -194,6 +194,7 @@ nav {
     display: flex;
     flex-direction: row;
     align-items: center;
+    margin-top: auto;
     space-x: 6px; /* Espaciado entre los elementos */
 }
 
@@ -406,7 +407,6 @@ h2 {
     box-shadow: 0px 4px 10px var(--shadow);
     margin-bottom: 2rem;
     overflow: auto;
-    max-height: 90vh;
     max-width: 98vw;
 }
 

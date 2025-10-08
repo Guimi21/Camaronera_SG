@@ -25,8 +25,10 @@ export default function Header() {
   };
 
   // Función para manejar la apertura/cierre de los menús en el acordeón
-  const toggleMenu = (menuId) => {
+  const toggleMenu = (menuId, menuRuta) => {
     setActiveMenu(activeMenu === menuId ? null : menuId); // Si el menú ya está abierto, lo cierra
+    menuRuta = menuRuta.startsWith("/layout/") ? menuRuta : `/layout${menuRuta}`;
+    navigate(menuRuta); // Navega a la ruta del menú
   };
 
   // Función que devuelve el componente de icono de forma dinámica
@@ -69,7 +71,7 @@ export default function Header() {
             <div key={menu.id_menu} className="w-full">
               <button
                 className={`flex items-center p-2 rounded hover:bg-gray-700 ${location.pathname === menu.ruta ? "bg-gray-700" : ""}`}
-                onClick={() => toggleMenu(menu.id_menu)} // Abrir/cerrar el menú acordeón
+                onClick={() => toggleMenu(menu.id_menu, menu.ruta)} // Abrir/cerrar el menú acordeón
               >
                 {IconComponent && <IconComponent className="mr-2" />}
                 {menu.nombre}
