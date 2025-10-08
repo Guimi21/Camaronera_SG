@@ -101,7 +101,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         // Validar campos requeridos
-        $required_fields = ['codigo', 'hectareas', 'ubicacion', 'id_compania'];
+        $required_fields = ['codigo', 'hectareas', 'ubicacion', 'id_compania', 'id_usuario_crea', 'id_usuario_actualiza'];
         foreach ($required_fields as $field) {
             if (!isset($input[$field]) || empty($input[$field])) {
                 $response = [
@@ -133,7 +133,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         // Insertar nueva piscina
-        $insert_sql = "INSERT INTO piscina (codigo, hectareas, ubicacion, id_compania) VALUES (:codigo, :hectareas, :ubicacion, :id_compania)";
+        $insert_sql = "INSERT INTO piscina (codigo, hectareas, ubicacion, id_compania, id_usuario_crea, id_usuario_actualiza) VALUES (:codigo, :hectareas, :ubicacion, :id_compania, :id_usuario_crea, :id_usuario_actualiza)";
         $insert_stmt = $conn->prepare($insert_sql);
         
         if (!$insert_stmt) {
@@ -144,6 +144,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $insert_stmt->bindParam(':hectareas', $input['hectareas'], PDO::PARAM_STR);
         $insert_stmt->bindParam(':ubicacion', $input['ubicacion'], PDO::PARAM_STR);
         $insert_stmt->bindParam(':id_compania', $input['id_compania'], PDO::PARAM_INT);
+        $insert_stmt->bindParam(':id_usuario_crea', $input['id_usuario_crea'], PDO::PARAM_INT);
+        $insert_stmt->bindParam(':id_usuario_actualiza', $input['id_usuario_actualiza'], PDO::PARAM_INT);
 
         if (!$insert_stmt->execute()) {
             throw new Exception("Error ejecutando inserción: " . implode(", ", $insert_stmt->errorInfo()));
