@@ -338,6 +338,7 @@ try {
     // Continuar con la consulta
     $query .= $whereCondition . "
     GROUP BY
+        p.id_piscina,
         p.codigo,
         p.hectareas,
         cp.fecha_siembra,
