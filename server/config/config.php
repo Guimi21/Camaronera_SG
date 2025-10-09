@@ -1,15 +1,28 @@
 <?php
-// define('BASE_URL', 'https://camaron360.com');
-// define('DB_HOST', 'localhost');
-// define('DB_USER', 'guimialc_root');
-// define('DB_PASS', 'bdCamaronera360'); // Cambia esto por tu contraseña de MySQL
-// define('DB_NAME', 'guimialc_sg_camaronera'); 
+// Detectar el entorno automáticamente
+$isProduction = false;
 
-define('BASE_URL', 'http://localhost:3000'); // Cambia esto a la URL de tu servidor
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', ''); // Cambia esto por tu contraseña de MySQL
-define('DB_NAME', 'sg_camaronera'); // Nombre de la base de datos
+// Detectar el dominio/host
+if (isset($_SERVER['HTTP_HOST'])) {
+    $isProduction = $_SERVER['HTTP_HOST'] === 'camaron360.com' || 
+                   strpos($_SERVER['HTTP_HOST'], 'camaron360.com') !== false;
+}
+
+if ($isProduction) {
+    // Configuración de PRODUCCIÓN
+    define('BASE_URL', 'https://camaron360.com');
+    define('DB_HOST', 'localhost');
+    define('DB_USER', 'guimialc_root');
+    define('DB_PASS', 'bdCamaronera360');
+    define('DB_NAME', 'guimialc_sg_camaronera');
+} else {
+    // Configuración de DESARROLLO
+    define('BASE_URL', 'http://localhost:3000');
+    define('DB_HOST', 'localhost');
+    define('DB_USER', 'root');
+    define('DB_PASS', '');
+    define('DB_NAME', 'sg_camaronera');
+}
 
 // Crear la conexión a la base de datos
 try {
