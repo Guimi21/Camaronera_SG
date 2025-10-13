@@ -5,12 +5,16 @@ $isProduction = false;
 // Detectar el dominio/host
 if (isset($_SERVER['HTTP_HOST'])) {
     $isProduction = $_SERVER['HTTP_HOST'] === 'camaron360.com' || 
+                   $_SERVER['HTTP_HOST'] === 'www.camaron360.com' ||
                    strpos($_SERVER['HTTP_HOST'], 'camaron360.com') !== false;
 }
 
 if ($isProduction) {
     // Configuración de PRODUCCIÓN
-    define('BASE_URL', 'https://camaron360.com');
+    // Usar el dominio con el que se accedió (con o sin www)
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $hostname = $_SERVER['HTTP_HOST'] ?? 'camaron360.com';
+    define('BASE_URL', $protocol . '://' . $hostname);
     define('DB_HOST', 'localhost');
     define('DB_USER', 'guimialc_root');
     define('DB_PASS', 'bdCamaronera360');

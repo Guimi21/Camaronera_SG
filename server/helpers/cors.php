@@ -11,6 +11,7 @@ function setupCORS() {
     // Lista de orígenes permitidos
     $allowedOrigins = [
         'https://camaron360.com',
+        'https://www.camaron360.com',
         'http://localhost:3000',
         'http://localhost:3001',
         'http://127.0.0.1:3000'
