@@ -10,10 +10,12 @@ import Administrador from "./pages/Modulos/Administrador";
 import Digitador from "./pages/Modulos/Digitador";
 import Directivo from "./pages/Modulos/Directivo";
 import MonitoreoPiscinas from "./pages/Modulos/MonitoreoPiscinas";
+import MonitoreoBalanceados from "./pages/Modulos/MonitoreoBalanceados";
 
 // Formularios
 import PiscinaForm from "./pages/Modulos/Form/PiscinaForm";
 import CicloProductivoForm from "./pages/Modulos/Form/CicloProductivoForm";
+import BalanceadoForm from "./pages/Modulos/Form/BalanceadoForm";
 
 // Redirección por defecto según tipo_usuario
 function DefaultModuleRedirect() {
@@ -64,9 +66,11 @@ function App() {
             {/* Formularios */}
             <Route path="form/piscina" element={<PiscinaForm />} />
             <Route path="form/ciclo" element={<CicloProductivoForm />} />
+            <Route path="form/balanceado" element={<BalanceadoForm />} />
 
             {/* Dashboard - Monitoreo */}
             <Route path="dashboard/monitoreo-piscinas" element={<MonitoreoPiscinas />} />
+            <Route path="dashboard/monitoreo-balanceados" element={<MonitoreoBalanceados />} />
           </Route>
 
           {/* Redirección a login si no hay ninguna ruta válida */}
