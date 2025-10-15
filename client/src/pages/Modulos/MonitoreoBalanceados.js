@@ -164,7 +164,7 @@ export default function MonitoreoBalanceados() {
       {/* Header */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">Monitoreo de Balanceados</h1>
-        <p className="text-gray-600">Panel de control para el seguimiento de tipos de balanceado de la compañía</p>
+        <p className="text-gray-600">Panel de control para el muestra de tipos de balanceado de la compañía</p>
       </div>
 
       {/* Filtros y Tabla */}

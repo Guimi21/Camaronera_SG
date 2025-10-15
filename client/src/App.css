@@ -65,16 +65,15 @@ header {
     color: white;
     padding: 1rem;
     display: flex;
-    justify-content: flex-end; /* Alinea el contenido a la derecha */
+    justify-content: space-between; /* Alinea los elementos de forma horizontal con espacio entre ellos */
     align-items: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra suave */
     position: sticky;
     width: calc(100%);
     top: 0;
     z-index: 100;
     height: var(--header-height);
 }
-
 
 .header-left {
     display: flex;
@@ -135,18 +134,7 @@ header {
         gap: 2rem; /* Mayor espacio entre los elementos */
     }
 }
-/* Contenedor principal del header */
-header {
-    display: flex;
-    justify-content: space-between; /* Alinea los elementos de forma horizontal con espacio entre ellos */
-    align-items: center; /* Alinea verticalmente todos los elementos */
-    padding: 1rem; /* Espaciado en el header */
-    background-color: #1f2937; /* Color de fondo oscuro */
-    color: white;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra suave */
-}
 
-/* Contenedor del logo */
 /* Contenedor principal de logo */
 .logoContainer {
     display: flex;
@@ -222,12 +210,6 @@ nav a.active {
     color: #ffffff;
 }
 
-/* Menú de navegación: */
-nav {
-  display: flex;
-  flex-direction: column;
-}
-
 nav.md\\:block {
   display: block;
 }
@@ -239,13 +221,6 @@ nav.hidden {
 
 nav.block {
   display: block;
-}
-
-/* Acordeón de menú en móviles */
-button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 @media (max-width: 768px) {
@@ -287,20 +262,49 @@ div.flex {
     margin-left: auto; /* Esto empuja el contenido a la derecha */
 }
 
-/* Estilo para el botón de logout */
+/* Estilo de la leyenda debajo de los campos del formulario */
+.leyenda {
+    padding-left: 1cm;
+    font-size: 0.9rem;
+}
+
+/* Estilo de las opciones del menú hamburguesa del header */
+.header-button {
+    width: 100%;
+}
+
+/* Estilo para el botón */
 button {
     display: flex;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    background-color: #dc2626; /* Rojo para el botón de logout */
+    background-color: #2563eb;
     color: white;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.875rem;
     border-radius: 8px;
+    border: none;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
 button:hover {
-    background-color: #b91c1c; /* Color de hover para el botón */
+    background-color: #1e40af;
+    transform: translateY(-2px);
+}
+
+button:disabled {
+    background-color: #93c5fd;
+    cursor: not-allowed;
+    transform: none;
+}
+
+button svg {
+    width: 20px;
+    height: 20px;
+    stroke: white;
 }
 
 /* Contenido principal */
@@ -447,39 +451,6 @@ option {
     color: #374151;
 }
 
-/* Estilo para el botón */
-button {
-    background-color: #2563eb;
-    color: white;
-    padding: 0.75rem 1.25rem;
-    font-size: 0.875rem;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    transition: var(--transition);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-}
-
-button:hover {
-    background-color: #1e40af;
-    transform: translateY(-2px);
-}
-
-button:disabled {
-    background-color: #93c5fd;
-    cursor: not-allowed;
-    transform: none;
-}
-
-button svg {
-    width: 20px;
-    height: 20px;
-    stroke: white;
-}
-
 /* Responsive Table Styling */
 .table-container {
     width: 100%;
@@ -495,8 +466,7 @@ table {
     background: white;
 }
 
-table th,
-table td {
+table th, table td {
     padding: 0.75rem 1rem;
     text-align: left;
     border-bottom: 1px solid #e5e7eb;

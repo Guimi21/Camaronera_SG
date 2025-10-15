@@ -117,7 +117,7 @@ export default function BalanceadoForm() {
               maxLength={50}
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 mt-1 leyenda">
               Nombre del tipo de balanceado (máximo 50 caracteres)
             </p>
           </div>
@@ -138,7 +138,7 @@ export default function BalanceadoForm() {
               maxLength={20}
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 mt-1 leyenda">
               Unidad de medida (máximo 20 caracteres)
             </p>
           </div>

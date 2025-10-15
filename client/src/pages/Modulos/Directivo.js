@@ -60,7 +60,7 @@ export default function Directivo() {
       poblacion_actual: item["Población actual"],
       supervivencia: item["Sobrev. Actual %"],
       observaciones: item.Observaciones,
-      fecha_seguimiento: item["Fecha Seguimiento"]
+      fecha_muestra: item["Fecha Muestra"]
     }));
   };
 
@@ -325,7 +325,7 @@ export default function Directivo() {
       "Población Actual": item.poblacion_actual,
       "Supervivencia (%)": item.supervivencia,
       "Observaciones": item.observaciones,
-      "Fecha Seguimiento": item.fecha_seguimiento
+      "Fecha Muestra": item.fecha_muestra
     }));
     
     const ws = XLSX.utils.json_to_sheet(excelData);
@@ -455,7 +455,7 @@ export default function Directivo() {
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Población Actual</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Supervivencia (%)</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Observaciones</th>
-                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Fecha Seguimiento</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Fecha Muestra</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -480,7 +480,7 @@ export default function Directivo() {
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.poblacion_actual ? parseInt(item.poblacion_actual) : 0}</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.supervivencia}%</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.observaciones}</td>
-                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.fecha_seguimiento}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.fecha_muestra}</td>
                         </tr>
                       ))
                     ) : (
@@ -528,24 +528,6 @@ export default function Directivo() {
                   <option value="50">50 por página</option>
                 </select>
               </div>
-
-              {/* Botón para agregar nuevo registro */}
-              <button
-                onClick={() => navigate('/layout/form/ciclo')}
-                className="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-blue-700 transition-colors duration-200"
-                title="Agregar nuevo registro"
-              >
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  className="h-5 w-5" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Agregar Seguimiento
-              </button>
 
               {/* Botón de descarga */}
               <button 

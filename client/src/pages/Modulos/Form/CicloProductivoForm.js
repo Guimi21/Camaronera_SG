@@ -22,18 +22,18 @@ export default function CicloProductivoForm() {
     poblacion_actual: '', // Calculado automáticamente
     supervivencia: '',
     observaciones: '',
-    fecha_seguimiento: ''
+    fecha_muestra: new Date().toISOString().split('T')[0]
   });
   
   const [ciclosDisponibles, setCiclosDisponibles] = useState([]);
-  const [ultimoSeguimiento, setUltimoSeguimientoState] = useState(null);
+  const [ultimoMuestra, setUltimoMuestraState] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingCiclos, setLoadingCiclos] = useState(true);
   const [error, setError] = useState('');
 
-  // Wrapper para trackear cambios en ultimoSeguimiento
-  const setUltimoSeguimiento = (valor) => {
-    setUltimoSeguimientoState(valor);
+  // Wrapper para trackear cambios en ultimoMuestra
+  const setUltimoMuestra = (valor) => {
+    setUltimoMuestraState(valor);
   };
 
   // Función para cargar los ciclos productivos disponibles
@@ -73,10 +73,10 @@ export default function CicloProductivoForm() {
     }
   };
 
-  // Función para obtener el último seguimiento de un ciclo productivo
-  const fetchUltimoSeguimiento = async (idCiclo) => {
+  // Función para obtener el último muestra de un ciclo productivo
+  const fetchUltimoMuestra = async (idCiclo) => {
     if (!idCiclo) {
-      setUltimoSeguimiento(null);
+      setUltimoMuestra(null);
       return;
     }
 
@@ -98,15 +98,15 @@ export default function CicloProductivoForm() {
       const result = await response.json();
       
       if (result.success && result.data && result.data.length > 0) {
-        // Obtener el seguimiento más reciente (el primero en la lista ordenada por fecha desc)
-        setUltimoSeguimiento(result.data[0]);
+        // Obtener el muestra más reciente (el primero en la lista ordenada por fecha desc)
+        setUltimoMuestra(result.data[0]);
       } else {
-        // No hay seguimientos previos para este ciclo
-        setUltimoSeguimiento(null);
+        // No hay muestras previos para este ciclo
+        setUltimoMuestra(null);
       }
     } catch (err) {
-      console.error("❌ Error al obtener último seguimiento:", err.message);
-      setUltimoSeguimiento(null);
+      console.error("❌ Error al obtener último muestra:", err.message);
+      setUltimoMuestra(null);
     }
   };
 
@@ -119,25 +119,25 @@ export default function CicloProductivoForm() {
     }
   }, [idCompania]);
 
-  // Monitor para cambios en ultimoSeguimiento
+  // Monitor para cambios en ultimoMuestra
   useEffect(() => {
-    // Monitoring changes in ultimoSeguimiento for automatic recalculations
-  }, [ultimoSeguimiento]);
+    // Monitoring changes in ultimoMuestra for automatic recalculations
+  }, [ultimoMuestra]);
 
   // Efecto para detectar cambios en el ciclo seleccionado y preparar recálculos
   useEffect(() => {
     if (formData.id_ciclo && formData.id_ciclo !== '') {
-      // El fetchUltimoSeguimiento se ejecutará automáticamente en handleChange
-      // Los useEffect de cálculos se ejecutarán cuando ultimoSeguimiento cambie
+      // El fetchUltimoMuestra se ejecutará automáticamente en handleChange
+      // Los useEffect de cálculos se ejecutarán cuando ultimoMuestra cambie
     }
   }, [formData.id_ciclo]);
 
   // Efecto para recalcular días de cultivo cuando cambien los datos relevantes
   useEffect(() => {
-    if (formData.id_ciclo && formData.fecha_seguimiento && ciclosDisponibles.length > 0) {
+    if (formData.id_ciclo && formData.fecha_muestra && ciclosDisponibles.length > 0) {
       const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == formData.id_ciclo);
       if (cicloSeleccionado) {
-        const diasCultivo = calcularDiasCultivo(cicloSeleccionado.fecha_siembra, formData.fecha_seguimiento);
+        const diasCultivo = calcularDiasCultivo(cicloSeleccionado.fecha_siembra, formData.fecha_muestra);
         if (diasCultivo !== formData.dias_cultivo) {
           setFormData(prev => ({
             ...prev,
@@ -146,12 +146,12 @@ export default function CicloProductivoForm() {
         }
       }
     }
-  }, [formData.id_ciclo, formData.fecha_seguimiento, ciclosDisponibles]);
+  }, [formData.id_ciclo, formData.fecha_muestra, ciclosDisponibles]);
 
   // Efecto para recalcular incremento de peso cuando cambien los datos relevantes
   useEffect(() => {
     if (formData.peso) {
-      const pesoAnterior = ultimoSeguimiento ? ultimoSeguimiento.peso : null;
+      const pesoAnterior = ultimoMuestra ? ultimoMuestra.peso : null;
       const incrementoPeso = calcularIncrementoPeso(formData.peso, pesoAnterior);
       if (incrementoPeso !== formData.incremento_peso) {
         setFormData(prev => ({
@@ -166,13 +166,13 @@ export default function CicloProductivoForm() {
         incremento_peso: ''
       }));
     }
-  }, [formData.peso, ultimoSeguimiento]);
+  }, [formData.peso, ultimoMuestra]);
 
   // Efecto para recalcular balanceado acumulado cuando cambien los datos relevantes
   useEffect(() => {
     // Solo calcular si hay al menos un valor de balanceado ingresado
     if (formData.balnova08 || formData.balnova12 || formData.balnova22) {
-      const balanceadoAnterior = ultimoSeguimiento ? ultimoSeguimiento.balanceado_acumulado : 0;
+      const balanceadoAnterior = ultimoMuestra ? ultimoMuestra.balanceado_acumulado : 0;
       const balanceadoAcumulado = calcularBalanceadoAcumulado(
         formData.balnova08,
         formData.balnova12, 
@@ -193,7 +193,7 @@ export default function CicloProductivoForm() {
         balanceado_acumulado: ''
       }));
     }
-  }, [formData.balnova08, formData.balnova12, formData.balnova22, ultimoSeguimiento]);
+  }, [formData.balnova08, formData.balnova12, formData.balnova22, ultimoMuestra]);
 
   // Efecto para recalcular población actual cuando cambien los datos relevantes
   useEffect(() => {
@@ -256,15 +256,15 @@ export default function CicloProductivoForm() {
   }, [formData.balanceado_acumulado, formData.biomasa_lbs]);
 
   // Función para calcular días de cultivo
-  const calcularDiasCultivo = (fechaSiembra, fechaSeguimiento) => {
-    if (!fechaSiembra || !fechaSeguimiento) return '';
+  const calcularDiasCultivo = (fechaSiembra, fechaMuestra) => {
+    if (!fechaSiembra || !fechaMuestra) return '';
     
     const fechaSiembraDate = new Date(fechaSiembra);
-    const fechaSeguimientoDate = new Date(fechaSeguimiento);
+    const fechaMuestraDate = new Date(fechaMuestra);
     
-    if (fechaSeguimientoDate < fechaSiembraDate) return 0;
+    if (fechaMuestraDate < fechaSiembraDate) return 0;
     
-    const diferenciaMilisegundos = fechaSeguimientoDate - fechaSiembraDate;
+    const diferenciaMilisegundos = fechaMuestraDate - fechaSiembraDate;
     const diferenciaDias = Math.floor(diferenciaMilisegundos / (1000 * 60 * 60 * 24));
     
     return diferenciaDias;
@@ -274,7 +274,7 @@ export default function CicloProductivoForm() {
   const calcularIncrementoPeso = (pesoActual, pesoAnterior) => {
     if (!pesoActual) return '';
     
-    // Si no hay peso anterior (primer seguimiento del ciclo), el incremento es el peso actual
+    // Si no hay peso anterior (primer muestra del ciclo), el incremento es el peso actual
     if (pesoAnterior === null || pesoAnterior === undefined) {
       const pesoActualNum = parseFloat(pesoActual);
       return isNaN(pesoActualNum) ? '' : pesoActualNum.toFixed(2);
@@ -363,27 +363,27 @@ export default function CicloProductivoForm() {
       const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == value);
       
       if (cicloSeleccionado) {
-        // Obtener el último seguimiento del ciclo seleccionado
-        fetchUltimoSeguimiento(value);
+        // Obtener el último muestra del ciclo seleccionado
+        fetchUltimoMuestra(value);
         
-        // Calcular días de cultivo si también hay fecha de seguimiento
-        if (newFormData.fecha_seguimiento) {
-          const diasCultivo = calcularDiasCultivo(cicloSeleccionado.fecha_siembra, newFormData.fecha_seguimiento);
+        // Calcular días de cultivo si también hay fecha de muestra
+        if (newFormData.fecha_muestra) {
+          const diasCultivo = calcularDiasCultivo(cicloSeleccionado.fecha_siembra, newFormData.fecha_muestra);
           newFormData.dias_cultivo = diasCultivo;
         }
         
         // Resetear valores calculados cuando se cambia de ciclo
-        // Se recalcularán automáticamente en los useEffect cuando se obtenga el último seguimiento
+        // Se recalcularán automáticamente en los useEffect cuando se obtenga el último muestra
         newFormData.balanceado_acumulado = '';
         newFormData.incremento_peso = '';
         
-        // Si ya hay un peso ingresado, necesitamos recalcular el incremento después de obtener el nuevo seguimiento
-        // Esto se hará automáticamente en el useEffect cuando cambie ultimoSeguimiento
+        // Si ya hay un peso ingresado, necesitamos recalcular el incremento después de obtener el nuevo muestra
+        // Esto se hará automáticamente en el useEffect cuando cambie ultimoMuestra
       }
     }
     
-    // Si se cambia la fecha de seguimiento y hay un ciclo seleccionado, recalcular días de cultivo
-    if (name === 'fecha_seguimiento' && newFormData.id_ciclo) {
+    // Si se cambia la fecha de muestra y hay un ciclo seleccionado, recalcular días de cultivo
+    if (name === 'fecha_muestra' && newFormData.id_ciclo) {
       const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == newFormData.id_ciclo);
       if (cicloSeleccionado) {
         const diasCultivo = calcularDiasCultivo(cicloSeleccionado.fecha_siembra, value);
@@ -393,7 +393,7 @@ export default function CicloProductivoForm() {
     
     // Si se cambia el peso, calcular incremento de peso y biomasa
     if (name === 'peso') {
-      const pesoAnterior = ultimoSeguimiento ? ultimoSeguimiento.peso : null;
+      const pesoAnterior = ultimoMuestra ? ultimoMuestra.peso : null;
       const incrementoPeso = calcularIncrementoPeso(value, pesoAnterior);
       newFormData.incremento_peso = incrementoPeso;
 
@@ -412,7 +412,7 @@ export default function CicloProductivoForm() {
     
     // Si se cambia algún valor de balanceado, recalcular el acumulado
     if (name === 'balnova08' || name === 'balnova12' || name === 'balnova22') {
-      const balanceadoAnterior = ultimoSeguimiento ? ultimoSeguimiento.balanceado_acumulado : 0;
+      const balanceadoAnterior = ultimoMuestra ? ultimoMuestra.balanceado_acumulado : 0;
       const balanceadoAcumulado = calcularBalanceadoAcumulado(
         name === 'balnova08' ? value : newFormData.balnova08,
         name === 'balnova12' ? value : newFormData.balnova12,
@@ -464,9 +464,9 @@ export default function CicloProductivoForm() {
       return;
     }
 
-    // Validar que se haya ingresado la fecha de seguimiento
-    if (!formData.fecha_seguimiento) {
-      setError('Debes ingresar la fecha de seguimiento');
+    // Validar que se haya ingresado la fecha de muestra
+    if (!formData.fecha_muestra) {
+      setError('Debes ingresar la fecha de muestra');
       setLoading(false);
       return;
     }
@@ -506,7 +506,7 @@ export default function CicloProductivoForm() {
       if (response.ok && result.success) {
         // Redirigir de vuelta al panel directivo con mensaje de éxito
         navigate('/layout/directivo', { 
-          state: { message: 'Registro de seguimiento creado exitosamente' } 
+          state: { message: 'Registro de muestra creado exitosamente' } 
         });
       } else {
         setError(result.message || `Error al crear el registro (Status: ${response.status})`);
@@ -529,10 +529,10 @@ export default function CicloProductivoForm() {
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-blue-800 mb-2">
-              Nuevo Registro de Seguimiento
+              Nuevo Registro de Muestra
             </h1>
             <p className="text-gray-600">
-              Selecciona un ciclo productivo existente y completa los campos de seguimiento para agregar un nuevo registro.
+              Selecciona un ciclo productivo existente y completa los campos de muestra para agregar un nuevo registro.
             </p>
           </div>
 
@@ -546,7 +546,7 @@ export default function CicloProductivoForm() {
             <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
               <p><strong>No hay ciclos productivos disponibles.</strong></p>
               <p className="text-sm mt-1">
-                Para agregar registros de seguimiento, primero debes crear ciclos productivos en el sistema.
+                Para agregar registros de muestra, primero debes crear ciclos productivos en el sistema.
               </p>
             </div>
           )}
@@ -583,27 +583,27 @@ export default function CicloProductivoForm() {
                   ))}
                 </select>
               )}
-              <p className="text-sm text-gray-500 mt-1">
-                Selecciona el ciclo productivo al cual deseas agregar datos de seguimiento
+              <p className="text-sm text-gray-500 mt-1 leyenda">
+                Selecciona el ciclo productivo al cual deseas agregar datos de muestra
               </p>
             </div>
 
-            {/* Información de seguimiento */}
+            {/* Información de muestra */}
             <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fecha de Seguimiento *
+                  Fecha de Muestra *
                 </label>
                 <input
                   type="date"
-                  name="fecha_seguimiento"
-                  value={formData.fecha_seguimiento}
+                  name="fecha_muestra"
+                  value={formData.fecha_muestra}
                   onChange={handleChange}
                   required
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
-                <p className="text-sm text-gray-500 mt-1">
-                  Selecciona la fecha del seguimiento
+                <p className="text-sm text-gray-500 mt-1 leyenda">
+                  Selecciona la fecha del muestra
                 </p>
               </div>
             </div>
@@ -622,8 +622,8 @@ export default function CicloProductivoForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
                   placeholder="Se calcula automáticamente"
                 />
-                <p className="text-sm text-gray-500 mt-1">
-                  Calculado desde la fecha de siembra hasta la fecha de seguimiento
+                <p className="text-sm text-gray-500 mt-1 leyenda">
+                  Calculado desde la fecha de siembra hasta la fecha de muestra
                 </p>
               </div>
 
@@ -640,11 +640,11 @@ export default function CicloProductivoForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Ej: 15.5"
                 />
-                <p className="text-sm text-gray-500 mt-1">
-                  {ultimoSeguimiento 
-                    ? `Peso anterior: ${ultimoSeguimiento.peso}g` 
+                <p className="text-sm text-gray-500 mt-1 leyenda">
+                  {ultimoMuestra 
+                    ? `Peso anterior: ${ultimoMuestra.peso}g` 
                     : formData.id_ciclo 
-                      ? "Buscando último seguimiento..."
+                      ? "Buscando último muestra..."
                       : "Selecciona un ciclo primero"
                   }
                 </p>
@@ -662,8 +662,8 @@ export default function CicloProductivoForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
                   placeholder="Se calcula automáticamente"
                 />
-                <p className="text-sm text-gray-500 mt-1">
-                  Diferencia entre el peso actual y el peso del último seguimiento
+                <p className="text-sm text-gray-500 mt-1 leyenda">
+                  Diferencia entre el peso actual y el peso del último muestra
                 </p>
               </div>
 
@@ -680,7 +680,7 @@ export default function CicloProductivoForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Ej: 93.33"
                 />
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray-500 mt-1 leyenda">
                   {formData.id_ciclo && ciclosDisponibles.length > 0
                     ? (() => {
                         const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == formData.id_ciclo);
@@ -709,7 +709,7 @@ export default function CicloProductivoForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
                   placeholder="Se calcula automáticamente"
                 />
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray-500 mt-1 leyenda">
                   Cantidad de siembra × (Supervivencia % ÷ 100)
                 </p>
               </div>
@@ -726,7 +726,7 @@ export default function CicloProductivoForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
                   placeholder="Se calcula automáticamente"
                 />
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray-500 mt-1 leyenda">
                   (Peso en g ÷ 454) × Población actual
                 </p>
               </div>
@@ -747,8 +747,8 @@ export default function CicloProductivoForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Ej: 500"
                 />
-                <p className="text-sm text-gray-500 mt-1">
-                  Cantidad consumida en este seguimiento
+                <p className="text-sm text-gray-500 mt-1 leyenda">
+                  Cantidad consumida en este muestra
                 </p>
               </div>
 
@@ -765,8 +765,8 @@ export default function CicloProductivoForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Ej: 750"
                 />
-                <p className="text-sm text-gray-500 mt-1">
-                  Cantidad consumida en este seguimiento
+                <p className="text-sm text-gray-500 mt-1 leyenda">
+                  Cantidad consumida en este muestra
                 </p>
               </div>
 
@@ -783,8 +783,8 @@ export default function CicloProductivoForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Ej: 1000"
                 />
-                <p className="text-sm text-gray-500 mt-1">
-                  Cantidad consumida en este seguimiento
+                <p className="text-sm text-gray-500 mt-1 leyenda">
+                  Cantidad consumida en este muestra
                 </p>
               </div>
 
@@ -800,10 +800,10 @@ export default function CicloProductivoForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
                   placeholder="Se calcula automáticamente"
                 />
-                <p className="text-sm text-gray-500 mt-1">
-                  {ultimoSeguimiento && ultimoSeguimiento.balanceado_acumulado 
-                    ? `Acumulado anterior: ${ultimoSeguimiento.balanceado_acumulado} + consumo actual`
-                    : "Suma del consumo actual (primer seguimiento del ciclo)"
+                <p className="text-sm text-gray-500 mt-1 leyenda">
+                  {ultimoMuestra && ultimoMuestra.balanceado_acumulado 
+                    ? `Acumulado anterior: ${ultimoMuestra.balanceado_acumulado} + consumo actual`
+                    : "Suma del consumo actual (primer muestra del ciclo)"
                   }
                 </p>
               </div>
@@ -820,7 +820,7 @@ export default function CicloProductivoForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
                   placeholder="Se calcula automáticamente"
                 />
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray-500 mt-1 leyenda">
                   Balanceado acumulado ÷ Biomasa (lbs)
                 </p>
               </div>

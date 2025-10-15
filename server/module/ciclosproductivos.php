@@ -14,7 +14,7 @@ if (!isset($conn)) {
     exit();
 }
 
-// Manejar solicitudes POST para crear registros de seguimiento
+// Manejar solicitudes POST para crear registros de muestra
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
         // Obtener datos del cuerpo de la solicitud
@@ -61,9 +61,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             exit();
         }
 
-        // Insertar nuevo registro de seguimiento
+        // Insertar nuevo registro de muestra
         $insertQuery = "
-        INSERT INTO seguimiento (
+        INSERT INTO muestra (
             id_ciclo,
             dias_cultivo,
             peso_promedio,
@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             poblacion_actual,
             indice_supervivencia,
             observaciones,
-            fecha_seguimiento,
+            fecha_muestra,
             id_compania,
             id_usuario_crea,
             id_usuario_actualiza
@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         // Log para debugging
-        error_log("Creando seguimiento para ciclo ID: " . $input['id_ciclo'] . " por usuario ID: " . $input['id_usuario'] . " en compañía ID: " . $input['id_compania']);
+        error_log("Creando muestra para ciclo ID: " . $input['id_ciclo'] . " por usuario ID: " . $input['id_usuario'] . " en compañía ID: " . $input['id_compania']);
         error_log("Datos recibidos: " . json_encode($input));
         
         $stmt = $conn->prepare($insertQuery);
@@ -114,20 +114,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->bindValue(8, $input['poblacion_actual'] ?? null);
         $stmt->bindValue(9, $input['supervivencia'] ?? null);
         $stmt->bindValue(10, $input['observaciones'] ?? null);
-        $stmt->bindValue(11, $input['fecha_seguimiento'] ?? date('Y-m-d'));
+        $stmt->bindValue(11, $input['fecha_muestra'] ?? date('Y-m-d'));
         $stmt->bindValue(12, $input['id_compania']);
         $stmt->bindValue(13, $input['id_usuario']);
         $stmt->bindValue(14, $input['id_usuario']); // Mismo usuario para crea y actualiza en inserción
 
         if ($stmt->execute()) {
-            $seguimientoId = $conn->lastInsertId();
+            $muestraId = $conn->lastInsertId();
             
             // Insertar registros de balanceado si están presentes
             if (!empty($input['balnova08']) || !empty($input['balnova12']) || !empty($input['balnova22'])) {
-                error_log("Insertando registros de balanceado para seguimiento ID: " . $seguimientoId);
+                error_log("Insertando registros de balanceado para muestra ID: " . $muestraId);
                 $balanceadoQuery = "
                 INSERT INTO consumo_balanceado (
-                    id_seguimiento, 
+                    id_muestra, 
                     id_tipo_balanceado, 
                     cantidad, 
                     id_compania, 
@@ -141,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     // Balnova 2.2mm (asumiendo id_tipo_balanceado = 1)
                     if (!empty($input['balnova22'])) {
                         $balanceadoStmt->execute([
-                            $seguimientoId, 
+                            $muestraId, 
                             1, 
                             $input['balnova22'], 
                             $input['id_compania'], 
@@ -153,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     // Balnova 1.2mm (asumiendo id_tipo_balanceado = 2)
                     if (!empty($input['balnova12'])) {
                         $balanceadoStmt->execute([
-                            $seguimientoId, 
+                            $muestraId, 
                             2, 
                             $input['balnova12'], 
                             $input['id_compania'], 
@@ -165,7 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     // Balnova 0.8mm (asumiendo id_tipo_balanceado = 3)
                     if (!empty($input['balnova08'])) {
                         $balanceadoStmt->execute([
-                            $seguimientoId, 
+                            $muestraId, 
                             3, 
                             $input['balnova08'], 
                             $input['id_compania'], 
@@ -182,8 +182,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             $response = [
                 'success' => true,
-                'message' => 'Registro de seguimiento creado exitosamente',
-                'data' => ['id_seguimiento' => $seguimientoId]
+                'message' => 'Registro de muestra creado exitosamente',
+                'data' => ['id_muestra' => $muestraId]
             ];
             echo json_encode($response);
             http_response_code(201);
@@ -192,10 +192,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
     } catch (Exception $e) {
-        error_log("Error al crear seguimiento: " . $e->getMessage());
+        error_log("Error al crear muestra: " . $e->getMessage());
         $response = [
             'success' => false,
-            'message' => 'Error al crear el registro de seguimiento'
+            'message' => 'Error al crear el registro de muestra'
         ];
         echo json_encode($response);
         http_response_code(500);
@@ -205,35 +205,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 // Manejar solicitudes GET (código existente)
 try {
-    // Verificar si se solicita el último seguimiento de un ciclo específico
+    // Verificar si se solicita el último muestra de un ciclo específico
     if (isset($_GET['id_ciclo']) && isset($_GET['ultimo'])) {
         $id_ciclo = $_GET['id_ciclo'];
         
         // Log para debugging
-        error_log("Buscando último seguimiento para ciclo ID: " . $id_ciclo);
+        error_log("Buscando último muestra para ciclo ID: " . $id_ciclo);
         
-        // Consulta de prueba para ver si hay algún seguimiento en la tabla
-        $testQuery = "SELECT COUNT(*) as total FROM seguimiento WHERE id_ciclo = ?";
+        // Consulta de prueba para ver si hay algún muestra en la tabla
+        $testQuery = "SELECT COUNT(*) as total FROM muestra WHERE id_ciclo = ?";
         $testStmt = $conn->prepare($testQuery);
         $testStmt->bindValue(1, $id_ciclo);
         $testStmt->execute();
         $testResult = $testStmt->fetch(PDO::FETCH_ASSOC);
-        error_log("Total de seguimientos para este ciclo: " . $testResult['total']);
+        error_log("Total de muestras para este ciclo: " . $testResult['total']);
         
-        // Consulta simplificada para obtener el último seguimiento del ciclo
+        // Consulta simplificada para obtener el último muestra del ciclo
         $queryUltimo = "
         SELECT 
             s.peso_promedio as peso,
             s.balanceado_acumulado,
-            s.fecha_seguimiento,
-            s.id_seguimiento,
+            s.fecha_muestra,
+            s.id_muestra,
             s.id_ciclo
         FROM 
-            seguimiento s 
+            muestra s 
         WHERE 
             s.id_ciclo = ?
         ORDER BY 
-            s.fecha_seguimiento DESC 
+            s.fecha_muestra DESC 
         LIMIT 1
         ";
         
@@ -251,15 +251,15 @@ try {
             error_log("Error ejecutando consulta: " . implode(', ', $stmtUltimo->errorInfo()));
         }
         
-        $ultimoSeguimiento = $stmtUltimo->fetchAll(PDO::FETCH_ASSOC);
+        $ultimoMuestra = $stmtUltimo->fetchAll(PDO::FETCH_ASSOC);
         
-        error_log("Resultados encontrados: " . count($ultimoSeguimiento));
-        error_log("Datos del último seguimiento: " . json_encode($ultimoSeguimiento));
+        error_log("Resultados encontrados: " . count($ultimoMuestra));
+        error_log("Datos del último muestra: " . json_encode($ultimoMuestra));
         
         $response = [
             'success' => true,
-            'data' => $ultimoSeguimiento,
-            'total' => count($ultimoSeguimiento)
+            'data' => $ultimoMuestra,
+            'total' => count($ultimoMuestra)
         ];
         
         echo json_encode($response);
@@ -296,12 +296,12 @@ try {
         s.poblacion_actual AS 'Población actual',
         s.indice_supervivencia AS 'Sobrev. Actual %',
         s.observaciones AS 'Observaciones',
-        s.fecha_seguimiento AS 'Fecha Seguimiento'
+        s.fecha_muestra AS 'Fecha Muestra'
     FROM
         piscina p
         INNER JOIN ciclo_productivo cp ON cp.id_piscina = p.id_piscina
-        LEFT JOIN seguimiento s ON cp.id_ciclo = s.id_ciclo
-        LEFT JOIN consumo_balanceado cb ON s.id_seguimiento = cb.id_seguimiento
+        LEFT JOIN muestra s ON cp.id_ciclo = s.id_ciclo
+        LEFT JOIN consumo_balanceado cb ON s.id_muestra = cb.id_muestra
         LEFT JOIN tipo_balanceado tb ON cb.id_tipo_balanceado = tb.id_tipo_balanceado
     ";
 
@@ -323,14 +323,14 @@ try {
     } else {
         // Si piscina es 'todas', manejar los filtros de fecha
         if ($filters['startDate'] && $filters['endDate']) {
-            $whereCondition .= " AND s.fecha_seguimiento BETWEEN ? AND ?";
+            $whereCondition .= " AND s.fecha_muestra BETWEEN ? AND ?";
             $params[] = $filters['startDate'];
             $params[] = $filters['endDate'];
         } else {
-            // Si no hay filtro de fecha, traer solo la última fecha de seguimiento por piscina
-            $whereCondition .= " AND s.fecha_seguimiento = (
-                SELECT MAX(fecha_seguimiento)
-                FROM seguimiento
+            // Si no hay filtro de fecha, traer solo la última fecha de muestra por piscina
+            $whereCondition .= " AND s.fecha_muestra = (
+                SELECT MAX(fecha_muestra)
+                FROM muestra
                 WHERE id_ciclo IN (SELECT id_ciclo FROM ciclo_productivo WHERE id_piscina = p.id_piscina))";
         }
     }
@@ -354,9 +354,9 @@ try {
         s.poblacion_actual,
         s.indice_supervivencia,
         s.observaciones,
-        s.fecha_seguimiento
+        s.fecha_muestra
     ORDER BY 
-        p.id_piscina, s.fecha_seguimiento desc;";
+        p.id_piscina, s.fecha_muestra desc;";
 
     // Preparar y ejecutar la consulta
     $stmt = $conn->prepare($query);

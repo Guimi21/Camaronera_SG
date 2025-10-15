@@ -70,7 +70,7 @@ export default function Header() {
           return (
             <div key={menu.id_menu} className="w-full">
               <button
-                className={`flex items-center p-2 rounded hover:bg-gray-700 ${location.pathname === menu.ruta ? "bg-gray-700" : ""}`}
+                className={`header-button flex items-center p-2 rounded hover:bg-gray-700 ${location.pathname === menu.ruta ? "bg-gray-700" : ""}`}
                 onClick={() => toggleMenu(menu.id_menu, menu.ruta)} // Abrir/cerrar el menú acordeón
               >
                 {IconComponent && <IconComponent className="mr-2" />}

@@ -131,7 +131,7 @@ export default function PiscinaForm() {
               maxLength={50}
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 mt-1 leyenda">
               Identificador único de la piscina (máximo 50 caracteres)
             </p>
           </div>
@@ -153,7 +153,7 @@ export default function PiscinaForm() {
               step="0.01"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 mt-1 leyenda">
               Área de la piscina en hectáreas
             </p>
           </div>
@@ -176,7 +176,7 @@ export default function PiscinaForm() {
             maxLength={255}
             required
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-500 mt-1 leyenda">
             Describa la ubicación o referencias geográficas de la piscina (máximo 255 caracteres)
           </p>
         </div>

@@ -214,7 +214,7 @@ export default function MonitoreoPiscinas() {
       {/* Header */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">Monitoreo de Piscinas</h1>
-        <p className="text-gray-600">Panel de control para el seguimiento de piscinas de la compañía</p>
+        <p className="text-gray-600">Panel de control para el muestra de piscinas de la compañía</p>
       </div>
 
       {/* 
