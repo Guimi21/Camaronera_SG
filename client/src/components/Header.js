@@ -7,7 +7,7 @@ import * as MdIcons from "react-icons/md";
 import logo from "../assets/logos/logo.png";
 
 export default function Header() {
-  const { user, logout, grupoEmpresarial, compania, menus } = useAuth();
+  const { user, nombre, logout, grupoEmpresarial, compania, menus } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Estado para manejar el menú desplegable en móviles
@@ -99,7 +99,7 @@ export default function Header() {
       {/* Icono de usuario y botón de logout alineado a la derecha */}
       <div className="flex items-center space-x-4 ml-auto">
         <FaUserCircle className="text-2xl text-gray-300" />
-        <span className="ml-2 hidden sm:inline">Hola, {user}</span>
+        <span className="ml-2 hidden sm:inline">Hola, {nombre}</span>
         <button
           onClick={handleLogout}
           className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"

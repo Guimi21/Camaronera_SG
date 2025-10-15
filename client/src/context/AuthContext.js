@@ -6,8 +6,9 @@ const AuthContext = createContext();
 let inactivityTimer = null;
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [tipoUsuario, setTipoUsuario] = useState(null);
+  const [nombre, setNombre] = useState(null); // Estado para el nombre del usuario
+  const [user, setUser] = useState(null);  // Estado para el nickname del usuario
+  const [tipoUsuario, setTipoUsuario] = useState(null); // Estado para el tipo de usuario
   const [menus, setMenus] = useState([]);  // Menús del usuario
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
@@ -19,10 +20,11 @@ export const AuthProvider = ({ children }) => {
 
   // Logout
   const logout = useCallback(() => {
-    setUser(null);
+    setNombre(null); // Limpiar nombre al hacer logout
+    setUser(null); // Limpiar usuario al hacer logout
     setTipoUsuario(null); // Limpiar tipoUsuario al hacer logout
     setMenus([]);  // Limpiar menús al hacer logout
-    setToken(null);
+    setToken(null); // Limpiar token al hacer logout
     setGrupoEmpresarial(null); // Limpiar grupo empresarial
     setCompania(null); // Limpiar compañía
     setIdCompania(null); // Limpiar ID compañía
@@ -46,7 +48,8 @@ export const AuthProvider = ({ children }) => {
       }
 
       setToken(parsedData.token);
-      setUser(parsedData.usuario);
+      setNombre(parsedData.nombre); // Guardamos el nombre del usuario
+      setUser(parsedData.usuario);  // Guardamos el nickname del usuario
       setTipoUsuario(parsedData.tipo_usuario);  // Asegúrate de que 'tipo_usuario' se guarde aquí
       setGrupoEmpresarial(parsedData.grupo_empresarial); // Guardamos grupo empresarial
       setCompania(parsedData.compania); // Guardamos compañía
@@ -85,9 +88,10 @@ export const AuthProvider = ({ children }) => {
         throw new Error(jsonResponse.error || "Credenciales incorrectas");
       }
 
-      setUser(jsonResponse.usuario);
+      setNombre(jsonResponse.nombre); // Guardamos el nombre del usuario
+      setUser(jsonResponse.usuario);  // Guardamos el nickname del usuario
       setTipoUsuario(jsonResponse.tipo_usuario);  // Asegúrate de almacenar el tipo de usuario aquí
-      setMenus(jsonResponse.menus);
+      setMenus(jsonResponse.menus); // Guardamos los menús
       setGrupoEmpresarial(jsonResponse.grupo_empresarial); // Guardamos grupo empresarial
       setCompania(jsonResponse.compania); // Guardamos compañía
       setIdCompania(jsonResponse.id_compania); // Guardamos ID compañía
@@ -103,6 +107,7 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider
       value={{
+        nombre,
         user,
         tipoUsuario, 
         menus,
