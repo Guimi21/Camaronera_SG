@@ -11,9 +11,11 @@ import Digitador from "./pages/Modulos/Digitador";
 import Directivo from "./pages/Modulos/Directivo";
 import MonitoreoPiscinas from "./pages/Modulos/MonitoreoPiscinas";
 import MonitoreoBalanceados from "./pages/Modulos/MonitoreoBalanceados";
+import MonitoreoCiclos from "./pages/Modulos/MonitoreoCiclos";
 
 // Formularios
 import PiscinaForm from "./pages/Modulos/Form/PiscinaForm";
+import MuestraForm from "./pages/Modulos/Form/MuestraForm";
 import CicloProductivoForm from "./pages/Modulos/Form/CicloProductivoForm";
 import BalanceadoForm from "./pages/Modulos/Form/BalanceadoForm";
 
@@ -65,12 +67,14 @@ function App() {
 
             {/* Formularios */}
             <Route path="form/piscina" element={<PiscinaForm />} />
+            <Route path="form/muestra" element={<MuestraForm />} />
             <Route path="form/ciclo" element={<CicloProductivoForm />} />
             <Route path="form/balanceado" element={<BalanceadoForm />} />
 
             {/* Dashboard - Monitoreo */}
             <Route path="dashboard/monitoreo-piscinas" element={<MonitoreoPiscinas />} />
             <Route path="dashboard/monitoreo-balanceados" element={<MonitoreoBalanceados />} />
+            <Route path="dashboard/monitoreo-ciclos" element={<MonitoreoCiclos />} />
           </Route>
 
           {/* Redirección a login si no hay ninguna ruta válida */}

@@ -303,13 +303,23 @@ export default function Directivo() {
     fetchTableData(filterParams);
   };
 
+  // Formatear fecha para mostrar (evita problemas de zona horaria)
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    // Dividir la fecha en partes (YYYY-MM-DD) para evitar problemas de zona horaria
+    const [year, month, day] = dateString.split('T')[0].split('-');
+    // Crear fecha sin conversión de zona horaria
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString('es-ES');
+  };
+
   // Descargar los datos filtrados como Excel
   const handleDownload = () => {
     // Preparar datos para Excel
     const excelData = filteredTableData.map(item => ({
       "Piscina": item.piscina,
       "Has": item.has,
-      "Fecha Siembra": item.fecha_siembra,
+      "Fecha Siembra": formatDate(item.fecha_siembra),
       "Días de Cultivo": item.dias_cultivo,
       "Siembra/Larvas": item.siembra_larvas,
       "Densidad (/ha)": item.densidad_ha,
@@ -325,7 +335,7 @@ export default function Directivo() {
       "Población Actual": item.poblacion_actual,
       "Supervivencia (%)": item.supervivencia,
       "Observaciones": item.observaciones,
-      "Fecha Muestra": item.fecha_muestra
+      "Fecha Muestra": formatDate(item.fecha_muestra)
     }));
     
     const ws = XLSX.utils.json_to_sheet(excelData);
@@ -464,7 +474,7 @@ export default function Directivo() {
                         <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.piscina}</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.has}</td>
-                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.fecha_siembra}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{formatDate(item.fecha_siembra)}</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.dias_cultivo}</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.siembra_larvas ? parseInt(item.siembra_larvas) : 0}</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.densidad_ha}</td>
@@ -480,7 +490,7 @@ export default function Directivo() {
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.poblacion_actual ? parseInt(item.poblacion_actual) : 0}</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.supervivencia}%</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.observaciones}</td>
-                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.fecha_muestra}</td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">{formatDate(item.fecha_muestra)}</td>
                         </tr>
                       ))
                     ) : (
@@ -518,7 +528,10 @@ export default function Directivo() {
                 
                 <select 
                   value={itemsPerPage} 
-                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
                   className="border rounded p-2 text-sm"
                 >
                   <option value="5">5 por página</option>
