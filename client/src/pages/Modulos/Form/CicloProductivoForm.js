@@ -23,17 +23,6 @@ export default function CicloProductivoForm() {
   const [loadingPiscinas, setLoadingPiscinas] = useState(true);
   const [error, setError] = useState('');
 
-  // Debug: verificar que idCompania e idUsuario estén disponibles
-  useEffect(() => {
-    console.log('AuthContext values:', { idCompania, idUsuario });
-    if (!idCompania) {
-      console.warn('⚠️ idCompania no está disponible');
-    }
-    if (!idUsuario) {
-      console.warn('⚠️ idUsuario no está disponible');
-    }
-  }, [idCompania, idUsuario]);
-
   useEffect(() => {
     const fetchPiscinas = async () => {
       if (!idCompania) {
@@ -190,9 +179,6 @@ export default function CicloProductivoForm() {
         id_usuario_crea: idUsuario,
         id_usuario_actualiza: idUsuario // Mismo usuario que crea el registro
       };
-
-      console.log('Datos a enviar:', dataToSend);
-      console.log('idCompania:', idCompania, 'idUsuario:', idUsuario);
 
       const response = await fetch(`${API_BASE_URL}/module/ciclos.php`, {
         method: 'POST',
