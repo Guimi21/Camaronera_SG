@@ -225,12 +225,13 @@ export default function MonitoreoCiclos() {
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Densidad</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo Siembra</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                <th className="py-2 px-4 border-b text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {currentData.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="py-4 text-center text-gray-500">
+                  <td colSpan="9" className="py-4 text-center text-gray-500">
                     No se encontraron ciclos productivos
                   </td>
                 </tr>
@@ -266,6 +267,24 @@ export default function MonitoreoCiclos() {
                       }`}>
                         {ciclo.estado === 'EN_CURSO' ? 'En Curso' : 'Finalizado'}
                       </span>
+                    </td>
+                    <td className="py-2 px-4 border-b text-sm text-center">
+                      <button
+                        onClick={() => navigate(`/layout/form/editar-ciclo/${ciclo.id_ciclo}`)}
+                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200 flex items-center gap-1 mx-auto"
+                        title="Editar ciclo productivo"
+                      >
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          className="h-4 w-4" 
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Editar
+                      </button>
                     </td>
                   </tr>
                 ))

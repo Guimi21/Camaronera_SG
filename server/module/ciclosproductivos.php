@@ -152,6 +152,159 @@ try {
         exit();
     }
     
+    // Manejar solicitud PUT para actualizar un ciclo productivo existente
+    if ($method === 'PUT') {
+        // Leer el cuerpo de la solicitud JSON
+        $input = json_decode(file_get_contents('php://input'), true);
+        
+        // Validar que se envíe el ID del ciclo a actualizar
+        if (!isset($input['id_ciclo']) || empty($input['id_ciclo'])) {
+            $response = [
+                'success' => false,
+                'message' => 'ID de ciclo requerido'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+        
+        // Validar campos requeridos
+        if (!isset($input['id_piscina']) || empty($input['id_piscina'])) {
+            $response = [
+                'success' => false,
+                'message' => 'ID de piscina requerido'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+        
+        if (!isset($input['fecha_siembra']) || empty($input['fecha_siembra'])) {
+            $response = [
+                'success' => false,
+                'message' => 'Fecha de siembra requerida'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+        
+        if (!isset($input['cantidad_siembra']) || empty($input['cantidad_siembra'])) {
+            $response = [
+                'success' => false,
+                'message' => 'Cantidad de siembra requerida'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+        
+        if (!isset($input['densidad']) || empty($input['densidad'])) {
+            $response = [
+                'success' => false,
+                'message' => 'Densidad requerida'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+        
+        if (!isset($input['tipo_siembra']) || empty($input['tipo_siembra'])) {
+            $response = [
+                'success' => false,
+                'message' => 'Tipo de siembra requerido'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+        
+        if (!isset($input['estado']) || empty($input['estado'])) {
+            $response = [
+                'success' => false,
+                'message' => 'Estado requerido'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+        
+        if (!isset($input['id_compania']) || empty($input['id_compania'])) {
+            $response = [
+                'success' => false,
+                'message' => 'ID de compañía requerido'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+        
+        if (!isset($input['id_usuario_actualiza']) || empty($input['id_usuario_actualiza'])) {
+            $response = [
+                'success' => false,
+                'message' => 'ID de usuario requerido'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+        
+        // Verificar que el ciclo pertenece a la compañía del usuario
+        $verifyQuery = "SELECT id_ciclo FROM ciclo_productivo WHERE id_ciclo = ? AND id_compania = ?";
+        $verifyStmt = $conn->prepare($verifyQuery);
+        $verifyStmt->bindValue(1, $input['id_ciclo'], PDO::PARAM_INT);
+        $verifyStmt->bindValue(2, $input['id_compania'], PDO::PARAM_INT);
+        $verifyStmt->execute();
+        
+        if ($verifyStmt->rowCount() === 0) {
+            $response = [
+                'success' => false,
+                'message' => 'Ciclo productivo no encontrado o no pertenece a su compañía'
+            ];
+            echo json_encode($response);
+            http_response_code(404);
+            exit();
+        }
+        
+        // Actualizar el ciclo productivo
+        $query = "
+            UPDATE ciclo_productivo SET
+                id_piscina = ?,
+                fecha_siembra = ?,
+                fecha_cosecha = ?,
+                cantidad_siembra = ?,
+                densidad = ?,
+                tipo_siembra = ?,
+                estado = ?,
+                id_usuario_actualiza = ?,
+                fecha_actualizacion = CURRENT_TIMESTAMP
+            WHERE id_ciclo = ? AND id_compania = ?
+        ";
+        
+        $stmt = $conn->prepare($query);
+        $stmt->bindValue(1, $input['id_piscina'], PDO::PARAM_INT);
+        $stmt->bindValue(2, $input['fecha_siembra']);
+        $stmt->bindValue(3, $input['fecha_cosecha'] ?? null);
+        $stmt->bindValue(4, $input['cantidad_siembra'], PDO::PARAM_INT);
+        $stmt->bindValue(5, $input['densidad']);
+        $stmt->bindValue(6, $input['tipo_siembra']);
+        $stmt->bindValue(7, $input['estado']);
+        $stmt->bindValue(8, $input['id_usuario_actualiza'], PDO::PARAM_INT);
+        $stmt->bindValue(9, $input['id_ciclo'], PDO::PARAM_INT);
+        $stmt->bindValue(10, $input['id_compania'], PDO::PARAM_INT);
+        
+        $stmt->execute();
+        
+        $response = [
+            'success' => true,
+            'message' => 'Ciclo productivo actualizado exitosamente'
+        ];
+        
+        echo json_encode($response);
+        http_response_code(200);
+        exit();
+    }
+    
     // Manejar solicitud GET para obtener ciclos productivos
     if ($method === 'GET') {
         // Obtener id_compania de los parámetros de la consulta
@@ -164,6 +317,58 @@ try {
             ];
             echo json_encode($response);
             http_response_code(400);
+            exit();
+        }
+
+        // Si se proporciona un id_ciclo específico, obtener solo ese ciclo
+        if (isset($_GET['id_ciclo']) && !empty($_GET['id_ciclo'])) {
+            $id_ciclo = $_GET['id_ciclo'];
+            
+            $query = "
+            SELECT 
+                cp.id_ciclo,
+                cp.id_piscina,
+                p.codigo AS codigo_piscina,
+                p.hectareas,
+                p.ubicacion,
+                cp.fecha_siembra,
+                cp.fecha_cosecha,
+                cp.cantidad_siembra,
+                cp.densidad,
+                cp.tipo_siembra,
+                cp.estado,
+                cp.id_compania
+            FROM 
+                ciclo_productivo cp
+                INNER JOIN piscina p ON cp.id_piscina = p.id_piscina
+            WHERE 
+                cp.id_ciclo = ? AND cp.id_compania = ?
+            ";
+            
+            $stmt = $conn->prepare($query);
+            $stmt->bindValue(1, $id_ciclo, PDO::PARAM_INT);
+            $stmt->bindValue(2, $id_compania, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            $ciclo = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$ciclo) {
+                $response = [
+                    'success' => false,
+                    'message' => 'Ciclo productivo no encontrado'
+                ];
+                echo json_encode($response);
+                http_response_code(404);
+                exit();
+            }
+            
+            $response = [
+                'success' => true,
+                'data' => $ciclo
+            ];
+            
+            echo json_encode($response);
+            http_response_code(200);
             exit();
         }
 

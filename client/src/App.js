@@ -17,6 +17,7 @@ import MonitoreoCiclos from "./pages/Modulos/MonitoreoCiclos";
 import PiscinaForm from "./pages/Modulos/Form/PiscinaForm";
 import MuestraForm from "./pages/Modulos/Form/MuestraForm";
 import CicloProductivoForm from "./pages/Modulos/Form/CicloProductivoForm";
+import EditarCicloProductivoForm from "./pages/Modulos/Form/EditarCicloProductivoForm";
 import BalanceadoForm from "./pages/Modulos/Form/BalanceadoForm";
 
 // Redirección por defecto según tipo_usuario
@@ -69,6 +70,7 @@ function App() {
             <Route path="form/piscina" element={<PiscinaForm />} />
             <Route path="form/muestra" element={<MuestraForm />} />
             <Route path="form/ciclo" element={<CicloProductivoForm />} />
+            <Route path="form/editar-ciclo/:id" element={<EditarCicloProductivoForm />} />
             <Route path="form/balanceado" element={<BalanceadoForm />} />
 
             {/* Dashboard - Monitoreo */}
