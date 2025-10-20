@@ -45,7 +45,7 @@ export default function MuestraForm() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/module/ciclos.php?id_compania=${idCompania}`, {
+      const response = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php?id_compania=${idCompania}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -83,7 +83,7 @@ export default function MuestraForm() {
     }
 
     try {
-      const url = `${API_BASE_URL}/module/ciclosproductivos.php?id_ciclo=${idCiclo}&ultimo=true`;
+      const url = `${API_BASE_URL}/module/muestras.php?id_ciclo=${idCiclo}&ultimo=true`;
       
       const response = await fetch(url, {
         method: 'GET',
@@ -495,7 +495,7 @@ export default function MuestraForm() {
         id_compania: idCompania
       };
       
-      const response = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php`, {
+      const response = await fetch(`${API_BASE_URL}/module/muestras.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -180,7 +180,7 @@ export default function CicloProductivoForm() {
         id_usuario_actualiza: idUsuario // Mismo usuario que crea el registro
       };
 
-      const response = await fetch(`${API_BASE_URL}/module/ciclos.php`, {
+      const response = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

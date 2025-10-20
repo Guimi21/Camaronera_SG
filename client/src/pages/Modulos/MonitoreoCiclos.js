@@ -34,7 +34,7 @@ export default function MonitoreoCiclos() {
       const queryParams = new URLSearchParams();
       queryParams.append('id_compania', idCompania);
       
-      const response = await fetch(`${API_BASE_URL}/module/ciclos.php?${queryParams.toString()}`, {
+      const response = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php?${queryParams.toString()}`, {
         method: 'GET',
         credentials: 'include',
         headers: {

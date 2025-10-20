@@ -84,7 +84,7 @@ export default function Directivo() {
       // Agregar el id_compania del usuario autenticado
       queryParams.append('id_compania', idCompania);
       
-      const response = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php?${queryParams.toString()}`, {
+      const response = await fetch(`${API_BASE_URL}/module/muestras.php?${queryParams.toString()}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -167,7 +167,7 @@ export default function Directivo() {
       queryParams.append('id_compania', idCompania);
       
       // Hacer la llamada GET con los parámetros de la URL
-      const response = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php?${queryParams.toString()}`, {
+      const response = await fetch(`${API_BASE_URL}/module/muestras.php?${queryParams.toString()}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
