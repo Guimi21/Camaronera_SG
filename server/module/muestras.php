@@ -205,6 +205,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 // Manejar solicitudes GET (código existente)
 try {
+    // Verificar si se solicita el conteo de muestras de un ciclo específico
+    if (isset($_GET['id_ciclo']) && isset($_GET['count'])) {
+        $id_ciclo = $_GET['id_ciclo'];
+        
+        // Consulta para contar las muestras del ciclo
+        $countQuery = "SELECT COUNT(*) as total FROM muestra WHERE id_ciclo = ?";
+        $countStmt = $conn->prepare($countQuery);
+        $countStmt->bindValue(1, $id_ciclo);
+        $countStmt->execute();
+        $countResult = $countStmt->fetch(PDO::FETCH_ASSOC);
+        
+        $response = [
+            'success' => true,
+            'data' => [
+                'id_ciclo' => $id_ciclo,
+                'total_muestras' => (int)$countResult['total'],
+                'tiene_muestras' => (int)$countResult['total'] > 0
+            ]
+        ];
+        
+        echo json_encode($response);
+        http_response_code(200);
+        exit();
+    }
+    
     // Verificar si se solicita el último muestra de un ciclo específico
     if (isset($_GET['id_ciclo']) && isset($_GET['ultimo'])) {
         $id_ciclo = $_GET['id_ciclo'];

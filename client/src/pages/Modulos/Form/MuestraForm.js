@@ -579,11 +579,21 @@ export default function MuestraForm() {
                       : "Seleccionar piscina y fecha de siembra"
                     }
                   </option>
-                  {ciclosDisponibles.map(ciclo => (
-                    <option key={ciclo.id_ciclo} value={ciclo.id_ciclo}>
-                      Piscina {ciclo.codigo_piscina} - Siembra: {new Date(ciclo.fecha_siembra).toLocaleDateString('es-ES')} ({ciclo.hectareas} has, {ciclo.tipo_siembra}, Densidad: {ciclo.densidad}/ha)
-                    </option>
-                  ))}
+                  {ciclosDisponibles.map(ciclo => {
+                    // Formatear fecha sin problemas de zona horaria
+                    const formatFecha = (fechaString) => {
+                      if (!fechaString) return 'N/A';
+                      const [year, month, day] = fechaString.split('T')[0].split('-');
+                      const fecha = new Date(year, month - 1, day);
+                      return fecha.toLocaleDateString('es-ES');
+                    };
+                    
+                    return (
+                      <option key={ciclo.id_ciclo} value={ciclo.id_ciclo}>
+                        Piscina {ciclo.codigo_piscina} - Siembra: {formatFecha(ciclo.fecha_siembra)} ({ciclo.hectareas} has, {ciclo.tipo_siembra}, Densidad: {ciclo.densidad}/ha)
+                      </option>
+                    );
+                  })}
                 </select>
               )}
               <p className="text-sm text-gray-500 mt-1 leyenda">

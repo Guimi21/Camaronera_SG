@@ -24,6 +24,7 @@ export default function EditarCicloProductivoForm() {
   const [loadingPiscinas, setLoadingPiscinas] = useState(true);
   const [loadingCiclo, setLoadingCiclo] = useState(true);
   const [error, setError] = useState('');
+  const [tieneMuestras, setTieneMuestras] = useState(false); // Nuevo estado para verificar si tiene muestras
 
   // Cargar datos del ciclo productivo a editar
   useEffect(() => {
@@ -70,6 +71,10 @@ export default function EditarCicloProductivoForm() {
             tipo_siembra: ciclo.tipo_siembra || '',
             estado: ciclo.estado || 'EN_CURSO'
           });
+          
+          // Verificar si el ciclo tiene muestras asociadas
+          checkMuestras(ciclo.id_ciclo);
+          
           setError('');
         } else {
           throw new Error(result.message || "Error al obtener datos del ciclo");
@@ -79,6 +84,36 @@ export default function EditarCicloProductivoForm() {
         setError(err.message || "No se pudieron cargar los datos del ciclo.");
       } finally {
         setLoadingCiclo(false);
+      }
+    };
+    
+    // Función para verificar si el ciclo tiene muestras
+    const checkMuestras = async (idCiclo) => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/module/muestras.php?id_ciclo=${idCiclo}&count=true`,
+          {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          setTieneMuestras(result.data.tiene_muestras);
+        }
+      } catch (err) {
+        console.error("Error checking muestras:", err);
+        // En caso de error, asumir que no tiene muestras para permitir edición
+        setTieneMuestras(false);
       }
     };
 
@@ -218,6 +253,11 @@ export default function EditarCicloProductivoForm() {
       return;
     }
     
+    if (formData.estado === 'FINALIZADO' && !formData.fecha_cosecha) {
+      setError('La fecha de cosecha es requerida cuando el estado es "Finalizado".');
+      return;
+    }
+    
     if (!idCompania || !idUsuario) {
       setError('No se pudo obtener la información del usuario o compañía.');
       return;
@@ -307,6 +347,24 @@ export default function EditarCicloProductivoForm() {
         </div>
       )}
 
+      {tieneMuestras && (
+        <div className="mb-6 p-4 bg-blue-100 border border-blue-400 text-blue-700 rounded">
+          <p><strong>ℹ️ Ciclo con muestras registradas</strong></p>
+          <p className="text-sm mt-1">
+            Este ciclo productivo tiene muestras asociadas. Solo se pueden editar los campos: Fecha de Cosecha, Tipo de Siembra y Estado.
+          </p>
+        </div>
+      )}
+
+      {formData.estado === 'FINALIZADO' && !formData.fecha_cosecha && (
+        <div className="mb-6 p-4 bg-orange-100 border border-orange-400 text-orange-700 rounded">
+          <p><strong>⚠️ Fecha de cosecha requerida</strong></p>
+          <p className="text-sm mt-1">
+            Para finalizar un ciclo productivo, debe ingresar la fecha de cosecha. El botón "Guardar Cambios" estará deshabilitado hasta que ingrese esta fecha.
+          </p>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label htmlFor="id_piscina" className="block text-sm font-medium text-gray-700 mb-2">
@@ -317,8 +375,10 @@ export default function EditarCicloProductivoForm() {
             name="id_piscina"
             value={formData.id_piscina}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            disabled={piscinas.length === 0}
+            className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              tieneMuestras ? 'bg-gray-50 cursor-not-allowed' : ''
+            }`}
+            disabled={piscinas.length === 0 || tieneMuestras}
             required
           >
             <option value="">
@@ -349,7 +409,10 @@ export default function EditarCicloProductivoForm() {
               name="fecha_siembra"
               value={formData.fecha_siembra}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                tieneMuestras ? 'bg-gray-50 cursor-not-allowed' : ''
+              }`}
+              disabled={tieneMuestras}
               required
             />
             <p className="text-xs text-gray-500 mt-1 leyenda">
@@ -359,7 +422,8 @@ export default function EditarCicloProductivoForm() {
 
           <div>
             <label htmlFor="fecha_cosecha" className="block text-sm font-medium text-gray-700 mb-2">
-              Fecha de Cosecha (Estimada)
+              Fecha de Cosecha {formData.estado === 'FINALIZADO' && <span className="text-red-600">*</span>}
+              {formData.estado === 'FINALIZADO' && <span className="text-xs text-red-600"> (Requerida para ciclos finalizados)</span>}
             </label>
             <input
               type="date"
@@ -367,10 +431,18 @@ export default function EditarCicloProductivoForm() {
               name="fecha_cosecha"
               value={formData.fecha_cosecha}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                formData.estado === 'FINALIZADO' && !formData.fecha_cosecha
+                  ? 'border-red-300 bg-red-50'
+                  : 'border-gray-300'
+              }`}
+              required={formData.estado === 'FINALIZADO'}
             />
             <p className="text-xs text-gray-500 mt-1 leyenda">
-              Fecha estimada de cosecha (opcional)
+              {formData.estado === 'FINALIZADO' 
+                ? 'Fecha de cosecha es obligatoria para ciclos finalizados'
+                : 'Fecha estimada de cosecha (opcional)'
+              }
             </p>
           </div>
 
@@ -384,10 +456,13 @@ export default function EditarCicloProductivoForm() {
               name="cantidad_siembra"
               value={formData.cantidad_siembra}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                tieneMuestras ? 'bg-gray-50 cursor-not-allowed' : ''
+              }`}
               placeholder="Ej: 500000"
               min="1"
               step="1"
+              disabled={tieneMuestras}
               required
             />
             <p className="text-xs text-gray-500 mt-1 leyenda">
@@ -461,9 +536,9 @@ export default function EditarCicloProductivoForm() {
         <div className="flex flex-col sm:flex-row gap-4 pt-6">
           <button
             type="submit"
-            disabled={loading || piscinas.length === 0}
+            disabled={loading || piscinas.length === 0 || (formData.estado === 'FINALIZADO' && !formData.fecha_cosecha)}
             className={`flex-1 sm:flex-none px-6 py-3 rounded-md font-medium text-white transition-colors duration-200 ${
-              loading || piscinas.length === 0
+              loading || piscinas.length === 0 || (formData.estado === 'FINALIZADO' && !formData.fecha_cosecha)
                 ? 'bg-gray-400 cursor-not-allowed'
                 : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
             }`}

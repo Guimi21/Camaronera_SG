@@ -24,7 +24,7 @@ export default function CicloProductivoForm() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchPiscinas = async () => {
+    const fetchPiscinasDisponibles = async () => {
       if (!idCompania) {
         setError("No se pudo obtener la información de la compañía del usuario.");
         setLoadingPiscinas(false);
@@ -32,7 +32,8 @@ export default function CicloProductivoForm() {
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/module/piscinas.php?id_compania=${idCompania}`, {
+        // Obtener todas las piscinas
+        const piscinasResponse = await fetch(`${API_BASE_URL}/module/piscinas.php?id_compania=${idCompania}`, {
           method: 'GET',
           credentials: 'include',
           headers: {
@@ -40,28 +41,56 @@ export default function CicloProductivoForm() {
           },
         });
 
-        if (!response.ok) {
-          throw new Error(`Error HTTP: ${response.status}`);
+        if (!piscinasResponse.ok) {
+          throw new Error(`Error HTTP: ${piscinasResponse.status}`);
         }
 
-        const result = await response.json();
+        const piscinasResult = await piscinasResponse.json();
         
-        if (result.success) {
-          setPiscinas(result.data);
-          setError('');
-        } else {
-          throw new Error(result.message || "Error al obtener piscinas");
+        if (!piscinasResult.success) {
+          throw new Error(piscinasResult.message || "Error al obtener piscinas");
         }
+
+        // Obtener todos los ciclos productivos
+        const ciclosResponse = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php?id_compania=${idCompania}`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!ciclosResponse.ok) {
+          throw new Error(`Error HTTP: ${ciclosResponse.status}`);
+        }
+
+        const ciclosResult = await ciclosResponse.json();
+        
+        if (!ciclosResult.success) {
+          throw new Error(ciclosResult.message || "Error al obtener ciclos productivos");
+        }
+
+        // Filtrar piscinas que NO tienen ciclos EN_CURSO
+        const piscinasConCicloEnCurso = ciclosResult.data
+          .filter(ciclo => ciclo.estado === 'EN_CURSO')
+          .map(ciclo => ciclo.id_piscina);
+
+        const piscinasDisponibles = piscinasResult.data.filter(
+          piscina => !piscinasConCicloEnCurso.includes(piscina.id_piscina)
+        );
+
+        setPiscinas(piscinasDisponibles);
+        setError('');
       } catch (err) {
-        console.error("Error fetching piscinas:", err);
-        setError(err.message || "No se pudieron cargar las piscinas.");
+        console.error("Error fetching piscinas disponibles:", err);
+        setError(err.message || "No se pudieron cargar las piscinas disponibles.");
       } finally {
         setLoadingPiscinas(false);
       }
     };
 
     if (idCompania) {
-      fetchPiscinas();
+      fetchPiscinasDisponibles();
     } else {
       setLoadingPiscinas(false);
     }
@@ -237,7 +266,8 @@ export default function CicloProductivoForm() {
         <div className="mb-6 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
           <p><strong>No hay piscinas disponibles.</strong></p>
           <p className="text-sm mt-1">
-            Para agregar ciclos productivos, primero debes crear piscinas en el sistema.
+            Para agregar ciclos productivos, debe haber piscinas sin ciclos activos en el sistema.
+            Las piscinas con ciclos "EN_CURSO" no están disponibles para nuevos ciclos.
           </p>
         </div>
       )}
@@ -275,7 +305,7 @@ export default function CicloProductivoForm() {
             </select>
           )}
           <p className="text-xs text-gray-500 mt-1 leyenda">
-            Seleccione la piscina donde se realizará el ciclo productivo
+            Solo se muestran piscinas sin ciclos productivos activos (EN_CURSO)
           </p>
         </div>
 

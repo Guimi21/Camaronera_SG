@@ -392,7 +392,7 @@ try {
         WHERE 
             cp.id_compania = ?
         ORDER BY 
-            cp.fecha_siembra DESC, p.codigo
+            cp.id_ciclo DESC
         ";
 
         // Preparar y ejecutar la consulta
