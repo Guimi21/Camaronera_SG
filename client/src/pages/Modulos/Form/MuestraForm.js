@@ -14,9 +14,7 @@ export default function MuestraForm() {
     peso: '',
     incremento_peso: '',
     biomasa_lbs: '', // Calculado automáticamente
-    balnova08: '',
-    balnova12: '',
-    balnova22: '',
+    balanceados: {}, // Objeto dinámico para almacenar consumos de balanceado
     balanceado_acumulado: '',
     conversion_alimenticia: '', // Calculado automáticamente
     poblacion_actual: '', // Calculado automáticamente
@@ -26,14 +24,69 @@ export default function MuestraForm() {
   });
   
   const [ciclosDisponibles, setCiclosDisponibles] = useState([]);
+  const [tiposBalanceado, setTiposBalanceado] = useState([]); // Tipos de balanceado de la compañía
   const [ultimoMuestra, setUltimoMuestraState] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingCiclos, setLoadingCiclos] = useState(true);
+  const [loadingTipos, setLoadingTipos] = useState(true);
   const [error, setError] = useState('');
 
   // Wrapper para trackear cambios en ultimoMuestra
   const setUltimoMuestra = (valor) => {
     setUltimoMuestraState(valor);
+  };
+
+  // Función para cargar los tipos de balanceado de la compañía
+  const fetchTiposBalanceado = async () => {
+    if (!idCompania) {
+      console.error("No hay ID de compañía disponible");
+      setLoadingTipos(false);
+      return [];
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/module/tipos_balanceado.php?id_compania=${idCompania}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        setTiposBalanceado(result.data);
+        
+        // Inicializar los campos de balanceado en el formData
+        const balanceadosIniciales = {};
+        result.data.forEach(tipo => {
+          balanceadosIniciales[tipo.id_tipo_balanceado] = '';
+        });
+        
+        setFormData(prev => ({
+          ...prev,
+          balanceados: balanceadosIniciales
+        }));
+        
+        console.log('Tipos de balanceado cargados:', result.data);
+        return result.data;
+      } else {
+        console.error("Error al obtener tipos de balanceado:", result.message);
+        setTiposBalanceado([]);
+        return [];
+      }
+    } catch (err) {
+      console.error("Error fetching tipos balanceado:", err);
+      setTiposBalanceado([]);
+      return [];
+    } finally {
+      setLoadingTipos(false);
+    }
   };
 
   // Función para cargar los ciclos productivos disponibles
@@ -112,12 +165,17 @@ export default function MuestraForm() {
     }
   };
 
-  // Cargar ciclos disponibles al montar el componente
+  // Cargar ciclos y tipos de balanceado disponibles al montar el componente
   useEffect(() => {
     if (idCompania) {
-      fetchCiclosDisponibles();
+      const loadInitialData = async () => {
+        await fetchTiposBalanceado();
+        await fetchCiclosDisponibles();
+      };
+      loadInitialData();
     } else {
       setLoadingCiclos(false);
+      setLoadingTipos(false);
     }
   }, [idCompania]);
 
@@ -173,12 +231,12 @@ export default function MuestraForm() {
   // Efecto para recalcular balanceado acumulado cuando cambien los datos relevantes
   useEffect(() => {
     // Solo calcular si hay al menos un valor de balanceado ingresado
-    if (formData.balnova08 || formData.balnova12 || formData.balnova22) {
+    const tieneBalanceado = Object.values(formData.balanceados).some(val => val !== '' && val !== null && val !== undefined);
+    
+    if (tieneBalanceado) {
       const balanceadoAnterior = ultimoMuestra ? ultimoMuestra.balanceado_acumulado : 0;
       const balanceadoAcumulado = calcularBalanceadoAcumulado(
-        formData.balnova08,
-        formData.balnova12, 
-        formData.balnova22,
+        formData.balanceados,
         balanceadoAnterior
       );
       
@@ -195,7 +253,7 @@ export default function MuestraForm() {
         balanceado_acumulado: ''
       }));
     }
-  }, [formData.balnova08, formData.balnova12, formData.balnova22, ultimoMuestra]);
+  }, [formData.balanceados, ultimoMuestra]);
 
   // Efecto para recalcular población actual cuando cambien los datos relevantes
   useEffect(() => {
@@ -292,14 +350,14 @@ export default function MuestraForm() {
   };
 
   // Función para calcular balanceado acumulado
-  const calcularBalanceadoAcumulado = (balnova08, balnova12, balnova22, balanceadoAnterior) => {
-    // Convertir valores a números, usando 0 si están vacíos o no son válidos
-    const val08 = (balnova08 === '' || balnova08 === null || balnova08 === undefined) ? 0 : parseFloat(balnova08) || 0;
-    const val12 = (balnova12 === '' || balnova12 === null || balnova12 === undefined) ? 0 : parseFloat(balnova12) || 0;
-    const val22 = (balnova22 === '' || balnova22 === null || balnova22 === undefined) ? 0 : parseFloat(balnova22) || 0;
-    const valAnterior = (balanceadoAnterior === null || balanceadoAnterior === undefined) ? 0 : parseFloat(balanceadoAnterior) || 0;
+  const calcularBalanceadoAcumulado = (balanceadosObj, balanceadoAnterior) => {
+    // Sumar todos los valores de balanceado ingresados
+    const sumaActual = Object.values(balanceadosObj).reduce((sum, val) => {
+      const numVal = (val === '' || val === null || val === undefined) ? 0 : parseFloat(val) || 0;
+      return sum + numVal;
+    }, 0);
     
-    const sumaActual = val08 + val12 + val22;
+    const valAnterior = (balanceadoAnterior === null || balanceadoAnterior === undefined) ? 0 : parseFloat(balanceadoAnterior) || 0;
     const acumuladoTotal = valAnterior + sumaActual;
     
     return acumuladoTotal.toFixed(2);
@@ -354,11 +412,28 @@ export default function MuestraForm() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     
+    // Verificar si el cambio es en un campo de balanceado
+    const isBalanceadoField = name.startsWith('balanceado_');
+    
     // Actualizar el estado del formulario
-    const newFormData = {
-      ...formData,
-      [name]: value
-    };
+    let newFormData;
+    
+    if (isBalanceadoField) {
+      // Extraer el ID del tipo de balanceado del nombre del campo
+      const idTipoBalanceado = name.replace('balanceado_', '');
+      newFormData = {
+        ...formData,
+        balanceados: {
+          ...formData.balanceados,
+          [idTipoBalanceado]: value
+        }
+      };
+    } else {
+      newFormData = {
+        ...formData,
+        [name]: value
+      };
+    }
     
     // Manejar cambio de ciclo productivo
     if (name === 'id_ciclo') {
@@ -413,12 +488,10 @@ export default function MuestraForm() {
     }
     
     // Si se cambia algún valor de balanceado, recalcular el acumulado
-    if (name === 'balnova08' || name === 'balnova12' || name === 'balnova22') {
+    if (isBalanceadoField) {
       const balanceadoAnterior = ultimoMuestra ? ultimoMuestra.balanceado_acumulado : 0;
       const balanceadoAcumulado = calcularBalanceadoAcumulado(
-        name === 'balnova08' ? value : newFormData.balnova08,
-        name === 'balnova12' ? value : newFormData.balnova12,
-        name === 'balnova22' ? value : newFormData.balnova22,
+        newFormData.balanceados,
         balanceadoAnterior
       );
       newFormData.balanceado_acumulado = balanceadoAcumulado;
@@ -488,12 +561,33 @@ export default function MuestraForm() {
     }
 
     try {
-      // Agregar el id_usuario e id_compania a los datos del formulario
+      // Preparar los datos para enviar
+      // Extraer los campos de balanceado del objeto y convertirlos a un array
+      const balanceadosArray = Object.entries(formData.balanceados)
+        .filter(([id, cantidad]) => cantidad !== '' && cantidad !== null && cantidad !== undefined && parseFloat(cantidad) > 0)
+        .map(([id, cantidad]) => ({
+          id_tipo_balanceado: parseInt(id),
+          cantidad: parseFloat(cantidad)
+        }));
+      
       const dataToSend = {
-        ...formData,
+        id_ciclo: formData.id_ciclo,
+        dias_cultivo: formData.dias_cultivo,
+        peso: formData.peso,
+        incremento_peso: formData.incremento_peso,
+        biomasa_lbs: formData.biomasa_lbs,
+        balanceados: balanceadosArray, // Enviar como array de objetos
+        balanceado_acumulado: formData.balanceado_acumulado,
+        conversion_alimenticia: formData.conversion_alimenticia,
+        poblacion_actual: formData.poblacion_actual,
+        supervivencia: formData.supervivencia,
+        observaciones: formData.observaciones,
+        fecha_muestra: formData.fecha_muestra,
         id_usuario: idUsuario,
         id_compania: idCompania
       };
+      
+      console.log('Datos a enviar:', dataToSend);
       
       const response = await fetch(`${API_BASE_URL}/module/muestras.php`, {
         method: 'POST',
@@ -747,59 +841,36 @@ export default function MuestraForm() {
 
             {/* Información de alimentación */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Balnova 0.8 mm
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="balnova08"
-                  value={formData.balnova08}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ej: 500"
-                />
-                <p className="text-sm text-gray-500 mt-1 leyenda">
-                  Cantidad consumida en este muestra
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Balnova 1.2 mm
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="balnova12"
-                  value={formData.balnova12}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ej: 750"
-                />
-                <p className="text-sm text-gray-500 mt-1 leyenda">
-                  Cantidad consumida en este muestra
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Balnova 2.2 mm
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="balnova22"
-                  value={formData.balnova22}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ej: 1000"
-                />
-                <p className="text-sm text-gray-500 mt-1 leyenda">
-                  Cantidad consumida en este muestra
-                </p>
-              </div>
+              {/* Campos dinámicos de balanceado */}
+              {loadingTipos ? (
+                <div className="col-span-full text-center py-4 text-gray-500">
+                  Cargando tipos de balanceado...
+                </div>
+              ) : tiposBalanceado.length === 0 ? (
+                <div className="col-span-full text-center py-4 text-yellow-600">
+                  No hay tipos de balanceado configurados para esta compañía.
+                </div>
+              ) : (
+                tiposBalanceado.map((tipo) => (
+                  <div key={tipo.id_tipo_balanceado}>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {tipo.nombre}
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name={`balanceado_${tipo.id_tipo_balanceado}`}
+                      value={formData.balanceados[tipo.id_tipo_balanceado] || ''}
+                      onChange={handleChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder={`Ej: 500`}
+                    />
+                    <p className="text-sm text-gray-500 mt-1 leyenda">
+                      Cantidad consumida en este muestreo ({tipo.unidad})
+                    </p>
+                  </div>
+                ))
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -857,7 +928,7 @@ export default function MuestraForm() {
             <div className="flex flex-col sm:flex-row gap-4 pt-6">
               <button
                 type="submit"
-                disabled={loading || loadingCiclos || ciclosDisponibles.length === 0}
+                disabled={loading || loadingCiclos || loadingTipos || ciclosDisponibles.length === 0 || tiposBalanceado.length === 0}
                 className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
@@ -878,7 +949,7 @@ export default function MuestraForm() {
               <button
                 type="button"
                 onClick={handleCancel}
-                disabled={loading || loadingCiclos}
+                disabled={loading || loadingCiclos || loadingTipos}
                 className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

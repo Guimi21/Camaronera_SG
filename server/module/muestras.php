@@ -122,9 +122,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($stmt->execute()) {
             $muestraId = $conn->lastInsertId();
             
-            // Insertar registros de balanceado si están presentes
-            if (!empty($input['balnova08']) || !empty($input['balnova12']) || !empty($input['balnova22'])) {
-                error_log("Insertando registros de balanceado para muestra ID: " . $muestraId);
+            // Insertar registros de balanceado si están presentes (formato dinámico)
+            if (!empty($input['balanceados']) && is_array($input['balanceados'])) {
+                error_log("Insertando registros de balanceado dinámicos para muestra ID: " . $muestraId);
                 $balanceadoQuery = "
                 INSERT INTO consumo_balanceado (
                     id_muestra, 
@@ -138,41 +138,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $balanceadoStmt = $conn->prepare($balanceadoQuery);
                 
                 try {
-                    // Balnova 2.2mm (asumiendo id_tipo_balanceado = 1)
-                    if (!empty($input['balnova22'])) {
-                        $balanceadoStmt->execute([
-                            $muestraId, 
-                            1, 
-                            $input['balnova22'], 
-                            $input['id_compania'], 
-                            $input['id_usuario'], 
-                            $input['id_usuario']
-                        ]);
-                        error_log("Insertado Balnova 2.2mm: " . $input['balnova22']);
-                    }
-                    // Balnova 1.2mm (asumiendo id_tipo_balanceado = 2)
-                    if (!empty($input['balnova12'])) {
-                        $balanceadoStmt->execute([
-                            $muestraId, 
-                            2, 
-                            $input['balnova12'], 
-                            $input['id_compania'], 
-                            $input['id_usuario'], 
-                            $input['id_usuario']
-                        ]);
-                        error_log("Insertado Balnova 1.2mm: " . $input['balnova12']);
-                    }
-                    // Balnova 0.8mm (asumiendo id_tipo_balanceado = 3)
-                    if (!empty($input['balnova08'])) {
-                        $balanceadoStmt->execute([
-                            $muestraId, 
-                            3, 
-                            $input['balnova08'], 
-                            $input['id_compania'], 
-                            $input['id_usuario'], 
-                            $input['id_usuario']
-                        ]);
-                        error_log("Insertado Balnova 0.8mm: " . $input['balnova08']);
+                    foreach ($input['balanceados'] as $balanceado) {
+                        if (isset($balanceado['id_tipo_balanceado']) && isset($balanceado['cantidad']) && $balanceado['cantidad'] > 0) {
+                            $balanceadoStmt->execute([
+                                $muestraId, 
+                                $balanceado['id_tipo_balanceado'], 
+                                $balanceado['cantidad'], 
+                                $input['id_compania'], 
+                                $input['id_usuario'], 
+                                $input['id_usuario']
+                            ]);
+                            error_log("Insertado balanceado ID " . $balanceado['id_tipo_balanceado'] . ": " . $balanceado['cantidad']);
+                        }
                     }
                 } catch (Exception $balanceadoError) {
                     error_log("Error al insertar balanceado: " . $balanceadoError->getMessage());
@@ -233,8 +210,6 @@ try {
     // Verificar si se solicita el último muestra de un ciclo específico
     if (isset($_GET['id_ciclo']) && isset($_GET['ultimo'])) {
         $id_ciclo = $_GET['id_ciclo'];
-        
-        // Log para debugging
         error_log("Buscando último muestra para ciclo ID: " . $id_ciclo);
         
         // Consulta de prueba para ver si hay algún muestra en la tabla
@@ -261,8 +236,6 @@ try {
             s.fecha_muestra DESC 
         LIMIT 1
         ";
-        
-        error_log("Query SQL: " . $queryUltimo);
         
         $stmtUltimo = $conn->prepare($queryUltimo);
         if (!$stmtUltimo) {
@@ -300,7 +273,21 @@ try {
         'id_compania' => isset($_GET['id_compania']) && !empty($_GET['id_compania']) ? $_GET['id_compania'] : null
     ];
 
-    // Crear la consulta base
+    // Obtener los tipos de balanceado de la compañía para crear columnas dinámicas
+    $tiposBalanceadoQuery = "SELECT id_tipo_balanceado, nombre FROM tipo_balanceado WHERE id_compania = ? ORDER BY id_tipo_balanceado";
+    $tiposBalanceadoStmt = $conn->prepare($tiposBalanceadoQuery);
+    $tiposBalanceadoStmt->bindValue(1, $filters['id_compania']);
+    $tiposBalanceadoStmt->execute();
+    $tiposBalanceado = $tiposBalanceadoStmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Construir las columnas dinámicas para los tipos de balanceado
+    $balanceadoColumns = "";
+    foreach ($tiposBalanceado as $tipo) {
+        $nombreColumna = str_replace([' ', '.', ',', '(', ')'], '', $tipo['nombre']); // Sanitizar nombre para usar como alias
+        $balanceadoColumns .= "COALESCE(SUM(CASE WHEN tb.id_tipo_balanceado = " . intval($tipo['id_tipo_balanceado']) . " AND cb.id_compania = " . intval($filters['id_compania']) . " THEN cb.cantidad ELSE 0 END), 0) AS '" . $tipo['nombre'] . "',\n        ";
+    }
+
+    // Crear la consulta base con columnas dinámicas
     $query = "
     SELECT
         p.codigo AS 'Piscina',
@@ -313,10 +300,7 @@ try {
         s.peso_promedio AS 'Peso',
         s.incremento_peso AS 'Inc.P',
         s.biomasa_lbs AS 'Biomasa Lbs',
-        COALESCE(SUM(CASE WHEN tb.nombre = 'Balnova 2,2 mm' THEN cb.cantidad ELSE 0 END), 0) AS 'Balnova22',
-        COALESCE(SUM(CASE WHEN tb.nombre = 'Balnova 1,2 mm' THEN cb.cantidad ELSE 0 END), 0) AS 'Balnova12',
-        COALESCE(SUM(CASE WHEN tb.nombre = 'Balnova 0,8 mm' THEN cb.cantidad ELSE 0 END), 0) AS 'Balnova08',
-        s.balanceado_acumulado AS 'Balanceado Acumulado',
+        " . $balanceadoColumns . "s.balanceado_acumulado AS 'Balanceado Acumulado',
         s.convercion_alimenticia AS 'Conversión Alimenticia',
         s.poblacion_actual AS 'Población actual',
         s.indice_supervivencia AS 'Sobrev. Actual %',
@@ -326,8 +310,8 @@ try {
         piscina p
         INNER JOIN ciclo_productivo cp ON cp.id_piscina = p.id_piscina
         LEFT JOIN muestra s ON cp.id_ciclo = s.id_ciclo
-        LEFT JOIN consumo_balanceado cb ON s.id_muestra = cb.id_muestra
-        LEFT JOIN tipo_balanceado tb ON cb.id_tipo_balanceado = tb.id_tipo_balanceado
+        LEFT JOIN consumo_balanceado cb ON s.id_muestra = cb.id_muestra AND cb.id_compania = " . intval($filters['id_compania']) . "
+        LEFT JOIN tipo_balanceado tb ON cb.id_tipo_balanceado = tb.id_tipo_balanceado AND tb.id_compania = " . intval($filters['id_compania']) . "
     ";
 
     // Condiciones dinámicas para el WHERE
@@ -383,6 +367,10 @@ try {
     ORDER BY 
         p.id_piscina, s.fecha_muestra desc;";
 
+    // Log para debugging
+    error_log("Tipos de balanceado encontrados: " . count($tiposBalanceado));
+    error_log("ID Compañía: " . $filters['id_compania']);
+
     // Preparar y ejecutar la consulta
     $stmt = $conn->prepare($query);
 
@@ -395,6 +383,7 @@ try {
 
     // Obtener los resultados
     $cicloData = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    error_log("Resultados obtenidos: " . count($cicloData));
 
     // Respuesta con los datos del ciclo productivo
     $response = [

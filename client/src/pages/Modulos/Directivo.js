@@ -26,6 +26,7 @@ export default function Directivo() {
   const [filteredGeneralData, setFilteredGeneralData] = useState([]);
   const [filteredTableData, setFilteredTableData] = useState([]);
   const [availablePiscinas, setAvailablePiscinas] = useState([]); // Piscinas disponibles para el usuario
+  const [tiposBalanceado, setTiposBalanceado] = useState([]); // Tipos de balanceado de la compañía
   const [filters, setFilters] = useState({
     piscinaGeneral: "todas",
     filterType: "piscina",
@@ -40,32 +41,42 @@ export default function Directivo() {
   const [error, setError] = useState(null);
 
   // Función para normalizar los datos del backend al formato esperado por el frontend
-  const normalizeData = (backendData) => {
-    return backendData.map(item => ({
-      piscina: item.Piscina,
-      has: item.Has,  
-      fecha_siembra: item["Fecha de siembra"],
-      dias_cultivo: item["Dias cultivo"],
-      siembra_larvas: item["Siembra / Larvas"],
-      densidad_ha: item.Densidad,
-      tipo_siembra: item["Tipo Siembra"],
-      peso: item.Peso,
-      inc: item["Inc.P"],
-      biomasa_lbs: item["Biomasa Lbs"],
-      balnova22: item.Balnova22,
-      balnova12: item.Balnova12,
-      balnova08: item.Balnova08,
-      balanceado_acu: item["Balanceado Acumulado"],
-      conversion_alimenticia: item["Conversión Alimenticia"],
-      poblacion_actual: item["Población actual"],
-      supervivencia: item["Sobrev. Actual %"],
-      observaciones: item.Observaciones,
-      fecha_muestra: item["Fecha Muestra"]
-    }));
+  const normalizeData = (backendData, tipos) => {
+    // Usar los tipos pasados como parámetro, o los del estado si no se pasan
+    const tiposToUse = tipos || tiposBalanceado;
+    
+    return backendData.map((item, index) => {
+      const normalized = {
+        piscina: item.Piscina,
+        has: item.Has,  
+        fecha_siembra: item["Fecha de siembra"],
+        dias_cultivo: item["Dias cultivo"],
+        siembra_larvas: item["Siembra / Larvas"],
+        densidad_ha: item.Densidad,
+        tipo_siembra: item["Tipo Siembra"],
+        peso: item.Peso,
+        inc: item["Inc.P"],
+        biomasa_lbs: item["Biomasa Lbs"],
+        balanceado_acu: item["Balanceado Acumulado"],
+        conversion_alimenticia: item["Conversión Alimenticia"],
+        poblacion_actual: item["Población actual"],
+        supervivencia: item["Sobrev. Actual %"],
+        observaciones: item.Observaciones,
+        fecha_muestra: item["Fecha Muestra"],
+        balanceados: {} // Objeto para almacenar dinámicamente los tipos de balanceado
+      };
+      
+      // Agregar dinámicamente los tipos de balanceado
+      tiposToUse.forEach(tipo => {
+        normalized.balanceados[tipo.nombre] = item[tipo.nombre] || 0;
+      });
+      
+      return normalized;
+    });
   };
 
   // Función para obtener datos generales del backend
-  const fetchGeneralData = async (piscinaValue = "todas") => {
+  const fetchGeneralData = async (piscinaValue = "todas", tipos = null) => {
     // Verificar que el usuario tenga idCompania antes de hacer la petición
     if (!idCompania) {
       setError("No se pudo obtener la información de la compañía del usuario.");
@@ -99,7 +110,7 @@ export default function Directivo() {
       const result = await response.json();
       
       if (result.success) {
-        const normalizedData = normalizeData(result.data);
+        const normalizedData = normalizeData(result.data, tipos);
         setData(normalizedData);
         setFilteredGeneralData(normalizedData);
         
@@ -139,7 +150,7 @@ export default function Directivo() {
     }
   };
 
-  const fetchTableData = async (filterParams = {}) => {
+  const fetchTableData = async (filterParams = {}, tipos = null) => {
     // Verificar que el usuario tenga idCompania antes de hacer la petición
     if (!idCompania) {
       setError("No se pudo obtener la información de la compañía del usuario.");
@@ -182,7 +193,7 @@ export default function Directivo() {
       const result = await response.json();
       
       if (result.success) {
-        const normalizedData = normalizeData(result.data);
+        const normalizedData = normalizeData(result.data, tipos);
         setFilteredTableData(normalizedData);
         setError(null);
       } else {
@@ -198,12 +209,56 @@ export default function Directivo() {
     }
   };
 
+  // Función para obtener los tipos de balanceado de la compañía
+  const fetchTiposBalanceado = async () => {
+    if (!idCompania) {
+      console.error("No hay ID de compañía disponible");
+      return [];
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/module/tipos_balanceado.php?id_compania=${idCompania}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        setTiposBalanceado(result.data);
+        return result.data;
+      } else {
+        console.error("Error al obtener tipos de balanceado:", result.message);
+        setTiposBalanceado([]);
+        return [];
+      }
+    } catch (err) {
+      console.error("Error fetching tipos balanceado:", err);
+      setTiposBalanceado([]);
+      return [];
+    }
+  };
+
   // Cargar datos iniciales al montar el componente
   useEffect(() => {
     // Solo cargar datos si el usuario tiene idCompania
     if (idCompania) {
-      fetchGeneralData();
-      fetchTableData();
+      const loadData = async () => {
+        // Primero cargar tipos de balanceado y obtener el resultado
+        const tipos = await fetchTiposBalanceado();
+        // Luego cargar los datos pasando los tipos
+        await fetchGeneralData("todas", tipos);
+        await fetchTableData({}, tipos);
+      };
+      
+      loadData();
     } else {
       // Si no hay idCompania, limpiar las piscinas disponibles
       setAvailablePiscinas([]);
@@ -280,7 +335,7 @@ export default function Directivo() {
 
     // Aplicar filtro de datos generales automáticamente al cambiar
     if (name === "piscinaGeneral") {
-      fetchGeneralData(value);
+      fetchGeneralData(value, tiposBalanceado);
     }
   };
 
@@ -300,7 +355,7 @@ export default function Directivo() {
     }
 
     // Llamada a la función para obtener los datos con los filtros aplicados
-    fetchTableData(filterParams);
+    fetchTableData(filterParams, tiposBalanceado);
   };
 
   // Formatear fecha para mostrar (evita problemas de zona horaria)
@@ -316,27 +371,35 @@ export default function Directivo() {
   // Descargar los datos filtrados como Excel
   const handleDownload = () => {
     // Preparar datos para Excel
-    const excelData = filteredTableData.map(item => ({
-      "Piscina": item.piscina,
-      "Has": item.has,
-      "Fecha Siembra": formatDate(item.fecha_siembra),
-      "Días de Cultivo": item.dias_cultivo,
-      "Siembra/Larvas": item.siembra_larvas,
-      "Densidad (/ha)": item.densidad_ha,
-      "Tipo Siembra": item.tipo_siembra,
-      "Peso (g)": item.peso,
-      "Inc.P (%)": item.inc,
-      "Biomasa (lbs)": item.biomasa_lbs,
-      "35% Balnova 0,8 mm": item.balnova08,
-      "35% Balnova 1,2 mm": item.balnova12,
-      "35% Balnova 2,2": item.balnova22,
-      "Balanceado Acumulado": item.balanceado_acu,
-      "Conversión Alimenticia": item.conversion_alimenticia,
-      "Población Actual": item.poblacion_actual,
-      "Supervivencia (%)": item.supervivencia,
-      "Observaciones": item.observaciones,
-      "Fecha Muestra": formatDate(item.fecha_muestra)
-    }));
+    const excelData = filteredTableData.map(item => {
+      const baseData = {
+        "Piscina": item.piscina,
+        "Has": item.has,
+        "Fecha Siembra": formatDate(item.fecha_siembra),
+        "Días de Cultivo": item.dias_cultivo,
+        "Siembra/Larvas": item.siembra_larvas,
+        "Densidad (/ha)": item.densidad_ha,
+        "Tipo Siembra": item.tipo_siembra,
+        "Peso (g)": item.peso,
+        "Inc.P (%)": item.inc,
+        "Biomasa (lbs)": item.biomasa_lbs
+      };
+      
+      // Agregar dinámicamente las columnas de balanceado
+      tiposBalanceado.forEach(tipo => {
+        baseData[tipo.nombre] = item.balanceados[tipo.nombre] || 0;
+      });
+      
+      // Agregar las columnas finales
+      baseData["Balanceado Acumulado"] = item.balanceado_acu;
+      baseData["Conversión Alimenticia"] = item.conversion_alimenticia;
+      baseData["Población Actual"] = item.poblacion_actual;
+      baseData["Supervivencia (%)"] = item.supervivencia;
+      baseData["Observaciones"] = item.observaciones;
+      baseData["Fecha Muestra"] = formatDate(item.fecha_muestra);
+      
+      return baseData;
+    });
     
     const ws = XLSX.utils.json_to_sheet(excelData);
     const wb = XLSX.utils.book_new();
@@ -457,9 +520,11 @@ export default function Directivo() {
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Peso (g)</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Inc.P (%)</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Biomasa (lbs)</th>
-                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Balnova 0,8 mm</th>
-                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Balnova 1,2 mm</th>
-                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Balnova 2,2</th>
+                      {tiposBalanceado.map((tipo) => (
+                        <th key={tipo.id_tipo_balanceado} className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">
+                          {tipo.nombre}
+                        </th>
+                      ))}
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Balanceado Acum.</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Conv. Alimenticia</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Población Actual</th>
@@ -482,9 +547,11 @@ export default function Directivo() {
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.peso}</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.inc}</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.biomasa_lbs?.toLocaleString() || '0'}</td>
-                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.balnova08?.toLocaleString() || '0'}</td>
-                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.balnova12?.toLocaleString() || '0'}</td>
-                          <td className="py-3 px-4 border-b whitespace-nowrap">{item.balnova22?.toLocaleString() || '0'}</td>
+                          {tiposBalanceado.map((tipo) => (
+                            <td key={tipo.id_tipo_balanceado} className="py-3 px-4 border-b whitespace-nowrap">
+                              {item.balanceados[tipo.nombre]?.toLocaleString() || '0'}
+                            </td>
+                          ))}
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.balanceado_acu?.toLocaleString() || '0'}</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.conversion_alimenticia}</td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">{item.poblacion_actual ? parseInt(item.poblacion_actual) : 0}</td>
@@ -496,7 +563,7 @@ export default function Directivo() {
                     ) : (
                       !loadingTable && (
                         <tr>
-                          <td colSpan="10" className="py-4 px-4 text-center text-gray-500">
+                          <td colSpan={10 + tiposBalanceado.length} className="py-4 px-4 text-center text-gray-500">
                             No hay datos disponibles con los filtros seleccionados
                           </td>
                         </tr>
