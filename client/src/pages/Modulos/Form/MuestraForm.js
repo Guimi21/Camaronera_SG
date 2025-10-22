@@ -73,7 +73,6 @@ export default function MuestraForm() {
           balanceados: balanceadosIniciales
         }));
         
-        console.log('Tipos de balanceado cargados:', result.data);
         return result.data;
       } else {
         console.error("Error al obtener tipos de balanceado:", result.message);
@@ -586,8 +585,6 @@ export default function MuestraForm() {
         id_usuario: idUsuario,
         id_compania: idCompania
       };
-      
-      console.log('Datos a enviar:', dataToSend);
       
       const response = await fetch(`${API_BASE_URL}/module/muestras.php`, {
         method: 'POST',

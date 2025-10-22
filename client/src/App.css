@@ -268,6 +268,10 @@ div.flex {
     font-size: 0.9rem;
 }
 
+.info {
+    width: 20%;
+}
+
 /* Estilo de las opciones del menú hamburguesa del header */
 .header-button {
     width: 100%;
@@ -408,7 +412,7 @@ h2 {
     font-size: 1.5rem;
 }
 
-.panel-directivo {
+.panel-directivo, .panel-administrador {
     background: var(--bg);
     border-radius: var(--border-radius);
     padding: 1.5rem;
@@ -523,7 +527,7 @@ table tr:hover {
         font-size: 1rem;
     }
     
-    .panel-directivo {
+    .panel-directivo, .panel-administrador {
         padding: 1rem;
         max-height: calc(95vh - 2rem); /* Ajuste dinámico */
     }
@@ -550,7 +554,7 @@ table tr:hover {
         padding: calc(1.5rem + 1vw);
     }
     
-    .panel-directivo {
+    .panel-directivo, .panel-administrador {
         max-height: calc(68vh - 2rem); /* Ajuste dinámico */
     }
 }
@@ -578,7 +582,7 @@ table tr:hover {
         padding: calc(0.4rem);
     }
     
-    .panel-directivo {
+    .panel-directivo, .panel-administrador {
         margin: 0 auto 2rem;
     }
 }
@@ -599,7 +603,7 @@ table tr:hover {
         padding: calc(0.5rem);
     }
     
-    .panel-directivo {
+    .panel-directivo, .panel-administrador {
         max-width: calc(1300px + 5vw);
         margin: 0 auto 2rem;
     }
@@ -621,7 +625,7 @@ table tr:hover {
         padding: calc(0.2rem);
     }
     
-    .panel-directivo {
+    .panel-directivo, .panel-administrador {
         max-width: calc(1800px + 5vw);
         margin: 0 auto 2rem;
     }
@@ -643,7 +647,7 @@ table tr:hover {
         padding: calc(5rem + 2vw);
     }
     
-    .panel-directivo {
+    .panel-directivo, .panel-administrador {
         max-width: calc(2600px + 8vw);
         margin: 0 auto 3rem;
     }
@@ -673,7 +677,7 @@ table tr:hover {
         padding: calc(0.6rem + 0.2vw) calc(0.8rem + 0.2vw);
     }
     
-    .panel-directivo {
+    .panel-directivo, .panel-administrador {
         padding: calc(0.75rem + 0.3vw);
         max-height: calc(60vh - 2rem); /* Ajuste dinámico */
     }

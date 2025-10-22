@@ -20,6 +20,7 @@ import CicloProductivoForm from "./pages/Modulos/Form/CicloProductivoForm";
 import EditarCicloProductivoForm from "./pages/Modulos/Form/EditarCicloProductivoForm";
 import ConsultarCicloProductivoForm from "./pages/Modulos/Form/ConsultarCicloProductivoForm";
 import BalanceadoForm from "./pages/Modulos/Form/BalanceadoForm";
+import CompaniaForm from "./pages/Modulos/Form/CompaniaForm";
 
 // Redirección por defecto según tipo_usuario
 function DefaultModuleRedirect() {
@@ -29,11 +30,11 @@ function DefaultModuleRedirect() {
 
   switch (tipoUsuario) {
     case "Administrador":
-      return <Navigate to="administrador" replace />;
+      return <Navigate to="dashboard/companias" replace />;
     case "Digitador":
       return <Navigate to="digitador" replace />;
     case "Director":
-      return <Navigate to="directivo" replace />;
+      return <Navigate to="dashboard/reporte" replace />;
     default:
       return <p>No tiene módulo asignado</p>;
   }
@@ -63,9 +64,9 @@ function App() {
             <Route index element={<DefaultModuleRedirect />} />
 
             {/* Módulos */}
-            <Route path="administrador" element={<Administrador />} />
+            <Route path="dashboard/companias" element={<Administrador />} />
             <Route path="digitador" element={<Digitador />} />
-            <Route path="directivo" element={<Directivo />} />
+            <Route path="dashboard/reporte" element={<Directivo />} />
 
             {/* Formularios */}
             <Route path="form/piscina" element={<PiscinaForm />} />
@@ -74,6 +75,7 @@ function App() {
             <Route path="form/editar-ciclo/:id" element={<EditarCicloProductivoForm />} />
             <Route path="form/consultar-ciclo/:id" element={<ConsultarCicloProductivoForm />} />
             <Route path="form/balanceado" element={<BalanceadoForm />} />
+            <Route path="form/compania" element={<CompaniaForm />} />
 
             {/* Dashboard - Monitoreo */}
             <Route path="dashboard/monitoreo-piscinas" element={<MonitoreoPiscinas />} />
