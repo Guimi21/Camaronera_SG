@@ -598,7 +598,7 @@ export default function MuestraForm() {
       
       if (response.ok && result.success) {
         // Redirigir de vuelta al panel directivo con mensaje de éxito
-        navigate('/layout/directivo', { 
+        navigate('/layout/dashboard/reporte', { 
           state: { message: 'Registro de muestra creado exitosamente' } 
         });
       } else {
@@ -613,7 +613,7 @@ export default function MuestraForm() {
   };
 
   const handleCancel = () => {
-    navigate('/layout/directivo');
+    navigate('/layout/dashboard/reporte');
   };
 
   return (

@@ -12,6 +12,7 @@ import Directivo from "./pages/Modulos/Directivo";
 import MonitoreoPiscinas from "./pages/Modulos/MonitoreoPiscinas";
 import MonitoreoBalanceados from "./pages/Modulos/MonitoreoBalanceados";
 import MonitoreoCiclos from "./pages/Modulos/MonitoreoCiclos";
+import Usuarios from "./pages/Modulos/Usuarios";
 
 // Formularios
 import PiscinaForm from "./pages/Modulos/Form/PiscinaForm";
@@ -65,6 +66,7 @@ function App() {
 
             {/* Módulos */}
             <Route path="dashboard/companias" element={<Administrador />} />
+            <Route path="dashboard/usuarios" element={<Usuarios />} />
             <Route path="digitador" element={<Digitador />} />
             <Route path="dashboard/reporte" element={<Directivo />} />
 

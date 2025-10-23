@@ -416,7 +416,7 @@ export default function Directivo() {
   return (
     <div className="panel-directivo bg-white rounded-lg shadow-md p-4 sm:p-6 lg:p-8 max-w-full">
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h1 className="text-2xl font-bold mb-2 text-blue-800">Panel Directivo</h1>
+        <h1 className="text-2xl font-bold mb-2 text-blue-800">Monitoreo de Muestras</h1>
         <p className="text-gray-600 mb-6">Aquí se muestran reportes y estadísticas para los directivos.</p>
 
         {error && (
