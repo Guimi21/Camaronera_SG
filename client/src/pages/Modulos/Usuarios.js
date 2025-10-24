@@ -328,6 +328,18 @@ export default function Usuarios() {
               </div>
 
               <div className="flex flex-col sm:flex-row items-center gap-3">
+                {/* Botón para crear nuevo usuario */}
+                <button 
+                  onClick={() => navigate('/layout/form/usuario')}
+                  className="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-blue-700 transition"
+                  disabled={loading}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Nuevo Usuario
+                </button>
+
                 {/* Botón de descarga */}
                 <button 
                   onClick={handleDownload}

@@ -22,6 +22,7 @@ import EditarCicloProductivoForm from "./pages/Modulos/Form/EditarCicloProductiv
 import ConsultarCicloProductivoForm from "./pages/Modulos/Form/ConsultarCicloProductivoForm";
 import BalanceadoForm from "./pages/Modulos/Form/BalanceadoForm";
 import CompaniaForm from "./pages/Modulos/Form/CompaniaForm";
+import UsuarioForm from "./pages/Modulos/Form/UsuarioForm";
 
 // Redirección por defecto según tipo_usuario
 function DefaultModuleRedirect() {
@@ -78,6 +79,7 @@ function App() {
             <Route path="form/consultar-ciclo/:id" element={<ConsultarCicloProductivoForm />} />
             <Route path="form/balanceado" element={<BalanceadoForm />} />
             <Route path="form/compania" element={<CompaniaForm />} />
+            <Route path="form/usuario" element={<UsuarioForm />} />
 
             {/* Dashboard - Monitoreo */}
             <Route path="dashboard/monitoreo-piscinas" element={<MonitoreoPiscinas />} />
