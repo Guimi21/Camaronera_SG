@@ -20,7 +20,7 @@ $username = $data->username;
 $password = $data->password;
 
 // Verificar si las credenciales son correctas (esto debe hacerlo con tu base de datos)
-$query = "SELECT u.id_usuario, u.nombre, u.username, u.password_hash, u.tipo_usuario, uc.id_compania, c.nombre AS compania_nombre, c.id_grupo_empresarial, ge.nombre AS grupo_empresarial_nombre 
+$query = "SELECT u.id_usuario, u.nombre, u.username, u.password_hash, uc.id_compania, c.nombre AS compania_nombre, c.id_grupo_empresarial, ge.nombre AS grupo_empresarial_nombre 
           FROM usuario u
           JOIN usuario_compania uc ON u.id_usuario = uc.id_usuario
           JOIN compania c ON uc.id_compania = c.id_compania
@@ -43,6 +43,34 @@ if (!$user || $user['password_hash'] !== $password) {
     exit;
 }
 
+// Obtener los perfiles asociados al usuario
+$query_perfiles = "
+    SELECT p.id_perfil, p.nombre
+    FROM perfil p
+    JOIN usuario_perfil up ON p.id_perfil = up.id_perfil
+    WHERE up.id_usuario = :userId
+    ORDER BY p.nombre
+";
+$stmt_perfiles = $conn->prepare($query_perfiles);
+$stmt_perfiles->bindParam(':userId', $user['id_usuario']);
+$stmt_perfiles->execute();
+
+$perfiles = $stmt_perfiles->fetchAll(PDO::FETCH_ASSOC);
+
+// Obtener todas las compañías asociadas al usuario
+$query_companias = "
+    SELECT c.id_compania, c.nombre
+    FROM compania c
+    JOIN usuario_compania uc ON c.id_compania = uc.id_compania
+    WHERE uc.id_usuario = :userId
+    ORDER BY c.nombre
+";
+$stmt_companias = $conn->prepare($query_companias);
+$stmt_companias->bindParam(':userId', $user['id_usuario']);
+$stmt_companias->execute();
+
+$companias = $stmt_companias->fetchAll(PDO::FETCH_ASSOC);
+
 // Obtener los menús asociados al perfil del usuario
 $query_menus = "
     SELECT DISTINCT m.id_menu, m.nombre, m.ruta, m.icono, m.estado, modu.nombre AS modulo
@@ -61,15 +89,16 @@ $stmt_menus->execute();
 
 $menus = $stmt_menus->fetchAll(PDO::FETCH_ASSOC);
 
-// Respuesta con los datos del usuario, el grupo empresarial, la compañía y los menús
+// Respuesta con los datos del usuario, el grupo empresarial, la compañía, los perfiles y los menús
 $response = [
     'id_usuario' => $user['id_usuario'],  // ID del usuario
     'nombre' => $user['nombre'],  // Nombre del usuario
     'usuario' => $user['username'], // Nickname del usuario
-    'tipo_usuario' => $user['tipo_usuario'],  // Tipo de usuario
+    'perfiles' => $perfiles,  // Array de perfiles del usuario
     'grupo_empresarial' => $user['grupo_empresarial_nombre'],  // Nombre del grupo empresarial
-    'compania' => $user['compania_nombre'],  // Nombre de la compañía
-    'id_compania' => $user['id_compania'],  // ID de la compañía del usuario
+    'companias' => $companias,  // Array de todas las compañías del usuario
+    'compania' => $companias[0]['nombre'] ?? null,  // Nombre de la primera compañía
+    'id_compania' => $companias[0]['id_compania'] ?? null,  // ID de la primera compañía
     'menus' => $menus  // Agregar los menús a la respuesta
 ];
 

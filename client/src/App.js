@@ -24,18 +24,18 @@ import BalanceadoForm from "./pages/Modulos/Form/BalanceadoForm";
 import CompaniaForm from "./pages/Modulos/Form/CompaniaForm";
 import UsuarioForm from "./pages/Modulos/Form/UsuarioForm";
 
-// Redirección por defecto según tipo_usuario
+// Redirección por defecto según perfil activo
 function DefaultModuleRedirect() {
-  const { tipoUsuario } = useAuth();  // Accede a tipoUsuario desde el contexto
+  const { perfilActivo } = useAuth();  // Accede a perfilActivo desde el contexto
 
-  if (!tipoUsuario) return <Navigate to="/login" replace />;
+  if (!perfilActivo) return <Navigate to="/login" replace />;
 
-  switch (tipoUsuario) {
+  switch (perfilActivo) {
     case "Administrador":
       return <Navigate to="dashboard/companias" replace />;
     case "Digitador":
       return <Navigate to="digitador" replace />;
-    case "Director":
+    case "Directivo":
       return <Navigate to="dashboard/reporte" replace />;
     default:
       return <p>No tiene módulo asignado</p>;

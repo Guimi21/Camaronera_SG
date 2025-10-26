@@ -4,10 +4,19 @@ import * as XLSX from "xlsx";
 import config from "../../config";
 import { useAuth } from "../../context/AuthContext";
 
+// Función para obtener la fecha local en formato YYYY-MM-DD
+const getLocalDateString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function Usuarios() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
-  const { idUsuario } = useAuth(); // Obtener ID de usuario del contexto
+  const { idUsuario, compania } = useAuth(); // Obtener ID de usuario y nombre de compañía del contexto
   const [usuarios, setUsuarios] = useState([]);
   const [filteredUsuarios, setFilteredUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,7 +26,8 @@ export default function Usuarios() {
   const [filters, setFilters] = useState({
     busqueda: "",
     estado: "todos",
-    tipo_usuario: "todos"
+    perfil: "todos",
+    compania: "todos"
   });
 
   // Obtener usuarios al montar el componente
@@ -75,13 +85,14 @@ export default function Usuarios() {
   useEffect(() => {
     let filtered = [...usuarios];
 
-    // Filtrar por búsqueda (nombre, username, tipo_usuario)
+    // Filtrar por búsqueda (nombre, username, perfiles, compañías)
     if (filters.busqueda) {
       const searchTerm = filters.busqueda.toLowerCase();
       filtered = filtered.filter(u => 
         u.nombre.toLowerCase().includes(searchTerm) ||
         u.username.toLowerCase().includes(searchTerm) ||
-        (u.tipo_usuario && u.tipo_usuario.toLowerCase().includes(searchTerm))
+        (u.perfiles && u.perfiles.toLowerCase().includes(searchTerm)) ||
+        (u.companias && u.companias.toLowerCase().includes(searchTerm))
       );
     }
 
@@ -90,9 +101,14 @@ export default function Usuarios() {
       filtered = filtered.filter(u => u.estado === filters.estado);
     }
 
-    // Filtrar por tipo de usuario
-    if (filters.tipo_usuario !== "todos") {
-      filtered = filtered.filter(u => u.tipo_usuario === filters.tipo_usuario);
+    // Filtrar por perfil
+    if (filters.perfil !== "todos") {
+      filtered = filtered.filter(u => u.perfiles && u.perfiles.includes(filters.perfil));
+    }
+
+    // Filtrar por compañía
+    if (filters.compania !== "todos") {
+      filtered = filtered.filter(u => u.companias && u.companias.includes(filters.compania));
     }
 
     setFilteredUsuarios(filtered);
@@ -142,22 +158,36 @@ export default function Usuarios() {
       'No.': index + 1,
       'Nombre': usuario.nombre,
       'Usuario': usuario.username,
-      'Tipo de Usuario': usuario.tipo_usuario || 'N/A',
+      'Perfiles': usuario.perfiles || 'N/A',
+      'Compañías': usuario.companias || 'N/A',
       'Estado': usuario.estado === 'A' || usuario.estado === 'a' ? 'ACTIVO' : 'INACTIVO',
       'Fecha Creación': formatDate(usuario.fecha_creacion),
       'Última Actualización': formatDate(usuario.fecha_actualizacion)
     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    // Si no hay datos, crear un array con un objeto vacío para mostrar los encabezados
+    const finalData = excelData.length > 0 ? excelData : [
+      { 'No.': '', 'Nombre': '', 'Usuario': '', 'Perfiles': '', 'Compañías': '', 'Estado': '', 'Fecha Creación': '', 'Última Actualización': '' }
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(finalData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Usuarios');
 
-    const fileName = `reporte_usuarios_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const companiaSlug = compania ? compania.replace(/\s+/g, '_').toLowerCase() : 'compania';
+    const fileName = `reporte_usuarios_${companiaSlug}_${getLocalDateString()}.xlsx`;
     XLSX.writeFile(workbook, fileName);
   };
 
-  // Obtener tipos de usuario únicos para el filtro
-  const tiposUsuario = [...new Set(usuarios.map(u => u.tipo_usuario).filter(Boolean))];
+  // Obtener perfiles únicos para el filtro
+  const perfilesUnicos = [...new Set(
+    usuarios.flatMap(u => u.perfiles ? u.perfiles.split(', ') : [])
+  )].sort();
+
+  // Obtener compañías únicas para el filtro
+  const companiasUnicas = [...new Set(
+    usuarios.flatMap(u => u.companias ? u.companias.split(', ') : [])
+  )].sort();
 
   // Paginación
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -218,18 +248,34 @@ export default function Usuarios() {
                   </select>
                 </div>
 
-                {/* Filtro de tipo de usuario */}
+                {/* Filtro de perfil */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Tipo de Usuario:</label>
+                  <label className="text-sm font-medium mb-1">Perfil:</label>
                   <select 
-                    name="tipo_usuario" 
-                    value={filters.tipo_usuario} 
+                    name="perfil" 
+                    value={filters.perfil} 
                     onChange={handleFilterChange} 
                     className="border rounded p-2 text-sm"
                   >
                     <option value="todos">Todos</option>
-                    {tiposUsuario.map(tipo => (
-                      <option key={tipo} value={tipo}>{tipo}</option>
+                    {perfilesUnicos.map(perfil => (
+                      <option key={perfil} value={perfil}>{perfil}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Filtro de compañía */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium mb-1">Compañía:</label>
+                  <select 
+                    name="compania" 
+                    value={filters.compania} 
+                    onChange={handleFilterChange} 
+                    className="border rounded p-2 text-sm"
+                  >
+                    <option value="todos">Todos</option>
+                    {companiasUnicas.map(compania => (
+                      <option key={compania} value={compania}>{compania}</option>
                     ))}
                   </select>
                 </div>
@@ -245,7 +291,8 @@ export default function Usuarios() {
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">#</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Nombre</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Usuario</th>
-                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Tipo de Usuario</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Perfiles</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Compañías</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Estado</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Fecha Creación</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Última Actualización</th>
@@ -265,7 +312,10 @@ export default function Usuarios() {
                             {usuario.username}
                           </td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">
-                            {usuario.tipo_usuario || 'N/A'}
+                            {usuario.perfiles || 'N/A'}
+                          </td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">
+                            {usuario.companias || 'N/A'}
                           </td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">
                             {getEstadoBadge(usuario.estado)}
@@ -280,7 +330,7 @@ export default function Usuarios() {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="7" className="py-4 px-4 text-center text-gray-500">
+                        <td colSpan="8" className="py-4 px-4 text-center text-gray-500">
                           No hay usuarios disponibles
                         </td>
                       </tr>
@@ -344,7 +394,6 @@ export default function Usuarios() {
                 <button 
                   onClick={handleDownload}
                   className="bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-700 transition"
-                  disabled={loading || filteredUsuarios.length === 0}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

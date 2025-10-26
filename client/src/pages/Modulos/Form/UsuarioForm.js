@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
@@ -12,17 +12,90 @@ export default function UsuarioForm() {
     nombre: '',
     username: '',
     password: '',
-    tipo_usuario: 'Digitador',
+    perfiles: [], // Array de IDs de perfiles seleccionados
+    companias: [], // Array de IDs de compañías seleccionadas
     estado: 'A'
   });
 
+  const [perfilesDisponibles, setPerfilesDisponibles] = useState([]);
+  const [companiasDisponibles, setCompaniasDisponibles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
+  // Cargar perfiles disponibles
+  useEffect(() => {
+    fetchPerfiles();
+    fetchCompanias();
+  }, []);
+
+  const fetchPerfiles = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/module/perfiles.php`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        setPerfilesDisponibles(result.data);
+      }
+    } catch (err) {
+      console.error('Error fetching perfiles:', err);
+    }
+  };
+
+  const fetchCompanias = async () => {
+    try {
+      if (!idUsuario) return;
+
+      const response = await fetch(`${API_BASE_URL}/module/companias.php?id_usuario=${idUsuario}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        setCompaniasDisponibles(result.data);
+      }
+    } catch (err) {
+      console.error('Error fetching companias:', err);
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    setError('');
+    setSuccessMessage('');
+  };
+
+  const handlePerfilChange = (id_perfil) => {
+    setFormData(prev => {
+      const perfiles = prev.perfiles.includes(id_perfil)
+        ? prev.perfiles.filter(p => p !== id_perfil)
+        : [...prev.perfiles, id_perfil];
+      return { ...prev, perfiles };
+    });
+    setError('');
+    setSuccessMessage('');
+  };
+
+  const handleCompaniaChange = (id_compania) => {
+    setFormData(prev => {
+      const companias = prev.companias.includes(id_compania)
+        ? prev.companias.filter(c => c !== id_compania)
+        : [...prev.companias, id_compania];
+      return { ...prev, companias };
+    });
     setError('');
     setSuccessMessage('');
   };
@@ -44,6 +117,16 @@ export default function UsuarioForm() {
       return;
     }
 
+    if (formData.perfiles.length === 0) {
+      setError('Debe seleccionar al menos un perfil');
+      return;
+    }
+
+    if (formData.companias.length === 0) {
+      setError('Debe seleccionar al menos una compañía');
+      return;
+    }
+
     if (!idUsuario) {
       setError('No se pudo obtener la información del usuario autenticado');
       return;
@@ -60,7 +143,8 @@ export default function UsuarioForm() {
         // Por el momento guardamos la contraseña tal cual en password_hash
         password: formData.password,
         estado: formData.estado,
-        tipo_usuario: formData.tipo_usuario,
+        perfiles: formData.perfiles,
+        companias: formData.companias,
         id_usuario: idUsuario
       };
 
@@ -130,17 +214,57 @@ export default function UsuarioForm() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Contraseña *</label>
                 <input type="password" name="password" value={formData.password} onChange={handleChange}
                   className="w-full p-3 border border-gray-300 rounded-lg" placeholder="Contraseña" required />
-                <p className="text-sm text-gray-500 mt-1">Por ahora la contraseña se almacenará tal cual en la base de datos.</p>
+                <p className="leyenda text-sm text-gray-500 mt-1">Por ahora la contraseña se almacenará tal cual en la base de datos.</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Usuario *</label>
-                <select name="tipo_usuario" value={formData.tipo_usuario} onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg">
-                  <option value="Administrador">Administrador</option>
-                  <option value="Digitador">Digitador</option>
-                  <option value="Director">Director</option>
-                </select>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Perfiles *</label>
+                <div className="space-y-2 border border-gray-300 rounded-lg bg-gray-50">
+                  {perfilesDisponibles.length > 0 ? (
+                    perfilesDisponibles.map(perfil => (
+                      <div key={perfil.id_perfil} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id={`perfil-${perfil.id_perfil}`}
+                          checked={formData.perfiles.includes(perfil.id_perfil)}
+                          onChange={() => handlePerfilChange(perfil.id_perfil)}
+                          className="checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <label htmlFor={`perfil-${perfil.id_perfil}`} className="ml-2 text-sm text-gray-700">
+                          {perfil.nombre}
+                        </label>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500">Cargando perfiles...</p>
+                  )}
+                </div>
+                <p className="leyenda text-sm text-gray-500 mt-1">Seleccione al menos un perfil para el usuario.</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Compañías *</label>
+                <div className="space-y-2 border border-gray-300 rounded-lg bg-gray-50">
+                  {companiasDisponibles.length > 0 ? (
+                    companiasDisponibles.map(compania => (
+                      <div key={compania.id_compania} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id={`compania-${compania.id_compania}`}
+                          checked={formData.companias.includes(compania.id_compania)}
+                          onChange={() => handleCompaniaChange(compania.id_compania)}
+                          className="checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <label htmlFor={`compania-${compania.id_compania}`} className="ml-2 text-sm text-gray-700">
+                          {compania.nombre}
+                        </label>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500">Cargando compañías...</p>
+                  )}
+                </div>
+                <p className="leyenda text-sm text-gray-500 mt-1">Seleccione al menos una compañía para el usuario.</p>
               </div>
 
               <div>

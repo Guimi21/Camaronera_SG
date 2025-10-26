@@ -18,10 +18,19 @@ ChartJS.register(
   PointElement
 );
 
+// Función para obtener la fecha local en formato YYYY-MM-DD
+const getLocalDateString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function Directivo() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
-  const { idCompania } = useAuth(); // Obtener ID de compañía del usuario autenticado
+  const { idCompania, compania } = useAuth(); // Obtener ID de compañía y nombre del usuario autenticado
   const [data, setData] = useState([]);
   const [filteredGeneralData, setFilteredGeneralData] = useState([]);
   const [filteredTableData, setFilteredTableData] = useState([]);
@@ -401,10 +410,44 @@ export default function Directivo() {
       return baseData;
     });
     
-    const ws = XLSX.utils.json_to_sheet(excelData);
+    // Si no hay datos, crear un array con un objeto vacío para mostrar los encabezados
+    let finalData = excelData;
+    if (excelData.length === 0) {
+      const emptyRow = {
+        "Piscina": "",
+        "Has": "",
+        "Fecha Siembra": "",
+        "Días de Cultivo": "",
+        "Siembra/Larvas": "",
+        "Densidad (/ha)": "",
+        "Tipo Siembra": "",
+        "Peso (g)": "",
+        "Inc.P (%)": "",
+        "Biomasa (lbs)": ""
+      };
+      
+      // Agregar columnas dinámicas de balanceado vacías
+      tiposBalanceado.forEach(tipo => {
+        emptyRow[tipo.nombre] = "";
+      });
+      
+      // Agregar columnas finales vacías
+      emptyRow["Balanceado Acumulado"] = "";
+      emptyRow["Conversión Alimenticia"] = "";
+      emptyRow["Población Actual"] = "";
+      emptyRow["Supervivencia (%)"] = "";
+      emptyRow["Observaciones"] = "";
+      emptyRow["Fecha Muestra"] = "";
+      
+      finalData = [emptyRow];
+    }
+    
+    const ws = XLSX.utils.json_to_sheet(finalData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Reporte Producción");
-    XLSX.writeFile(wb, "reporte_produccion.xlsx");
+    const companiaSlug = compania ? compania.replace(/\s+/g, '_').toLowerCase() : 'compania';
+    const fileName = `reporte_produccion_${companiaSlug}_${getLocalDateString()}.xlsx`;
+    XLSX.writeFile(wb, fileName);
   };
 
   // Paginación
@@ -613,7 +656,6 @@ export default function Directivo() {
               <button 
                 onClick={handleDownload}
                 className="bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-700 transition"
-                disabled={loadingTable || filteredTableData.length === 0}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

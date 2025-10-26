@@ -3,6 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
 
+// Función para obtener la fecha local en formato YYYY-MM-DD
+const getLocalDateString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function CicloProductivoForm() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
@@ -10,7 +19,7 @@ export default function CicloProductivoForm() {
   
   const [formData, setFormData] = useState({
     id_piscina: '',
-    fecha_siembra: new Date().toISOString().split('T')[0],
+    fecha_siembra: getLocalDateString(),
     fecha_cosecha: '',
     cantidad_siembra: '',
     densidad: '',
@@ -320,6 +329,7 @@ export default function CicloProductivoForm() {
               name="fecha_siembra"
               value={formData.fecha_siembra}
               onChange={handleChange}
+              max={getLocalDateString()}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required
             />

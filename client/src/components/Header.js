@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, Link, useLocation } from "react-router-dom";
-import { FaUserCircle, FaSignOutAlt, FaBars } from "react-icons/fa";
+import { FaUserCircle, FaSignOutAlt, FaBars, FaBuilding } from "react-icons/fa";
 import * as FaIcons from "react-icons/fa";
 import * as MdIcons from "react-icons/md";
 import logo from "../assets/logos/logo.png";
 
 export default function Header() {
-  const { user, nombre, logout, grupoEmpresarial, compania, menus } = useAuth();
+  const { user, nombre, logout, grupoEmpresarial, companias, compania, idCompania, cambiarCompania, menus } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Estado para manejar el menú desplegable en móviles
@@ -38,6 +38,12 @@ export default function Header() {
     return null;
   };
 
+  // Función para manejar el cambio de compañía
+  const handleCompaniaChange = (e) => {
+    const nuevaCompaniaId = parseInt(e.target.value);
+    cambiarCompania(nuevaCompaniaId);
+  };
+
   // Si no hay usuario, no se renderiza el header
   if (!user) return null;
 
@@ -51,7 +57,30 @@ export default function Header() {
             <h1 className="logoTitulo"></h1>
             <div className="logoText">
               <p className="logoTitulo text-lg">{grupoEmpresarial || "N/A"}</p>
-              <p className="logoTitulo text-sm">{compania || "N/A"}</p>
+              
+              {/* Selector de compañía */}
+              {companias && companias.length > 1 ? (
+                <div className="flex items-center gap-2 mt-1">
+                  <FaBuilding className="text-gray-400 text-xs" />
+                  <select
+                    value={idCompania || ''}
+                    onChange={handleCompaniaChange}
+                    className="compania-selector text-sm bg-gray-700 text-white border border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    title="Seleccionar compañía"
+                  >
+                    {companias.map((comp) => (
+                      <option key={comp.id_compania} value={comp.id_compania}>
+                        {comp.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 mt-1">
+                  <FaBuilding className="text-gray-400 text-xs" />
+                  <p className="logoTitulo text-sm">{compania || "N/A"}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

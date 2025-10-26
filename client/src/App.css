@@ -176,6 +176,37 @@ header {
     margin-left: 0.5rem; /* Añadir un pequeño margen */
 }
 
+/* Selector de compañía en el header */
+.compania-selector {
+    background-color: #374151;
+    color: #ffffff;
+    border: 1px solid #4b5563;
+    border-radius: 6px;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 150px;
+    max-width: 250px;
+}
+
+.compania-selector:hover {
+    background-color: #4b5563;
+    border-color: #6b7280;
+}
+
+.compania-selector:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+    border-color: #3b82f6;
+}
+
+.compania-selector option {
+    background-color: #1f2937;
+    color: #ffffff;
+    padding: 0.5rem;
+}
 
 /* Menú de navegación (en la misma línea que el logo y el icono de usuario) */
 nav {
@@ -367,6 +398,10 @@ input, textarea {
     border-radius: 8px;
     font-size: 1rem;
     transition: var(--transition);
+}
+
+.checkbox {
+    width: 2.5vw;
 }
 
 textarea {

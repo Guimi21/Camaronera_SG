@@ -16,10 +16,19 @@ ChartJS.register(
   ArcElement
 );
 
+// Función para obtener la fecha local en formato YYYY-MM-DD
+const getLocalDateString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function MonitoreoPiscinas() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
-  const { idCompania } = useAuth(); // Obtener ID de compañía del usuario autenticado
+  const { idCompania, compania } = useAuth(); // Obtener ID de compañía y nombre del usuario autenticado
   const [piscinas, setPiscinas] = useState([]);
   const [filteredTableData, setfilteredTableData] = useState([]);
   const [filters, setFilters] = useState({
@@ -155,11 +164,17 @@ export default function MonitoreoPiscinas() {
       'Ubicación': piscina.ubicacion
     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    // Si no hay datos, crear un array con un objeto vacío para mostrar los encabezados
+    const finalData = dataToExport.length > 0 ? dataToExport : [
+      { 'No.': '', 'Código': '', 'Hectáreas': '', 'Ubicación': '' }
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(finalData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Piscinas');
 
-    const fileName = `monitoreo_piscinas_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const companiaSlug = compania ? compania.replace(/\s+/g, '_').toLowerCase() : 'compania';
+    const fileName = `monitoreo_piscinas_${companiaSlug}_${getLocalDateString()}.xlsx`;
     XLSX.writeFile(workbook, fileName);
   };
 

@@ -3,6 +3,15 @@ import { useNavigate, useParams } from 'react-router-dom';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
 
+// Función para obtener la fecha local en formato YYYY-MM-DD
+const getLocalDateString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function EditarCicloProductivoForm() {
   const navigate = useNavigate();
   const { id } = useParams(); // Obtener el ID del ciclo desde la URL
@@ -409,6 +418,7 @@ export default function EditarCicloProductivoForm() {
               name="fecha_siembra"
               value={formData.fecha_siembra}
               onChange={handleChange}
+              max={getLocalDateString()}
               className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                 tieneMuestras ? 'bg-gray-50 cursor-not-allowed' : ''
               }`}

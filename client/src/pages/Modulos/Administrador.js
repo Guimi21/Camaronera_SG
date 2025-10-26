@@ -4,10 +4,19 @@ import * as XLSX from "xlsx";
 import config from "../../config";
 import { useAuth } from "../../context/AuthContext";
 
+// Función para obtener la fecha local en formato YYYY-MM-DD
+const getLocalDateString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function Administrador() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
-  const { idUsuario } = useAuth(); // Obtener ID de usuario del contexto
+  const { idUsuario, compania } = useAuth(); // Obtener ID de usuario y nombre de compañía del contexto
   const [companias, setCompanias] = useState([]);
   const [filteredCompanias, setFilteredCompanias] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -144,11 +153,17 @@ export default function Administrador() {
       'Última Actualización': formatDate(compania.fecha_actualizacion)
     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    // Si no hay datos, crear un array con un objeto vacío para mostrar los encabezados
+    const finalData = excelData.length > 0 ? excelData : [
+      { 'No.': '', 'Nombre': '', 'Grupo Empresarial': '', 'Dirección': '', 'Teléfono': '', 'Estado': '', 'Fecha Creación': '', 'Última Actualización': '' }
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(finalData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Compañías');
 
-    const fileName = `reporte_companias_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const companiaSlug = compania ? compania.replace(/\s+/g, '_').toLowerCase() : 'sistema';
+    const fileName = `reporte_companias_${companiaSlug}_${getLocalDateString()}.xlsx`;
     XLSX.writeFile(workbook, fileName);
   };
 
@@ -331,7 +346,6 @@ export default function Administrador() {
                 <button 
                   onClick={handleDownload}
                   className="bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-700 transition"
-                  disabled={loading || filteredCompanias.length === 0}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

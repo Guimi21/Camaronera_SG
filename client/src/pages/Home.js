@@ -3,13 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Home() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, perfilActivo } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAuthenticated && user) {
-      // Redirigir automáticamente al módulo principal según el tipo de usuario
-      switch (user.tipo_usuario) {
+    if (isAuthenticated && perfilActivo) {
+      // Redirigir automáticamente al módulo principal según el perfil activo
+      switch (perfilActivo) {
         case "Administrador":
           navigate("/administrador");
           break;
@@ -23,7 +23,7 @@ export default function Home() {
           navigate("/body");
       }
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, perfilActivo, navigate]);
 
   return (
     <div className="p-8 text-center">

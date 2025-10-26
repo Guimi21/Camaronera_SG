@@ -8,13 +8,15 @@ let inactivityTimer = null;
 export const AuthProvider = ({ children }) => {
   const [nombre, setNombre] = useState(null); // Estado para el nombre del usuario
   const [user, setUser] = useState(null);  // Estado para el nickname del usuario
-  const [tipoUsuario, setTipoUsuario] = useState(null); // Estado para el tipo de usuario
+  const [perfiles, setPerfiles] = useState([]); // Estado para los perfiles del usuario
+  const [perfilActivo, setPerfilActivo] = useState(null); // Estado para el perfil activo (el primero)
   const [menus, setMenus] = useState([]);  // Menús del usuario
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
   const [grupoEmpresarial, setGrupoEmpresarial] = useState(null); // Agregamos estado para el grupo empresarial
-  const [compania, setCompania] = useState(null); // Agregamos estado para la empresa
-  const [idCompania, setIdCompania] = useState(null); // Agregamos estado para el ID de la compañía
+  const [companias, setCompanias] = useState([]); // Array de todas las compañías del usuario
+  const [compania, setCompania] = useState(null); // Agregamos estado para la empresa activa
+  const [idCompania, setIdCompania] = useState(null); // Agregamos estado para el ID de la compañía activa
   const [idUsuario, setIdUsuario] = useState(null); // Agregamos estado para el ID del usuario
   const { API_BASE_URL } = config;
 
@@ -22,10 +24,12 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback(() => {
     setNombre(null); // Limpiar nombre al hacer logout
     setUser(null); // Limpiar usuario al hacer logout
-    setTipoUsuario(null); // Limpiar tipoUsuario al hacer logout
+    setPerfiles([]); // Limpiar perfiles al hacer logout
+    setPerfilActivo(null); // Limpiar perfil activo al hacer logout
     setMenus([]);  // Limpiar menús al hacer logout
     setToken(null); // Limpiar token al hacer logout
     setGrupoEmpresarial(null); // Limpiar grupo empresarial
+    setCompanias([]); // Limpiar array de compañías
     setCompania(null); // Limpiar compañía
     setIdCompania(null); // Limpiar ID compañía
     setIdUsuario(null); // Limpiar ID usuario
@@ -50,10 +54,27 @@ export const AuthProvider = ({ children }) => {
       setToken(parsedData.token);
       setNombre(parsedData.nombre); // Guardamos el nombre del usuario
       setUser(parsedData.usuario);  // Guardamos el nickname del usuario
-      setTipoUsuario(parsedData.tipo_usuario);  // Asegúrate de que 'tipo_usuario' se guarde aquí
+      setPerfiles(parsedData.perfiles || []); // Guardamos los perfiles del usuario
+      setPerfilActivo(parsedData.perfiles && parsedData.perfiles.length > 0 ? parsedData.perfiles[0].nombre : null); // Primer perfil como activo
       setGrupoEmpresarial(parsedData.grupo_empresarial); // Guardamos grupo empresarial
-      setCompania(parsedData.compania); // Guardamos compañía
-      setIdCompania(parsedData.id_compania); // Guardamos ID compañía
+      setCompanias(parsedData.companias || []); // Guardamos todas las compañías
+      
+      // Establecer la compañía activa (desde localStorage si existe, o la primera del array)
+      const companiaActivaId = localStorage.getItem('companiaActivaId');
+      if (companiaActivaId && parsedData.companias) {
+        const companiaEncontrada = parsedData.companias.find(c => c.id_compania === parseInt(companiaActivaId));
+        if (companiaEncontrada) {
+          setCompania(companiaEncontrada.nombre);
+          setIdCompania(companiaEncontrada.id_compania);
+        } else {
+          setCompania(parsedData.compania);
+          setIdCompania(parsedData.id_compania);
+        }
+      } else {
+        setCompania(parsedData.compania);
+        setIdCompania(parsedData.id_compania);
+      }
+      
       setIdUsuario(parsedData.id_usuario); // Guardamos ID usuario
     } catch (error) {
       logout();
@@ -90,11 +111,13 @@ export const AuthProvider = ({ children }) => {
 
       setNombre(jsonResponse.nombre); // Guardamos el nombre del usuario
       setUser(jsonResponse.usuario);  // Guardamos el nickname del usuario
-      setTipoUsuario(jsonResponse.tipo_usuario);  // Asegúrate de almacenar el tipo de usuario aquí
+      setPerfiles(jsonResponse.perfiles || []); // Guardamos los perfiles del usuario
+      setPerfilActivo(jsonResponse.perfiles && jsonResponse.perfiles.length > 0 ? jsonResponse.perfiles[0].nombre : null); // Primer perfil como activo
       setMenus(jsonResponse.menus); // Guardamos los menús
       setGrupoEmpresarial(jsonResponse.grupo_empresarial); // Guardamos grupo empresarial
-      setCompania(jsonResponse.compania); // Guardamos compañía
-      setIdCompania(jsonResponse.id_compania); // Guardamos ID compañía
+      setCompanias(jsonResponse.companias || []); // Guardamos todas las compañías
+      setCompania(jsonResponse.compania); // Guardamos compañía activa
+      setIdCompania(jsonResponse.id_compania); // Guardamos ID compañía activa
       setIdUsuario(jsonResponse.id_usuario); // Guardamos ID usuario
       localStorage.setItem("authData", JSON.stringify(jsonResponse));
 
@@ -104,21 +127,47 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Función para cambiar la compañía activa
+  const cambiarCompania = useCallback((id_compania) => {
+    const companiaSeleccionada = companias.find(c => c.id_compania === id_compania);
+    if (companiaSeleccionada) {
+      setCompania(companiaSeleccionada.nombre);
+      setIdCompania(companiaSeleccionada.id_compania);
+      localStorage.setItem('companiaActivaId', id_compania.toString());
+      
+      // Actualizar también en authData para mantener persistencia
+      const authData = localStorage.getItem("authData");
+      if (authData) {
+        try {
+          const parsedData = JSON.parse(authData);
+          parsedData.compania = companiaSeleccionada.nombre;
+          parsedData.id_compania = companiaSeleccionada.id_compania;
+          localStorage.setItem("authData", JSON.stringify(parsedData));
+        } catch (error) {
+          console.error("Error al actualizar authData:", error);
+        }
+      }
+    }
+  }, [companias]);
+
   return (
     <AuthContext.Provider
       value={{
         nombre,
         user,
-        tipoUsuario, 
+        perfiles,
+        perfilActivo, 
         menus,
         loading,
         token,
-        grupoEmpresarial, 
+        grupoEmpresarial,
+        companias, // Array de todas las compañías
         compania,
         idCompania, // Agregamos idCompania al context
         idUsuario, // Agregamos idUsuario al context
         login,
         logout,
+        cambiarCompania, // Nueva función para cambiar compañía
         isAuthenticated: !!user,
       }}
     >

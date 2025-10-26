@@ -3,6 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
 
+// Función para obtener la fecha local en formato YYYY-MM-DD
+const getLocalDateString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function MuestraForm() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
@@ -20,7 +29,7 @@ export default function MuestraForm() {
     poblacion_actual: '', // Calculado automáticamente
     supervivencia: '',
     observaciones: '',
-    fecha_muestra: new Date().toISOString().split('T')[0]
+    fecha_muestra: getLocalDateString()
   });
   
   const [ciclosDisponibles, setCiclosDisponibles] = useState([]);
@@ -411,6 +420,19 @@ export default function MuestraForm() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     
+    // Validaciones para campos numéricos
+    if (name === 'peso' || name === 'supervivencia' || name.startsWith('balanceado_')) {
+      // No permitir valores negativos
+      if (value !== '' && parseFloat(value) < 0) {
+        return;
+      }
+      
+      // Validación específica para supervivencia (no mayor a 100)
+      if (name === 'supervivencia' && value !== '' && parseFloat(value) > 100) {
+        return;
+      }
+    }
+    
     // Verificar si el cambio es en un campo de balanceado
     const isBalanceadoField = name.startsWith('balanceado_');
     
@@ -703,6 +725,7 @@ export default function MuestraForm() {
                   name="fecha_muestra"
                   value={formData.fecha_muestra}
                   onChange={handleChange}
+                  max={getLocalDateString()}
                   required
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
@@ -738,6 +761,7 @@ export default function MuestraForm() {
                 <input
                   type="number"
                   step="0.01"
+                  min="0"
                   name="peso"
                   value={formData.peso}
                   onChange={handleChange}
@@ -778,6 +802,8 @@ export default function MuestraForm() {
                 <input
                   type="number"
                   step="0.01"
+                  min="0"
+                  max="100"
                   name="supervivencia"
                   value={formData.supervivencia}
                   onChange={handleChange}
@@ -856,6 +882,7 @@ export default function MuestraForm() {
                     <input
                       type="number"
                       step="0.01"
+                      min="0"
                       name={`balanceado_${tipo.id_tipo_balanceado}`}
                       value={formData.balanceados[tipo.id_tipo_balanceado] || ''}
                       onChange={handleChange}

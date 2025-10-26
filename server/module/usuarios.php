@@ -48,16 +48,22 @@ if ($method === 'GET') {
                 u.nombre,
                 u.username,
                 u.estado,
-                u.tipo_usuario,
                 u.id_grupo_empresarial,
                 u.fecha_creacion,
-                u.fecha_actualizacion
+                u.fecha_actualizacion,
+                GROUP_CONCAT(DISTINCT p.nombre ORDER BY p.nombre SEPARATOR ', ') as perfiles,
+                GROUP_CONCAT(DISTINCT c.nombre ORDER BY c.nombre SEPARATOR ', ') as companias
             FROM usuario u
+            LEFT JOIN usuario_perfil up ON u.id_usuario = up.id_usuario
+            LEFT JOIN perfil p ON up.id_perfil = p.id_perfil
+            LEFT JOIN usuario_compania uc ON u.id_usuario = uc.id_usuario
+            LEFT JOIN compania c ON uc.id_compania = c.id_compania
             WHERE u.id_grupo_empresarial = (
                 SELECT id_grupo_empresarial 
                 FROM usuario 
                 WHERE id_usuario = :id_usuario
             )
+            GROUP BY u.id_usuario, u.nombre, u.username, u.estado, u.id_grupo_empresarial, u.fecha_creacion, u.fecha_actualizacion
             ORDER BY u.fecha_creacion DESC
         ";
 
@@ -121,9 +127,15 @@ if ($method === 'POST') {
             exit();
         }
 
-        if (!isset($input['tipo_usuario']) || empty(trim($input['tipo_usuario']))) {
+        if (!isset($input['perfiles']) || !is_array($input['perfiles']) || count($input['perfiles']) === 0) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Tipo de usuario requerido']);
+            echo json_encode(['success' => false, 'message' => 'Al menos un perfil es requerido']);
+            exit();
+        }
+
+        if (!isset($input['companias']) || !is_array($input['companias']) || count($input['companias']) === 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Al menos una compañía es requerida']);
             exit();
         }
 
@@ -155,22 +167,61 @@ if ($method === 'POST') {
         // Por el momento almacenamos el password tal cual en password_hash (según instrucción)
         $password_hash = trim($input['password']);
         $estado = trim($input['estado']);
-        $tipo_usuario = trim($input['tipo_usuario']);
+        $perfiles = $input['perfiles']; // Array de IDs de perfiles
+        $companias = $input['companias']; // Array de IDs de compañías
 
         // Insertar nuevo usuario
-        $insertQuery = "INSERT INTO usuario (nombre, username, password_hash, estado, tipo_usuario, id_grupo_empresarial, fecha_creacion, fecha_actualizacion)
-                        VALUES (:nombre, :username, :password_hash, :estado, :tipo_usuario, :id_grupo_empresarial, NOW(), NOW())";
+        $insertQuery = "INSERT INTO usuario (nombre, username, password_hash, estado, id_grupo_empresarial, fecha_creacion, fecha_actualizacion)
+                        VALUES (:nombre, :username, :password_hash, :estado, :id_grupo_empresarial, NOW(), NOW())";
 
         $insertStmt = $conn->prepare($insertQuery);
         $insertStmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
         $insertStmt->bindParam(':username', $username, PDO::PARAM_STR);
         $insertStmt->bindParam(':password_hash', $password_hash, PDO::PARAM_STR);
         $insertStmt->bindParam(':estado', $estado, PDO::PARAM_STR);
-        $insertStmt->bindParam(':tipo_usuario', $tipo_usuario, PDO::PARAM_STR);
         $insertStmt->bindParam(':id_grupo_empresarial', $id_grupo_empresarial, PDO::PARAM_INT);
 
         if ($insertStmt->execute()) {
             $new_id = $conn->lastInsertId();
+            
+            // Insertar relaciones usuario-perfil
+            $insertPerfilQuery = "INSERT INTO usuario_perfil (id_usuario, id_perfil) VALUES (:id_usuario, :id_perfil)";
+            $insertPerfilStmt = $conn->prepare($insertPerfilQuery);
+            
+            foreach ($perfiles as $id_perfil) {
+                $insertPerfilStmt->bindParam(':id_usuario', $new_id, PDO::PARAM_INT);
+                $insertPerfilStmt->bindParam(':id_perfil', $id_perfil, PDO::PARAM_INT);
+                $insertPerfilStmt->execute();
+            }
+            
+            // Insertar relaciones usuario-compañía
+            $insertCompaniaQuery = "INSERT INTO usuario_compania (id_usuario, id_compania) VALUES (:id_usuario, :id_compania)";
+            $insertCompaniaStmt = $conn->prepare($insertCompaniaQuery);
+            
+            foreach ($companias as $id_compania) {
+                $insertCompaniaStmt->bindParam(':id_usuario', $new_id, PDO::PARAM_INT);
+                $insertCompaniaStmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
+                $insertCompaniaStmt->execute();
+            }
+            
+            // Obtener nombres de perfiles asignados
+            $queryPerfiles = "SELECT p.nombre FROM perfil p 
+                             JOIN usuario_perfil up ON p.id_perfil = up.id_perfil 
+                             WHERE up.id_usuario = :id_usuario";
+            $stmtPerfiles = $conn->prepare($queryPerfiles);
+            $stmtPerfiles->bindParam(':id_usuario', $new_id, PDO::PARAM_INT);
+            $stmtPerfiles->execute();
+            $perfilesNombres = $stmtPerfiles->fetchAll(PDO::FETCH_COLUMN);
+            
+            // Obtener nombres de compañías asignadas
+            $queryCompanias = "SELECT c.nombre FROM compania c 
+                              JOIN usuario_compania uc ON c.id_compania = uc.id_compania 
+                              WHERE uc.id_usuario = :id_usuario";
+            $stmtCompanias = $conn->prepare($queryCompanias);
+            $stmtCompanias->bindParam(':id_usuario', $new_id, PDO::PARAM_INT);
+            $stmtCompanias->execute();
+            $companiasNombres = $stmtCompanias->fetchAll(PDO::FETCH_COLUMN);
+            
             http_response_code(201);
             echo json_encode([
                 'success' => true,
@@ -180,7 +231,8 @@ if ($method === 'POST') {
                     'nombre' => $nombre,
                     'username' => $username,
                     'estado' => $estado,
-                    'tipo_usuario' => $tipo_usuario,
+                    'perfiles' => implode(', ', $perfilesNombres),
+                    'companias' => implode(', ', $companiasNombres),
                     'id_grupo_empresarial' => $id_grupo_empresarial
                 ]
             ]);

@@ -4,10 +4,19 @@ import * as XLSX from "xlsx";
 import config from "../../config";
 import { useAuth } from "../../context/AuthContext";
 
+// Función para obtener la fecha local en formato YYYY-MM-DD
+const getLocalDateString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function MonitoreoCiclos() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
-  const { idCompania } = useAuth(); // Obtener ID de compañía del usuario autenticado
+  const { idCompania, compania } = useAuth(); // Obtener ID de compañía y nombre del usuario autenticado
   const [ciclos, setCiclos] = useState([]);
   const [filteredTableData, setFilteredTableData] = useState([]);
   const [filters, setFilters] = useState({
@@ -126,11 +135,17 @@ export default function MonitoreoCiclos() {
       'Estado': ciclo.estado
     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    // Si no hay datos, crear un array con un objeto vacío para mostrar los encabezados
+    const finalData = dataToExport.length > 0 ? dataToExport : [
+      { 'No.': '', 'Piscina': '', 'Fecha Siembra': '', 'Fecha Cosecha': '', 'Cantidad Siembra': '', 'Densidad': '', 'Tipo Siembra': '', 'Estado': '' }
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(finalData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Ciclos Productivos');
 
-    const fileName = `monitoreo_ciclos_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const companiaSlug = compania ? compania.replace(/\s+/g, '_').toLowerCase() : 'compania';
+    const fileName = `monitoreo_ciclos_${companiaSlug}_${getLocalDateString()}.xlsx`;
     XLSX.writeFile(workbook, fileName);
   };
 
