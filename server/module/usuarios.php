@@ -133,7 +133,12 @@ if ($method === 'POST') {
             exit();
         }
 
-        if (!isset($input['companias']) || !is_array($input['companias']) || count($input['companias']) === 0) {
+        // companias es opcional para Superadministrador
+        $companias = isset($input['companias']) && is_array($input['companias']) ? $input['companias'] : [];
+        
+        // Validar que si no se proporciona idGrupoEmpresarial (no es Superadministrador), tenga al menos una compañía
+        $isSuperadmin = isset($input['idGrupoEmpresarial']) && !empty($input['idGrupoEmpresarial']);
+        if (empty($companias) && !$isSuperadmin) {
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'Al menos una compañía es requerida']);
             exit();
@@ -148,19 +153,40 @@ if ($method === 'POST') {
         // Obtener el id_grupo_empresarial del usuario autenticado (id_usuario enviado en el body)
         $id_usuario = intval($input['id_usuario']);
 
-        $queryGrupo = "SELECT id_grupo_empresarial FROM usuario WHERE id_usuario = :id_usuario";
-        $stmtGrupo = $conn->prepare($queryGrupo);
-        $stmtGrupo->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
-        $stmtGrupo->execute();
-        $usuario = $stmtGrupo->fetch(PDO::FETCH_ASSOC);
+        // Obtener el id_grupo_empresarial
+        $id_grupo_empresarial = null;
 
-        if (!$usuario || !$usuario['id_grupo_empresarial']) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'No se pudo obtener el grupo empresarial del usuario']);
-            exit();
+        // Si se proporciona idGrupoEmpresarial (Superadministrador), usar ese
+        if (isset($input['idGrupoEmpresarial']) && !empty($input['idGrupoEmpresarial'])) {
+            $id_grupo_empresarial = intval($input['idGrupoEmpresarial']);
+            
+            // Validar que el grupo empresarial existe
+            $queryGrupoValida = "SELECT id_grupo_empresarial FROM grupo_empresarial WHERE id_grupo_empresarial = :id_grupo";
+            $stmtGrupoValida = $conn->prepare($queryGrupoValida);
+            $stmtGrupoValida->bindParam(':id_grupo', $id_grupo_empresarial, PDO::PARAM_INT);
+            $stmtGrupoValida->execute();
+            
+            if ($stmtGrupoValida->rowCount() === 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Grupo empresarial inválido']);
+                exit();
+            }
+        } else {
+            // Si no se proporciona, obtener el del usuario autenticado
+            $queryGrupo = "SELECT id_grupo_empresarial FROM usuario WHERE id_usuario = :id_usuario";
+            $stmtGrupo = $conn->prepare($queryGrupo);
+            $stmtGrupo->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+            $stmtGrupo->execute();
+            $usuario = $stmtGrupo->fetch(PDO::FETCH_ASSOC);
+
+            if (!$usuario || !$usuario['id_grupo_empresarial']) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'No se pudo obtener el grupo empresarial del usuario']);
+                exit();
+            }
+
+            $id_grupo_empresarial = intval($usuario['id_grupo_empresarial']);
         }
-
-        $id_grupo_empresarial = intval($usuario['id_grupo_empresarial']);
 
         $nombre = trim($input['nombre']);
         $username = trim($input['username']);
@@ -168,7 +194,7 @@ if ($method === 'POST') {
         $password_hash = trim($input['password']);
         $estado = trim($input['estado']);
         $perfiles = $input['perfiles']; // Array de IDs de perfiles
-        $companias = $input['companias']; // Array de IDs de compañías
+        // $companias ya fue procesada antes, no reasignar
 
         // Insertar nuevo usuario
         $insertQuery = "INSERT INTO usuario (nombre, username, password_hash, estado, id_grupo_empresarial, fecha_creacion, fecha_actualizacion)
@@ -194,14 +220,16 @@ if ($method === 'POST') {
                 $insertPerfilStmt->execute();
             }
             
-            // Insertar relaciones usuario-compañía
-            $insertCompaniaQuery = "INSERT INTO usuario_compania (id_usuario, id_compania) VALUES (:id_usuario, :id_compania)";
-            $insertCompaniaStmt = $conn->prepare($insertCompaniaQuery);
-            
-            foreach ($companias as $id_compania) {
-                $insertCompaniaStmt->bindParam(':id_usuario', $new_id, PDO::PARAM_INT);
-                $insertCompaniaStmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
-                $insertCompaniaStmt->execute();
+            // Insertar relaciones usuario-compañía (solo si existen compañías)
+            if (!empty($companias)) {
+                $insertCompaniaQuery = "INSERT INTO usuario_compania (id_usuario, id_compania) VALUES (:id_usuario, :id_compania)";
+                $insertCompaniaStmt = $conn->prepare($insertCompaniaQuery);
+                
+                foreach ($companias as $id_compania) {
+                    $insertCompaniaStmt->bindParam(':id_usuario', $new_id, PDO::PARAM_INT);
+                    $insertCompaniaStmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
+                    $insertCompaniaStmt->execute();
+                }
             }
             
             // Obtener nombres de perfiles asignados
@@ -252,6 +280,143 @@ if ($method === 'POST') {
     }
 }
 
+// Manejo de peticiones PUT - Actualizar usuario
+if ($method === 'PUT') {
+    try {
+        // Leer el cuerpo de la solicitud JSON
+        $input = json_decode(file_get_contents('php://input'), true);
+
+        // Validar campos requeridos
+        if (!isset($input['nombre']) || empty(trim($input['nombre']))) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Nombre requerido']);
+            exit();
+        }
+
+        if (!isset($input['perfiles']) || !is_array($input['perfiles']) || count($input['perfiles']) === 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Al menos un perfil es requerido']);
+            exit();
+        }
+
+        if (!isset($input['companias']) || !is_array($input['companias'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Compañías debe ser un array']);
+            exit();
+        }
+
+        if (!isset($input['estado']) || empty($input['estado'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Estado requerido']);
+            exit();
+        }
+
+        if (!isset($input['id_usuario_edit']) || empty($input['id_usuario_edit'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'ID de usuario a editar requerido']);
+            exit();
+        }
+
+        if (!isset($input['id_usuario']) || empty($input['id_usuario'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'ID de usuario autenticado requerido']);
+            exit();
+        }
+
+        $id_usuario_edit = intval($input['id_usuario_edit']);
+        $id_usuario_autenticado = intval($input['id_usuario']);
+        $nombre = trim($input['nombre']);
+        $estado = trim($input['estado']);
+        $perfiles = $input['perfiles'];
+        $companias = $input['companias'];
+
+        // Actualizar datos del usuario
+        $updateQuery = "UPDATE usuario SET nombre = :nombre, estado = :estado, fecha_actualizacion = NOW()
+                        WHERE id_usuario = :id_usuario_edit";
+
+        $updateStmt = $conn->prepare($updateQuery);
+        $updateStmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
+        $updateStmt->bindParam(':estado', $estado, PDO::PARAM_STR);
+        $updateStmt->bindParam(':id_usuario_edit', $id_usuario_edit, PDO::PARAM_INT);
+
+        if (!$updateStmt->execute()) {
+            throw new Exception('Error al actualizar el usuario');
+        }
+
+        // Eliminar perfiles antiguos
+        $deletePerfilQuery = "DELETE FROM usuario_perfil WHERE id_usuario = :id_usuario";
+        $deletePerfilStmt = $conn->prepare($deletePerfilQuery);
+        $deletePerfilStmt->bindParam(':id_usuario', $id_usuario_edit, PDO::PARAM_INT);
+        $deletePerfilStmt->execute();
+
+        // Insertar nuevos perfiles
+        $insertPerfilQuery = "INSERT INTO usuario_perfil (id_usuario, id_perfil) VALUES (:id_usuario, :id_perfil)";
+        $insertPerfilStmt = $conn->prepare($insertPerfilQuery);
+
+        foreach ($perfiles as $id_perfil) {
+            $insertPerfilStmt->bindParam(':id_usuario', $id_usuario_edit, PDO::PARAM_INT);
+            $insertPerfilStmt->bindParam(':id_perfil', $id_perfil, PDO::PARAM_INT);
+            $insertPerfilStmt->execute();
+        }
+
+        // Eliminar compañías antiguas
+        $deleteCompaniaQuery = "DELETE FROM usuario_compania WHERE id_usuario = :id_usuario";
+        $deleteCompaniaStmt = $conn->prepare($deleteCompaniaQuery);
+        $deleteCompaniaStmt->bindParam(':id_usuario', $id_usuario_edit, PDO::PARAM_INT);
+        $deleteCompaniaStmt->execute();
+
+        // Insertar nuevas compañías
+        $insertCompaniaQuery = "INSERT INTO usuario_compania (id_usuario, id_compania) VALUES (:id_usuario, :id_compania)";
+        $insertCompaniaStmt = $conn->prepare($insertCompaniaQuery);
+
+        foreach ($companias as $id_compania) {
+            $insertCompaniaStmt->bindParam(':id_usuario', $id_usuario_edit, PDO::PARAM_INT);
+            $insertCompaniaStmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
+            $insertCompaniaStmt->execute();
+        }
+
+        // Obtener datos actualizados del usuario
+        $queryPerfiles = "SELECT p.nombre FROM perfil p 
+                         JOIN usuario_perfil up ON p.id_perfil = up.id_perfil 
+                         WHERE up.id_usuario = :id_usuario";
+        $stmtPerfiles = $conn->prepare($queryPerfiles);
+        $stmtPerfiles->bindParam(':id_usuario', $id_usuario_edit, PDO::PARAM_INT);
+        $stmtPerfiles->execute();
+        $perfilesNombres = $stmtPerfiles->fetchAll(PDO::FETCH_COLUMN);
+
+        $queryCompanias = "SELECT c.nombre FROM compania c 
+                          JOIN usuario_compania uc ON c.id_compania = uc.id_compania 
+                          WHERE uc.id_usuario = :id_usuario";
+        $stmtCompanias = $conn->prepare($queryCompanias);
+        $stmtCompanias->bindParam(':id_usuario', $id_usuario_edit, PDO::PARAM_INT);
+        $stmtCompanias->execute();
+        $companiasNombres = $stmtCompanias->fetchAll(PDO::FETCH_COLUMN);
+
+        http_response_code(200);
+        echo json_encode([
+            'success' => true,
+            'message' => 'Usuario actualizado exitosamente',
+            'data' => [
+                'id_usuario' => $id_usuario_edit,
+                'nombre' => $nombre,
+                'estado' => $estado,
+                'perfiles' => implode(', ', $perfilesNombres),
+                'companias' => implode(', ', $companiasNombres)
+            ]
+        ]);
+        exit();
+
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Error en la base de datos: ' . $e->getMessage()]);
+        exit();
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Error del servidor: ' . $e->getMessage()]);
+        exit();
+    }
+}
+
 // Método no permitido
 http_response_code(405);
 echo json_encode([
@@ -259,3 +424,4 @@ echo json_encode([
     'message' => 'Método no permitido'
 ]);
 exit();
+

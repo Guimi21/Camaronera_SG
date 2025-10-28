@@ -150,6 +150,33 @@ export const AuthProvider = ({ children }) => {
     }
   }, [companias]);
 
+  // Función para actualizar las compañías del usuario autenticado
+  const actualizarCompanias = (nuevasCompanias) => {
+    setCompanias(nuevasCompanias);
+    
+    // Si hay compañías nuevas, seleccionar la primera
+    if (nuevasCompanias && nuevasCompanias.length > 0) {
+      const primeraCompania = nuevasCompanias[0];
+      setCompania(primeraCompania.nombre);
+      setIdCompania(primeraCompania.id_compania);
+      localStorage.setItem('companiaActivaId', primeraCompania.id_compania.toString());
+      
+      // Actualizar authData
+      const authData = localStorage.getItem("authData");
+      if (authData) {
+        try {
+          const parsedData = JSON.parse(authData);
+          parsedData.companias = nuevasCompanias;
+          parsedData.compania = primeraCompania.nombre;
+          parsedData.id_compania = primeraCompania.id_compania;
+          localStorage.setItem("authData", JSON.stringify(parsedData));
+        } catch (error) {
+          console.error("Error al actualizar authData:", error);
+        }
+      }
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -168,6 +195,7 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         cambiarCompania, // Nueva función para cambiar compañía
+        actualizarCompanias, // Nueva función para actualizar compañías
         isAuthenticated: !!user,
       }}
     >

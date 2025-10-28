@@ -9,10 +9,13 @@ import Home from "./pages/Home";
 import Administrador from "./pages/Modulos/Administrador";
 import Digitador from "./pages/Modulos/Digitador";
 import Directivo from "./pages/Modulos/Directivo";
+import Dashboard from "./pages/Modulos/Dashboard";
+import GruposEmpresariales from "./pages/Modulos/GruposEmpresariales";
 import MonitoreoPiscinas from "./pages/Modulos/MonitoreoPiscinas";
 import MonitoreoBalanceados from "./pages/Modulos/MonitoreoBalanceados";
 import MonitoreoCiclos from "./pages/Modulos/MonitoreoCiclos";
 import Usuarios from "./pages/Modulos/Usuarios";
+import UsuariosAdmin from "./pages/Modulos/UsuariosAdmin";
 
 // Formularios
 import PiscinaForm from "./pages/Modulos/Form/PiscinaForm";
@@ -22,7 +25,9 @@ import EditarCicloProductivoForm from "./pages/Modulos/Form/EditarCicloProductiv
 import ConsultarCicloProductivoForm from "./pages/Modulos/Form/ConsultarCicloProductivoForm";
 import BalanceadoForm from "./pages/Modulos/Form/BalanceadoForm";
 import CompaniaForm from "./pages/Modulos/Form/CompaniaForm";
+import GrupoEmpresarialForm from "./pages/Modulos/Form/GrupoEmpresarialForm";
 import UsuarioForm from "./pages/Modulos/Form/UsuarioForm";
+import UsuarioEditForm from "./pages/Modulos/Form/UsuarioEditForm";
 
 // Redirección por defecto según perfil activo
 function DefaultModuleRedirect() {
@@ -31,6 +36,8 @@ function DefaultModuleRedirect() {
   if (!perfilActivo) return <Navigate to="/login" replace />;
 
   switch (perfilActivo) {
+    case "Superadministrador":
+      return <Navigate to="dashboard/grupos-empresariales" replace />;
     case "Administrador":
       return <Navigate to="dashboard/companias" replace />;
     case "Digitador":
@@ -67,7 +74,9 @@ function App() {
 
             {/* Módulos */}
             <Route path="dashboard/companias" element={<Administrador />} />
+            <Route path="dashboard/grupos-empresariales" element={<GruposEmpresariales />} />
             <Route path="dashboard/usuarios" element={<Usuarios />} />
+            <Route path="dashboard/usuarios-admin" element={<UsuariosAdmin />} />
             <Route path="digitador" element={<Digitador />} />
             <Route path="dashboard/reporte" element={<Directivo />} />
 
@@ -79,7 +88,9 @@ function App() {
             <Route path="form/consultar-ciclo/:id" element={<ConsultarCicloProductivoForm />} />
             <Route path="form/balanceado" element={<BalanceadoForm />} />
             <Route path="form/compania" element={<CompaniaForm />} />
+            <Route path="form/grupo-empresarial" element={<GrupoEmpresarialForm />} />
             <Route path="form/usuario" element={<UsuarioForm />} />
+            <Route path="form/usuario/:idUsuario" element={<UsuarioEditForm />} />
 
             {/* Dashboard - Monitoreo */}
             <Route path="dashboard/monitoreo-piscinas" element={<MonitoreoPiscinas />} />

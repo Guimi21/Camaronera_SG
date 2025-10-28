@@ -20,11 +20,8 @@ $username = $data->username;
 $password = $data->password;
 
 // Verificar si las credenciales son correctas (esto debe hacerlo con tu base de datos)
-$query = "SELECT u.id_usuario, u.nombre, u.username, u.password_hash, uc.id_compania, c.nombre AS compania_nombre, c.id_grupo_empresarial, ge.nombre AS grupo_empresarial_nombre 
+$query = "SELECT u.id_usuario, u.nombre, u.username, u.password_hash, u.id_grupo_empresarial
           FROM usuario u
-          JOIN usuario_compania uc ON u.id_usuario = uc.id_usuario
-          JOIN compania c ON uc.id_compania = c.id_compania
-          LEFT JOIN grupo_empresarial ge ON c.id_grupo_empresarial = ge.id_grupo_empresarial
           WHERE u.username = :username";
 
 $stmt = $conn->prepare($query);
@@ -41,6 +38,17 @@ if (!$user || $user['password_hash'] !== $password) {
     echo json_encode(['error' => 'Credenciales incorrectas']);
     http_response_code(401);  // Código de estado 401 Unauthorized
     exit;
+}
+
+// Obtener el grupo empresarial
+$grupo_empresarial_nombre = null;
+if ($user['id_grupo_empresarial']) {
+    $query_grupo = "SELECT nombre FROM grupo_empresarial WHERE id_grupo_empresarial = :id_grupo";
+    $stmt_grupo = $conn->prepare($query_grupo);
+    $stmt_grupo->bindParam(':id_grupo', $user['id_grupo_empresarial'], PDO::PARAM_INT);
+    $stmt_grupo->execute();
+    $grupo = $stmt_grupo->fetch(PDO::FETCH_ASSOC);
+    $grupo_empresarial_nombre = $grupo['nombre'] ?? null;
 }
 
 // Obtener los perfiles asociados al usuario
@@ -95,7 +103,7 @@ $response = [
     'nombre' => $user['nombre'],  // Nombre del usuario
     'usuario' => $user['username'], // Nickname del usuario
     'perfiles' => $perfiles,  // Array de perfiles del usuario
-    'grupo_empresarial' => $user['grupo_empresarial_nombre'],  // Nombre del grupo empresarial
+    'grupo_empresarial' => $grupo_empresarial_nombre,  // Nombre del grupo empresarial
     'companias' => $companias,  // Array de todas las compañías del usuario
     'compania' => $companias[0]['nombre'] ?? null,  // Nombre de la primera compañía
     'id_compania' => $companias[0]['id_compania'] ?? null,  // ID de la primera compañía

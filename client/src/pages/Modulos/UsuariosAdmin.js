@@ -13,10 +13,10 @@ const getLocalDateString = () => {
   return `${year}-${month}-${day}`;
 };
 
-export default function Usuarios() {
+export default function UsuariosAdmin() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
-  const { idUsuario, compania } = useAuth(); // Obtener ID de usuario y nombre de compañía del contexto
+  const { idUsuario } = useAuth();
   const [usuarios, setUsuarios] = useState([]);
   const [filteredUsuarios, setFilteredUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,56 +26,54 @@ export default function Usuarios() {
   const [filters, setFilters] = useState({
     busqueda: "",
     estado: "todos",
-    perfil: "todos",
     compania: "todos"
   });
 
-  // Obtener usuarios al montar el componente
+  // Obtener usuarios administradores al montar el componente
   useEffect(() => {
     if (idUsuario) {
-      fetchUsuarios();
+      fetchUsuariosAdmin();
     }
   }, [idUsuario]);
 
-  const fetchUsuarios = async () => {
+  const fetchUsuariosAdmin = async () => {
     try {
       setLoading(true);
-      
-      // Verificar que el usuario tenga idUsuario antes de hacer la petición
+
       if (!idUsuario) {
         setError("No se pudo obtener la información del usuario.");
         setLoading(false);
         return;
       }
-      
+
       const queryParams = new URLSearchParams();
       queryParams.append('id_usuario', idUsuario);
-      
-      const response = await fetch(`${API_BASE_URL}/module/usuarios.php?${queryParams.toString()}`, {
+
+      const response = await fetch(`${API_BASE_URL}/module/usuarios_admin.php?${queryParams.toString()}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (!response.ok) {
         throw new Error(`Error HTTP: ${response.status}`);
       }
-      
+
       const result = await response.json();
-      
+
       if (result.success) {
         setUsuarios(result.data);
         setFilteredUsuarios(result.data);
         setError(null);
       } else {
-        throw new Error(result.message || "Error al obtener usuarios");
+        throw new Error(result.message || "Error al obtener usuarios administradores");
       }
-      
+
     } catch (err) {
-      console.error("Error fetching usuarios:", err);
-      setError(err.message || "No se pudieron cargar los usuarios.");
+      console.error("Error fetching usuarios admin:", err);
+      setError(err.message || "No se pudieron cargar los usuarios administradores.");
     } finally {
       setLoading(false);
     }
@@ -85,13 +83,12 @@ export default function Usuarios() {
   useEffect(() => {
     let filtered = [...usuarios];
 
-    // Filtrar por búsqueda (nombre, username, perfiles, compañías)
+    // Filtrar por búsqueda (nombre, username)
     if (filters.busqueda) {
       const searchTerm = filters.busqueda.toLowerCase();
-      filtered = filtered.filter(u => 
+      filtered = filtered.filter(u =>
         u.nombre.toLowerCase().includes(searchTerm) ||
         u.username.toLowerCase().includes(searchTerm) ||
-        (u.perfiles && u.perfiles.toLowerCase().includes(searchTerm)) ||
         (u.companias && u.companias.toLowerCase().includes(searchTerm))
       );
     }
@@ -99,11 +96,6 @@ export default function Usuarios() {
     // Filtrar por estado
     if (filters.estado !== "todos") {
       filtered = filtered.filter(u => u.estado === filters.estado);
-    }
-
-    // Filtrar por perfil
-    if (filters.perfil !== "todos") {
-      filtered = filtered.filter(u => u.perfiles && u.perfiles.includes(filters.perfil));
     }
 
     // Filtrar por compañía
@@ -142,8 +134,8 @@ export default function Usuarios() {
     const isActivo = estado === 'A' || estado === 'a';
     return (
       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-        isActivo 
-          ? 'bg-green-100 text-green-800' 
+        isActivo
+          ? 'bg-green-100 text-green-800'
           : 'bg-red-100 text-red-800'
       }`}>
         {isActivo ? 'ACTIVO' : 'INACTIVO'}
@@ -158,7 +150,6 @@ export default function Usuarios() {
       'No.': index + 1,
       'Nombre': usuario.nombre,
       'Usuario': usuario.username,
-      'Perfiles': usuario.perfiles || 'N/A',
       'Compañías': usuario.companias || 'N/A',
       'Estado': usuario.estado === 'A' || usuario.estado === 'a' ? 'ACTIVO' : 'INACTIVO',
       'Fecha Creación': formatDate(usuario.fecha_creacion),
@@ -167,22 +158,16 @@ export default function Usuarios() {
 
     // Si no hay datos, crear un array con un objeto vacío para mostrar los encabezados
     const finalData = excelData.length > 0 ? excelData : [
-      { 'No.': '', 'Nombre': '', 'Usuario': '', 'Perfiles': '', 'Compañías': '', 'Estado': '', 'Fecha Creación': '', 'Última Actualización': '' }
+      { 'No.': '', 'Nombre': '', 'Usuario': '', 'Compañías': '', 'Estado': '', 'Fecha Creación': '', 'Última Actualización': '' }
     ];
 
     const worksheet = XLSX.utils.json_to_sheet(finalData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Usuarios');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Usuarios Administradores');
 
-    const companiaSlug = compania ? compania.replace(/\s+/g, '_').toLowerCase() : 'compania';
-    const fileName = `reporte_usuarios_${companiaSlug}_${getLocalDateString()}.xlsx`;
+    const fileName = `reporte_usuarios_administradores_${getLocalDateString()}.xlsx`;
     XLSX.writeFile(workbook, fileName);
   };
-
-  // Obtener perfiles únicos para el filtro
-  const perfilesUnicos = [...new Set(
-    usuarios.flatMap(u => u.perfiles ? u.perfiles.split(', ') : [])
-  )].sort();
 
   // Obtener compañías únicas para el filtro
   const companiasUnicas = [...new Set(
@@ -198,8 +183,8 @@ export default function Usuarios() {
   return (
     <div className="panel-administrador bg-white rounded-lg shadow-md p-4 sm:p-6 lg:p-8 max-w-full">
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h1 className="text-2xl font-bold mb-2 text-blue-800">Gestión de Usuarios</h1>
-        <p className="text-gray-600 mb-6">Monitoreo y administración de usuarios del sistema.</p>
+        <h1 className="text-2xl font-bold mb-2 text-blue-800">Gestión de Usuarios Administradores</h1>
+        <p className="text-gray-600 mb-6">Monitoreo y administración de usuarios con perfil de Administrador.</p>
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -210,7 +195,7 @@ export default function Usuarios() {
         {loading && (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-            <span className="ml-3">Cargando usuarios...</span>
+            <span className="ml-3">Cargando usuarios administradores...</span>
           </div>
         )}
 
@@ -228,7 +213,7 @@ export default function Usuarios() {
                     name="busqueda"
                     value={filters.busqueda}
                     onChange={handleFilterChange}
-                    placeholder="Nombre, usuario, tipo..."
+                    placeholder="Nombre, usuario, compañía..."
                     className="border rounded p-2 text-sm w-64"
                   />
                 </div>
@@ -236,10 +221,10 @@ export default function Usuarios() {
                 {/* Filtro de estado */}
                 <div className="flex flex-col">
                   <label className="text-sm font-medium mb-1">Estado:</label>
-                  <select 
-                    name="estado" 
-                    value={filters.estado} 
-                    onChange={handleFilterChange} 
+                  <select
+                    name="estado"
+                    value={filters.estado}
+                    onChange={handleFilterChange}
                     className="border rounded p-2 text-sm"
                   >
                     <option value="todos">Todos</option>
@@ -248,29 +233,13 @@ export default function Usuarios() {
                   </select>
                 </div>
 
-                {/* Filtro de perfil */}
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Perfil:</label>
-                  <select 
-                    name="perfil" 
-                    value={filters.perfil} 
-                    onChange={handleFilterChange} 
-                    className="border rounded p-2 text-sm"
-                  >
-                    <option value="todos">Todos</option>
-                    {perfilesUnicos.map(perfil => (
-                      <option key={perfil} value={perfil}>{perfil}</option>
-                    ))}
-                  </select>
-                </div>
-
                 {/* Filtro de compañía */}
                 <div className="flex flex-col">
                   <label className="text-sm font-medium mb-1">Compañía:</label>
-                  <select 
-                    name="compania" 
-                    value={filters.compania} 
-                    onChange={handleFilterChange} 
+                  <select
+                    name="compania"
+                    value={filters.compania}
+                    onChange={handleFilterChange}
                     className="border rounded p-2 text-sm"
                   >
                     <option value="todos">Todos</option>
@@ -291,12 +260,10 @@ export default function Usuarios() {
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">#</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Nombre</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Usuario</th>
-                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Perfiles</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Compañías</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Estado</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Fecha Creación</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Última Actualización</th>
-                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -313,9 +280,6 @@ export default function Usuarios() {
                             {usuario.username}
                           </td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">
-                            {usuario.perfiles || 'N/A'}
-                          </td>
-                          <td className="py-3 px-4 border-b whitespace-nowrap">
                             {usuario.companias || 'N/A'}
                           </td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">
@@ -327,21 +291,12 @@ export default function Usuarios() {
                           <td className="py-3 px-4 border-b whitespace-nowrap">
                             {formatDate(usuario.fecha_actualizacion)}
                           </td>
-                          <td className="py-3 px-4 border-b whitespace-nowrap">
-                            <button
-                              onClick={() => navigate(`/layout/form/usuario/${usuario.id_usuario}`)}
-                              className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition"
-                              title="Editar usuario"
-                            >
-                              Editar
-                            </button>
-                          </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="9" className="py-4 px-4 text-center text-gray-500">
-                          No hay usuarios disponibles
+                        <td colSpan="7" className="py-4 px-4 text-center text-gray-500">
+                          No hay usuarios administradores disponibles
                         </td>
                       </tr>
                     )}
@@ -353,8 +308,8 @@ export default function Usuarios() {
             {/* Paginación */}
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
               <div className="pagination flex items-center gap-2">
-                <button 
-                  onClick={() => setCurrentPage(currentPage - 1)} 
+                <button
+                  onClick={() => setCurrentPage(currentPage - 1)}
                   disabled={currentPage === 1}
                   className="bg-blue-100 text-blue-800 px-3 py-2 rounded disabled:opacity-50 hover:bg-blue-200 transition"
                 >
@@ -363,16 +318,16 @@ export default function Usuarios() {
                 <span className="text-sm text-gray-600">
                   Página {currentPage} de {totalPages || 1}
                 </span>
-                <button 
-                  onClick={() => setCurrentPage(currentPage + 1)} 
+                <button
+                  onClick={() => setCurrentPage(currentPage + 1)}
                   disabled={currentPage >= totalPages}
                   className="bg-blue-100 text-blue-800 px-3 py-2 rounded disabled:opacity-50 hover:bg-blue-200 transition"
                 >
                   Siguiente
                 </button>
-                
-                <select 
-                  value={itemsPerPage} 
+
+                <select
+                  value={itemsPerPage}
                   onChange={(e) => {
                     setItemsPerPage(Number(e.target.value));
                     setCurrentPage(1);
@@ -389,7 +344,7 @@ export default function Usuarios() {
 
               <div className="flex flex-col sm:flex-row items-center gap-3">
                 {/* Botón para crear nuevo usuario */}
-                <button 
+                <button
                   onClick={() => navigate('/layout/form/usuario')}
                   className="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-blue-700 transition"
                   disabled={loading}
@@ -401,7 +356,7 @@ export default function Usuarios() {
                 </button>
 
                 {/* Botón de descarga */}
-                <button 
+                <button
                   onClick={handleDownload}
                   className="bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-700 transition"
                 >

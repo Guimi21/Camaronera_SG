@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { FaUserCircle, FaSignOutAlt, FaBars, FaBuilding } from "react-icons/fa";
@@ -8,6 +8,7 @@ import logo from "../assets/logos/logo.png";
 
 export default function Header() {
   const { user, nombre, logout, grupoEmpresarial, companias, compania, idCompania, cambiarCompania, menus } = useAuth();
+  
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Estado para manejar el menú desplegable en móviles
@@ -50,44 +51,46 @@ export default function Header() {
   return (
     <header className="bg-dark text-white px-4 py-3 shadow-sm flex justify-between items-center">
       {/* Logo y texto alineados a la izquierda */}
-      <div className="flex items-center space-x-4">
+      <div className="mt-2 flex items-center space-x-4">
         <div className="logoContainer">
           <img src={logo} alt="Logo Camaronera" className="logoPrincipal" />
           <div>
             <h1 className="logoTitulo"></h1>
             <div className="logoText">
-              <p className="logoTitulo text-lg">{grupoEmpresarial || "N/A"}</p>
+              <p className="logoTitulo text-lg">{grupoEmpresarial || "Súper Admin"}</p>
               
-              {/* Selector de compañía */}
-              {companias && companias.length > 1 ? (
-                <div className="flex items-center gap-2 mt-1">
-                  <FaBuilding className="text-gray-400 text-xs" />
-                  <select
-                    value={idCompania || ''}
-                    onChange={handleCompaniaChange}
-                    className="compania-selector text-sm bg-gray-700 text-white border border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    title="Seleccionar compañía"
-                  >
-                    {companias.map((comp) => (
-                      <option key={comp.id_compania} value={comp.id_compania}>
-                        {comp.nombre}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 mt-1">
-                  <FaBuilding className="text-gray-400 text-xs" />
-                  <p className="logoTitulo text-sm">{compania || "N/A"}</p>
-                </div>
-              )}
+              {/* Selector de compañía - solo se muestra si hay compañías */}
+              {companias && companias.length > 0 ? (
+                companias.length > 1 ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <FaBuilding className="text-gray-400 text-xs" />
+                    <select
+                      value={idCompania || ''}
+                      onChange={handleCompaniaChange}
+                      className="compania-selector text-sm bg-gray-700 text-white border border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      title="Seleccionar compañía"
+                    >
+                      {companias.map((comp) => (
+                        <option key={comp.id_compania} value={comp.id_compania}>
+                          {comp.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 mt-1">
+                    <FaBuilding className="text-gray-400 text-xs" />
+                    <p className="logoTitulo text-sm">{compania || "N/A"}</p>
+                  </div>
+                )
+              ) : null}
             </div>
           </div>
         </div>
       </div>
 
       {/* Botón de abrir/cerrar menú (para móviles) */}
-      <button onClick={toggleSidebar} className="text-2xl text-gray-300 md:hidden">
+      <button onClick={toggleSidebar} className="ml-1 text-2xl text-gray-300 md:hidden">
         <FaBars />
       </button>
 
@@ -126,7 +129,7 @@ export default function Header() {
       </nav>
 
       {/* Icono de usuario y botón de logout alineado a la derecha */}
-      <div className="flex items-center space-x-4 ml-auto">
+      <div className="header-user flex items-center space-x-4 ml-auto">
         <FaUserCircle className="text-2xl text-gray-300" />
         <span className="ml-2 hidden sm:inline">Hola, {nombre}</span>
         <button
