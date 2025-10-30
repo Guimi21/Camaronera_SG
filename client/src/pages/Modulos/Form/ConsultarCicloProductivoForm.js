@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
+import { useScrollToError } from '../../../hooks/useScrollToError';
 
 export default function ConsultarCicloProductivoForm() {
   const navigate = useNavigate();
@@ -23,6 +24,9 @@ export default function ConsultarCicloProductivoForm() {
   const [loadingPiscinas, setLoadingPiscinas] = useState(true);
   const [loadingCiclo, setLoadingCiclo] = useState(true);
   const [error, setError] = useState('');
+
+  // Hook para hacer scroll al principio cuando hay error
+  useScrollToError(error);
 
   // Cargar datos del ciclo productivo a consultar
   useEffect(() => {
@@ -152,7 +156,10 @@ export default function ConsultarCicloProductivoForm() {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+        <div className="header-user mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-center gap-3">
+          <svg className="info w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
           {error}
         </div>
       )}
@@ -167,11 +174,16 @@ export default function ConsultarCicloProductivoForm() {
       )}
 
       {piscinas.length === 0 && !error && (
-        <div className="mb-6 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
-          <p><strong>No hay piscinas disponibles.</strong></p>
-          <p className="text-sm mt-1">
-            No se encontraron piscinas en el sistema.
-          </p>
+        <div className="header-user mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-center gap-3">
+          <svg className="info w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+          <div>
+            <p><strong>No hay piscinas disponibles.</strong></p>
+            <p className="text-sm mt-1">
+              No se encontraron piscinas en el sistema.
+            </p>
+          </div>
         </div>
       )}
 
@@ -289,7 +301,7 @@ export default function ConsultarCicloProductivoForm() {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 pt-6">
+        <div className="mt-1 flex flex-col sm:flex-row gap-4 pt-6">
           <button
             type="button"
             onClick={handleCancel}

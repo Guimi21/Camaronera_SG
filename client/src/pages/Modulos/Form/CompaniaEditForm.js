@@ -1,22 +1,24 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
 import { useScrollToError } from '../../../hooks/useScrollToError';
 
-export default function CompaniaForm() {
+export default function CompaniaEditForm() {
   const navigate = useNavigate();
+  const { idCompania } = useParams();
+  const { idUsuario } = useAuth();
   const { API_BASE_URL } = config;
-  const { idUsuario } = useAuth(); // Obtener ID de usuario para obtener su grupo empresarial
-  
+
+  const [compania, setCompania] = useState(null);
   const [formData, setFormData] = useState({
     nombre: '',
     direccion: '',
     telefono: '',
     estado: 'ACTIVA'
   });
-  
-  const [loading, setLoading] = useState(false);
+
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   // Hook para hacer scroll al principio cuando hay error
@@ -59,6 +61,56 @@ export default function CompaniaForm() {
     return { valido: true, razon: '' };
   };
 
+  // Cargar datos de la compañía a editar
+  useEffect(() => {
+    if (idCompania && idUsuario) {
+      fetchCompaniaData();
+    }
+  }, [idCompania, idUsuario]);
+
+  const fetchCompaniaData = async () => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/module/companias.php?id_usuario=${idUsuario}`,
+        {
+          method: 'GET',
+          credentials: 'include',
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        // Buscar la compañía específica en la lista
+        const companiaEncontrada = result.data.find(c => 
+          String(c.id_compania) === String(idCompania)
+        );
+        
+        if (companiaEncontrada) {
+          setCompania(companiaEncontrada);
+          setFormData({
+            nombre: companiaEncontrada.nombre || '',
+            direccion: companiaEncontrada.direccion || '',
+            telefono: companiaEncontrada.telefono || '',
+            estado: companiaEncontrada.estado || 'ACTIVA'
+          });
+        } else {
+          throw new Error('Compañía no encontrada en la lista');
+        }
+      } else {
+        throw new Error('Error al obtener compañías');
+      }
+    } catch (err) {
+      console.error('Error fetching compania data:', err);
+      setError(err.message || 'No se pudo cargar la compañía');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     
@@ -67,23 +119,16 @@ export default function CompaniaForm() {
       const soloDigitos = value.replace(/\D/g, '');
       // Limitar a máximo 10 dígitos
       const telefonoLimitado = soloDigitos.slice(0, 10);
-      setFormData(prev => ({
-        ...prev,
-        [name]: telefonoLimitado
-      }));
+      setFormData(prev => ({ ...prev, [name]: telefonoLimitado }));
     } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      setFormData(prev => ({ ...prev, [name]: value }));
     }
-    // Limpiar mensajes al escribir
     setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Verificar si hay campos vacíos
     const camposVacios = obtenerCamposVacios();
     if (camposVacios.length > 0) {
@@ -107,56 +152,42 @@ export default function CompaniaForm() {
       }
     }
 
-    if (!idUsuario) {
-      setError('No se pudo obtener la información del usuario');
-      // Hacer scroll al inicio inmediatamente
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }, 0);
-      return;
-    }
-
     setLoading(true);
     setError('');
 
     try {
-      // Datos a enviar
-      const dataToSend = {
+      const payload = {
         nombre: formData.nombre.trim(),
         direccion: formData.direccion.trim() || null,
         telefono: formData.telefono.trim() || null,
         estado: formData.estado,
-        id_usuario: idUsuario // Enviar el ID del usuario para obtener su grupo empresarial
+        id_compania: parseInt(idCompania),
+        id_usuario: idUsuario
       };
 
       const response = await fetch(`${API_BASE_URL}/module/companias.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(dataToSend)
+        body: JSON.stringify(payload)
       });
+
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
 
       const result = await response.json();
 
       if (result.success) {
-        // Limpiar formulario
-        setFormData({
-          nombre: '',
-          direccion: '',
-          telefono: '',
-          estado: 'ACTIVA'
-        });
-
-        // Redirigir inmediatamente
+        // Redirigir inmediatamente sin retraso
         navigate('/layout/dashboard/companias');
       } else {
-        throw new Error(result.message || 'Error al crear la compañía');
+        throw new Error(result.message || 'Error al actualizar la compañía');
       }
+
     } catch (err) {
-      console.error('Error creating compania:', err);
-      setError(err.message || 'No se pudo crear la compañía. Por favor, intente nuevamente.');
+      console.error('Error updating compania:', err);
+      setError(err.message || 'No se pudo actualizar la compañía. Intente nuevamente.');
     } finally {
       setLoading(false);
     }
@@ -166,17 +197,30 @@ export default function CompaniaForm() {
     navigate('/layout/dashboard/companias');
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <span className="ml-3">Cargando...</span>
+      </div>
+    );
+  }
+
+  if (!compania) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="text-red-700">Compañía no encontrada</div>
+      </div>
+    );
+  }
+
   return (
     <div className="form-container min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-blue-800 mb-2">
-              Registrar Nueva Compañía
-            </h1>
-            <p className="text-gray-600">
-              Complete el formulario para agregar una nueva compañía al sistema.
-            </p>
+            <h1 className="text-2xl font-bold text-blue-800 mb-2">Editar Compañía</h1>
+            <p className="text-gray-600">Modifique los datos de la compañía: {compania.nombre}</p>
           </div>
 
           {error && (
@@ -214,7 +258,6 @@ export default function CompaniaForm() {
           )}
 
           <form onSubmit={handleSubmit} noValidate className="space-y-6">
-            {/* Información General */}
             <div className="grid grid-cols-1 gap-6">
               <div>
                 <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-2">
@@ -229,7 +272,7 @@ export default function CompaniaForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Ingrese el nombre de la compañía"
                 />
-                <p className="text-sm text-gray-500 mt-1 leyenda">
+                <p className="text-sm text-gray-500 mt-1">
                   El nombre debe ser único y descriptivo
                 </p>
               </div>
@@ -250,7 +293,7 @@ export default function CompaniaForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Ingrese la dirección"
                 />
-                <p className="text-sm text-gray-500 mt-1 leyenda">
+                <p className="text-sm text-gray-500 mt-1">
                   Dirección física de la compañía (opcional)
                 </p>
               </div>
@@ -269,7 +312,7 @@ export default function CompaniaForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Ej: 0999999999"
                 />
-                <p className="text-sm text-gray-500 mt-1 leyenda">
+                <p className="text-sm text-gray-500 mt-1">
                   Número de contacto de la compañía (10 dígitos, opcional). Ingresados: {formData.telefono.length}/10
                 </p>
               </div>
@@ -291,43 +334,28 @@ export default function CompaniaForm() {
                   <option value="ACTIVA">Activa</option>
                   <option value="INACTIVA">Inactiva</option>
                 </select>
-                <p className="text-sm text-gray-500 mt-1 leyenda">
-                  Estado operativo de la compañía
+                <p className="text-sm text-gray-500 mt-1">
+                  Seleccione el estado de la compañía
                 </p>
               </div>
             </div>
 
             {/* Botones de acción */}
-            <div className="mt-1 flex flex-col sm:flex-row gap-4 pt-6">
+            <div className="flex flex-col sm:flex-row gap-4 pt-6">
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors duration-200 font-medium"
               >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Guardando...
-                  </>
-                ) : (
-                  <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Guardar Compañía
-                  </>
-                )}
+                {loading ? 'Guardando...' : 'Guardar Cambios'}
               </button>
 
               <button
                 type="button"
                 onClick={handleCancel}
                 disabled={loading}
-                className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 disabled:opacity-50 transition-colors duration-200 font-medium"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
                 Cancelar
               </button>
             </div>

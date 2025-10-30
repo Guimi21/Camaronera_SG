@@ -25,6 +25,7 @@ import EditarCicloProductivoForm from "./pages/Modulos/Form/EditarCicloProductiv
 import ConsultarCicloProductivoForm from "./pages/Modulos/Form/ConsultarCicloProductivoForm";
 import BalanceadoForm from "./pages/Modulos/Form/BalanceadoForm";
 import CompaniaForm from "./pages/Modulos/Form/CompaniaForm";
+import CompaniaEditForm from "./pages/Modulos/Form/CompaniaEditForm";
 import GrupoEmpresarialForm from "./pages/Modulos/Form/GrupoEmpresarialForm";
 import UsuarioForm from "./pages/Modulos/Form/UsuarioForm";
 import UsuarioEditForm from "./pages/Modulos/Form/UsuarioEditForm";
@@ -88,6 +89,7 @@ function App() {
             <Route path="form/consultar-ciclo/:id" element={<ConsultarCicloProductivoForm />} />
             <Route path="form/balanceado" element={<BalanceadoForm />} />
             <Route path="form/compania" element={<CompaniaForm />} />
+            <Route path="form/compania/:idCompania" element={<CompaniaEditForm />} />
             <Route path="form/grupo-empresarial" element={<GrupoEmpresarialForm />} />
             <Route path="form/usuario" element={<UsuarioForm />} />
             <Route path="form/usuario/:idUsuario" element={<UsuarioEditForm />} />

@@ -127,6 +127,23 @@ try {
         $telefono = isset($input['telefono']) && !empty(trim($input['telefono'])) ? trim($input['telefono']) : null;
         $estado = $input['estado'];
         
+        // Verificar que no exista una compañía con el mismo nombre en el mismo grupo empresarial
+        $checkQuery = "SELECT id_compania FROM compania WHERE nombre = :nombre AND id_grupo_empresarial = :id_grupo_empresarial";
+        $checkStmt = $conn->prepare($checkQuery);
+        $checkStmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
+        $checkStmt->bindParam(':id_grupo_empresarial', $id_grupo_empresarial, PDO::PARAM_INT);
+        $checkStmt->execute();
+        
+        if ($checkStmt->fetch()) {
+            $response = [
+                'success' => false,
+                'message' => 'Ya existe una compañía con este nombre para este grupo empresarial'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+        
         // Insertar nueva compañía
         $insertQuery = "INSERT INTO compania (nombre, direccion, telefono, estado, id_grupo_empresarial, fecha_creacion, fecha_actualizacion) 
                         VALUES (:nombre, :direccion, :telefono, :estado, :id_grupo_empresarial, NOW(), NOW())";
@@ -157,6 +174,117 @@ try {
             http_response_code(201);
         } else {
             throw new Exception('Error al insertar la compañía en la base de datos');
+        }
+        
+    } elseif ($method === 'PUT') {
+        // Leer el cuerpo de la solicitud JSON
+        $input = json_decode(file_get_contents('php://input'), true);
+        
+        // Validar campos requeridos
+        if (!isset($input['id_compania']) || empty($input['id_compania'])) {
+            $response = [
+                'success' => false,
+                'message' => 'ID de compañía requerido'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+        
+        if (!isset($input['nombre']) || empty($input['nombre'])) {
+            $response = [
+                'success' => false,
+                'message' => 'Nombre de compañía requerido'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+        
+        if (!isset($input['estado']) || empty($input['estado'])) {
+            $response = [
+                'success' => false,
+                'message' => 'Estado requerido'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+        
+        if (!isset($input['id_usuario']) || empty($input['id_usuario'])) {
+            $response = [
+                'success' => false,
+                'message' => 'ID de usuario requerido'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+        
+        $id_compania = intval($input['id_compania']);
+        $id_usuario = intval($input['id_usuario']);
+        $nombre = trim($input['nombre']);
+        $direccion = isset($input['direccion']) && !empty(trim($input['direccion'])) ? trim($input['direccion']) : null;
+        $telefono = isset($input['telefono']) && !empty(trim($input['telefono'])) ? trim($input['telefono']) : null;
+        $estado = $input['estado'];
+        
+        // Verificar que la compañía pertenece al mismo grupo empresarial del usuario
+        $queryVerify = "SELECT c.id_compania 
+                        FROM compania c
+                        WHERE c.id_compania = :id_compania 
+                        AND c.id_grupo_empresarial = (
+                            SELECT id_grupo_empresarial 
+                            FROM usuario 
+                            WHERE id_usuario = :id_usuario
+                        )";
+        
+        $stmtVerify = $conn->prepare($queryVerify);
+        $stmtVerify->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
+        $stmtVerify->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+        $stmtVerify->execute();
+        
+        if (!$stmtVerify->fetch()) {
+            $response = [
+                'success' => false,
+                'message' => 'No tiene permiso para editar esta compañía'
+            ];
+            echo json_encode($response);
+            http_response_code(403);
+            exit();
+        }
+        
+        // Actualizar la compañía
+        $updateQuery = "UPDATE compania 
+                        SET nombre = :nombre, 
+                            direccion = :direccion, 
+                            telefono = :telefono, 
+                            estado = :estado, 
+                            fecha_actualizacion = NOW() 
+                        WHERE id_compania = :id_compania";
+        
+        $updateStmt = $conn->prepare($updateQuery);
+        $updateStmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
+        $updateStmt->bindParam(':direccion', $direccion, PDO::PARAM_STR);
+        $updateStmt->bindParam(':telefono', $telefono, PDO::PARAM_STR);
+        $updateStmt->bindParam(':estado', $estado, PDO::PARAM_STR);
+        $updateStmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
+        
+        if ($updateStmt->execute()) {
+            $response = [
+                'success' => true,
+                'message' => 'Compañía actualizada exitosamente',
+                'data' => [
+                    'id_compania' => $id_compania,
+                    'nombre' => $nombre,
+                    'direccion' => $direccion,
+                    'telefono' => $telefono,
+                    'estado' => $estado
+                ]
+            ];
+            echo json_encode($response);
+            http_response_code(200);
+        } else {
+            throw new Exception('Error al actualizar la compañía en la base de datos');
         }
         
     } else {

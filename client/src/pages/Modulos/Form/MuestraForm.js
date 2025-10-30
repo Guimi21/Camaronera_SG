@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
+import { useScrollToError } from '../../../hooks/useScrollToError';
 
 // Función para obtener la fecha local en formato YYYY-MM-DD
 const getLocalDateString = () => {
@@ -40,9 +41,24 @@ export default function MuestraForm() {
   const [loadingTipos, setLoadingTipos] = useState(true);
   const [error, setError] = useState('');
 
+  // Hook para hacer scroll al principio cuando hay error
+  useScrollToError(error);
+
   // Wrapper para trackear cambios en ultimoMuestra
   const setUltimoMuestra = (valor) => {
     setUltimoMuestraState(valor);
+  };
+
+  // Referencias para inputs numéricos
+  const inputRef1 = useRef(null); // Peso (g)
+  const inputRef2 = useRef(null); // Supervivencia (%)
+  const balanceadoInputRefs = useRef({}); // Dinámicos para balanceados
+
+  const handleWheel = (e) => {
+    // Solo bloquea el scroll si el input está enfocado
+    if (document.activeElement === e.target) {
+      e.preventDefault();
+    }
   };
 
   // Función para cargar los tipos de balanceado de la compañía
@@ -417,6 +433,50 @@ export default function MuestraForm() {
     return conversionAlimenticia.toFixed(3); // Redondeamos a 3 decimales para mayor precisión
   };
 
+  // Función para validar y obtener los campos vacíos o inválidos
+  const obtenerCamposVacios = () => {
+    const camposVacios = [];
+
+    // Validar ciclo
+    if (!formData.id_ciclo || formData.id_ciclo.trim() === '') {
+      camposVacios.push({ campo: 'Ciclo Productivo', tipo: 'vacio' });
+    }
+
+    // Validar fecha de muestra
+    if (!formData.fecha_muestra || formData.fecha_muestra.trim() === '') {
+      camposVacios.push({ campo: 'Fecha de Muestra', tipo: 'vacio' });
+    }
+
+    // Validar peso
+    if (!formData.peso || formData.peso.trim() === '') {
+      camposVacios.push({ campo: 'Peso (g)', tipo: 'vacio' });
+    } else if (parseFloat(formData.peso) <= 0) {
+      camposVacios.push({ campo: 'Peso (g)', tipo: 'invalido', razon: 'debe ser mayor a 0' });
+    }
+
+    // Validar supervivencia
+    if (!formData.supervivencia || formData.supervivencia.trim() === '') {
+      camposVacios.push({ campo: 'Supervivencia (%)', tipo: 'vacio' });
+    } else if (parseFloat(formData.supervivencia) < 0 || parseFloat(formData.supervivencia) > 100) {
+      camposVacios.push({ campo: 'Supervivencia (%)', tipo: 'invalido', razon: 'debe estar entre 0 y 100' });
+    }
+
+    // Validar balanceado
+    const tieneBalanceado = Object.values(formData.balanceados).some(
+      val => val !== '' && val !== null && val !== undefined && parseFloat(val) > 0
+    );
+    if (!tieneBalanceado) {
+      camposVacios.push({ campo: 'Balanceado', tipo: 'vacio', razon: 'debes ingresar al menos uno' });
+    }
+
+    // Validar observaciones
+    if (!formData.observaciones || formData.observaciones.trim() === '') {
+      camposVacios.push({ campo: 'Observaciones', tipo: 'vacio' });
+    }
+
+    return camposVacios;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     
@@ -550,36 +610,66 @@ export default function MuestraForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
 
+    // Acumular todos los errores de validación
+    const errores = [];
+
     // Validar que se haya seleccionado un ciclo
-    if (!formData.id_ciclo) {
-      setError('Debes seleccionar un ciclo productivo');
-      setLoading(false);
-      return;
+    if (!formData.id_ciclo || formData.id_ciclo.trim() === '') {
+      errores.push('Debes seleccionar un ciclo productivo.');
     }
 
     // Validar que se haya ingresado la fecha de muestra
-    if (!formData.fecha_muestra) {
-      setError('Debes ingresar la fecha de muestra');
-      setLoading(false);
-      return;
+    if (!formData.fecha_muestra || formData.fecha_muestra.trim() === '') {
+      errores.push('Debes ingresar la fecha de muestra.');
+    }
+
+    // Validar peso (requerido y > 0)
+    if (!formData.peso || formData.peso.trim() === '') {
+      errores.push('El peso es requerido.');
+    } else if (parseFloat(formData.peso) <= 0) {
+      errores.push('El peso debe ser mayor a 0.');
+    }
+
+    // Validar supervivencia (requerido, entre 0 y 100)
+    if (!formData.supervivencia || formData.supervivencia.trim() === '') {
+      errores.push('La supervivencia es requerida.');
+    } else if (parseFloat(formData.supervivencia) < 0 || parseFloat(formData.supervivencia) > 100) {
+      errores.push('La supervivencia debe estar entre 0 y 100.');
+    }
+
+    // Validar que al menos se haya ingresado un balanceado
+    const tieneBalanceado = Object.values(formData.balanceados).some(
+      val => val !== '' && val !== null && val !== undefined && parseFloat(val) > 0
+    );
+    if (!tieneBalanceado) {
+      errores.push('Debes ingresar al menos un tipo de balanceado.');
+    }
+
+    // Validar observaciones (requerido y no vacío)
+    if (!formData.observaciones || formData.observaciones.trim() === '') {
+      errores.push('Las observaciones son requeridas.');
     }
 
     // Validar que el usuario esté autenticado
     if (!idUsuario) {
-      setError('No se pudo obtener la información del usuario autenticado');
-      setLoading(false);
-      return;
+      errores.push('No se pudo obtener la información del usuario autenticado.');
     }
 
     // Validar que se tenga la información de la compañía
     if (!idCompania) {
-      setError('No se pudo obtener la información de la compañía del usuario');
+      errores.push('No se pudo obtener la información de la compañía del usuario.');
+    }
+
+    // Si hay errores, mostrarlos y no continuar
+    if (errores.length > 0) {
+      setError(errores.join('\n'));
       setLoading(false);
       return;
     }
+
+    setLoading(true);
 
     try {
       // Preparar los datos para enviar
@@ -639,35 +729,65 @@ export default function MuestraForm() {
   };
 
   return (
-    <div className="form-container min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-blue-800 mb-2">
-              Nuevo Registro de Muestra
-            </h1>
-            <p className="text-gray-600">
-              Selecciona un ciclo productivo existente y completa los campos de muestra para agregar un nuevo registro.
-            </p>
-          </div>
+    <div className="form-container max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-blue-800 mb-2">
+          Nuevo Registro de Muestra
+        </h1>
+        <p className="text-gray-600">
+          Selecciona un ciclo productivo existente y completa los campos de muestra para agregar un nuevo registro.
+        </p>
+      </div>
 
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-              {error}
-            </div>
-          )}
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
 
-          {!loadingCiclos && ciclosDisponibles.length === 0 && !error && (
-            <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+      {!loadingCiclos && ciclosDisponibles.length === 0 && !error && (
+        <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <svg className="info2 w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            <div>
               <p><strong>No hay ciclos productivos en curso disponibles.</strong></p>
-              <p className="text-sm mt-1">
+              <p className="text-sm text-yellow-800">
                 Para agregar registros de muestra, debe haber al menos un ciclo productivo con estado "EN_CURSO". 
                 Los ciclos finalizados no están disponibles para agregar nuevas muestras.
               </p>
             </div>
-          )}
+          </div>
+        </div>
+      )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Indicador de campos requeridos */}
+      {obtenerCamposVacios().length > 0 && ciclosDisponibles.length > 0 && (
+        <div className="bg-blue-50 border border-blue-300 rounded-lg p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <svg className="info w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            <div>
+              <p className="font-semibold text-blue-900 mb-2">Campos requeridos pendientes:</p>
+              <ul className="text-sm text-blue-800 space-y-1">
+                {obtenerCamposVacios().map((campo, idx) => (
+                  <li key={idx} className="flex items-center gap-2">
+                    <span className="inline-block w-2 h-2 bg-blue-600 rounded-full"></span>
+                    <span>
+                      <strong>{campo.campo}</strong>
+                      {campo.tipo === 'vacio' ? ' (vacío)' : ` (${campo.razon})`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
             {/* Selección de Ciclo Productivo */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -764,7 +884,11 @@ export default function MuestraForm() {
                   min="0"
                   name="peso"
                   value={formData.peso}
+                  ref={inputRef1}
+                  onFocus={(e) => e.target.addEventListener('wheel', handleWheel, { passive: false })}
+                  onBlur={(e) => e.target.removeEventListener('wheel', handleWheel)}
                   onChange={handleChange}
+                  required
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Ej: 15.5"
                 />
@@ -806,7 +930,11 @@ export default function MuestraForm() {
                   max="100"
                   name="supervivencia"
                   value={formData.supervivencia}
+                  ref={inputRef2}
+                  onFocus={(e) => e.target.addEventListener('wheel', handleWheel, { passive: false })}
+                  onBlur={(e) => e.target.removeEventListener('wheel', handleWheel)}
                   onChange={handleChange}
+                  required
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Ej: 93.33"
                 />
@@ -870,8 +998,15 @@ export default function MuestraForm() {
                   Cargando tipos de balanceado...
                 </div>
               ) : tiposBalanceado.length === 0 ? (
-                <div className="col-span-full text-center py-4 text-yellow-600">
-                  No hay tipos de balanceado configurados para esta compañía.
+                <div className="col-span-full bg-orange-50 border border-orange-300 rounded-lg p-4">
+                  <div className="header-user flex items-start gap-3">
+                    <svg className="info w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    <div>
+                      <p className="font-semibold text-orange-900">No hay tipos de balanceado configurados para esta compañía.</p>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 tiposBalanceado.map((tipo) => (
@@ -885,6 +1020,13 @@ export default function MuestraForm() {
                       min="0"
                       name={`balanceado_${tipo.id_tipo_balanceado}`}
                       value={formData.balanceados[tipo.id_tipo_balanceado] || ''}
+                      ref={(el) => {
+                        if (el) {
+                          balanceadoInputRefs.current[tipo.id_tipo_balanceado] = el;
+                        }
+                      }}
+                      onFocus={(e) => e.target.addEventListener('wheel', handleWheel, { passive: false })}
+                      onBlur={(e) => e.target.removeEventListener('wheel', handleWheel)}
                       onChange={handleChange}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder={`Ej: 500`}
@@ -936,13 +1078,14 @@ export default function MuestraForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Observaciones
+                Observaciones *
               </label>
               <textarea
                 name="observaciones"
                 value={formData.observaciones}
                 onChange={handleChange}
                 rows="4"
+                required
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Ingresa cualquier observación relevante..."
               />
@@ -983,8 +1126,6 @@ export default function MuestraForm() {
               </button>
             </div>
           </form>
-        </div>
-      </div>
     </div>
   );
 }

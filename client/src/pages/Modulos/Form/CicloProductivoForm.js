@@ -1,7 +1,8 @@
-﻿import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
+import { useScrollToError } from '../../../hooks/useScrollToError';
 
 // Función para obtener la fecha local en formato YYYY-MM-DD
 const getLocalDateString = () => {
@@ -31,6 +32,19 @@ export default function CicloProductivoForm() {
   const [loading, setLoading] = useState(false);
   const [loadingPiscinas, setLoadingPiscinas] = useState(true);
   const [error, setError] = useState('');
+
+  // Hook para hacer scroll al principio cuando hay error
+  useScrollToError(error);
+
+  // Referencias para inputs numéricos
+  const inputRef1 = useRef(null); // Cantidad de Siembra
+
+  const handleWheel = (e) => {
+    // Solo bloquea el scroll si el input está enfocado
+    if (document.activeElement === e.target) {
+      e.preventDefault();
+    }
+  };
 
   useEffect(() => {
     const fetchPiscinasDisponibles = async () => {
@@ -254,7 +268,10 @@ export default function CicloProductivoForm() {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+        <div className="header-user mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-center gap-3">
+          <svg className="info w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
           {error}
         </div>
       )}
@@ -272,12 +289,17 @@ export default function CicloProductivoForm() {
       )}
 
       {!loadingPiscinas && piscinas.length === 0 && !error && (
-        <div className="mb-6 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
-          <p><strong>No hay piscinas disponibles.</strong></p>
-          <p className="text-sm mt-1">
-            Para agregar ciclos productivos, debe haber piscinas sin ciclos activos en el sistema.
-            Las piscinas con ciclos "EN_CURSO" no están disponibles para nuevos ciclos.
-          </p>
+        <div className="header-user mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-center gap-3">
+          <svg className="info w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+          <div>
+            <p><strong>No hay piscinas disponibles.</strong></p>
+            <p className="text-sm mt-1">
+              Para agregar ciclos productivos, debe haber piscinas sin ciclos activos en el sistema.
+              Las piscinas con ciclos "EN_CURSO" no están disponibles para nuevos ciclos.
+            </p>
+          </div>
         </div>
       )}
 
@@ -364,6 +386,9 @@ export default function CicloProductivoForm() {
               id="cantidad_siembra"
               name="cantidad_siembra"
               value={formData.cantidad_siembra}
+              ref={inputRef1}
+              onFocus={(e) => e.target.addEventListener('wheel', handleWheel, { passive: false })}
+              onBlur={(e) => e.target.removeEventListener('wheel', handleWheel)}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Ej: 500000"
@@ -402,17 +427,18 @@ export default function CicloProductivoForm() {
             <label htmlFor="tipo_siembra" className="block text-sm font-medium text-gray-700 mb-2">
               Tipo de Siembra *
             </label>
-            <input
-              type="text"
+            <select
               id="tipo_siembra"
               name="tipo_siembra"
               value={formData.tipo_siembra}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Ej: Intensiva, Extensiva, Semi-intensiva"
-              maxLength={50}
               required
-            />
+            >
+              <option value="">Seleccione un tipo de siembra</option>
+              <option value="transf">transf</option>
+              <option value="Directo">Directo</option>
+            </select>
             <p className="text-xs text-gray-500 mt-1 leyenda">
               Tipo o método de siembra utilizado
             </p>

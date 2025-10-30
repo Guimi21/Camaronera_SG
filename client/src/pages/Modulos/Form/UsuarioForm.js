@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
+import { useScrollToError } from '../../../hooks/useScrollToError';
 
 export default function UsuarioForm() {
   const navigate = useNavigate();
@@ -23,7 +24,9 @@ export default function UsuarioForm() {
   const [gruposEmpresarialesDisponibles, setGruposEmpresarialesDisponibles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+
+  // Hook para hacer scroll al principio cuando hay error
+  useScrollToError(error);
 
   // Cargar perfiles disponibles
   useEffect(() => {
@@ -102,7 +105,6 @@ export default function UsuarioForm() {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     setError('');
-    setSuccessMessage('');
   };
 
   const handlePerfilChange = (id_perfil) => {
@@ -111,7 +113,6 @@ export default function UsuarioForm() {
       perfil: String(id_perfil)
     }));
     setError('');
-    setSuccessMessage('');
   };
 
   const handleCompaniaChange = (id_compania) => {
@@ -122,7 +123,6 @@ export default function UsuarioForm() {
       return { ...prev, companias };
     });
     setError('');
-    setSuccessMessage('');
   };
 
   const handleSubmit = async (e) => {
@@ -166,7 +166,6 @@ export default function UsuarioForm() {
 
     setLoading(true);
     setError('');
-    setSuccessMessage('');
 
     try {
       const payload = {
@@ -230,12 +229,13 @@ export default function UsuarioForm() {
             <p className="text-gray-600">Complete el formulario para agregar un nuevo usuario al sistema.</p>
           </div>
 
-          {successMessage && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">{successMessage}</div>
-          )}
-
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>
+            <div className="header-user mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-center gap-3">
+              <svg className="info w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              {error}
+            </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">

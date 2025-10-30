@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import config from '../../../config';
+import { useScrollToError } from '../../../hooks/useScrollToError';
 
 export default function GrupoEmpresarialForm() {
   const navigate = useNavigate();
@@ -13,7 +14,9 @@ export default function GrupoEmpresarialForm() {
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+
+  // Hook para hacer scroll al principio cuando hay error
+  useScrollToError(error);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -23,7 +26,6 @@ export default function GrupoEmpresarialForm() {
     }));
     // Limpiar mensajes al escribir
     setError('');
-    setSuccessMessage('');
   };
 
   const handleSubmit = async (e) => {
@@ -37,7 +39,6 @@ export default function GrupoEmpresarialForm() {
 
     setLoading(true);
     setError('');
-    setSuccessMessage('');
 
     try {
       // Datos a enviar
@@ -69,8 +70,6 @@ export default function GrupoEmpresarialForm() {
       }
 
       if (result.success) {
-        setSuccessMessage('Grupo empresarial creado exitosamente');
-        
         // Limpiar formulario
         setFormData({
           nombre: '',
@@ -108,9 +107,9 @@ export default function GrupoEmpresarialForm() {
           </div>
 
           {error && (
-            <div className="header-user bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 flex items-center">
-              <svg className="info w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            <div className="header-user mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-center gap-3">
+              <svg className="info w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
               {error}
             </div>

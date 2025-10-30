@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import config from "../../config";
 import { useAuth } from "../../context/AuthContext";
+import { useScrollToError } from "../../hooks/useScrollToError";
 
 // Función para obtener la fecha local en formato YYYY-MM-DD
 const getLocalDateString = () => {
@@ -27,6 +28,9 @@ export default function Administrador() {
     busqueda: "",
     estado: "todas"
   });
+
+  // Hook para hacer scroll al principio cuando hay error
+  useScrollToError(error);
 
   // Obtener compañías al montar el componente
   useEffect(() => {
@@ -242,6 +246,7 @@ export default function Administrador() {
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Estado</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Fecha Creación</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Última Actualización</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -272,11 +277,23 @@ export default function Administrador() {
                           <td className="py-3 px-4 border-b whitespace-nowrap">
                             {formatDate(compania.fecha_actualizacion)}
                           </td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">
+                            <button
+                              onClick={() => navigate(`/layout/form/compania/${compania.id_compania}`)}
+                              className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors duration-200"
+                              title="Editar compañía"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              Editar
+                            </button>
+                          </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="8" className="py-4 px-4 text-center text-gray-500">
+                        <td colSpan="9" className="py-4 px-4 text-center text-gray-500">
                           No hay compañías disponibles
                         </td>
                       </tr>
