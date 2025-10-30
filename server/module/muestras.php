@@ -180,8 +180,224 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     exit();
 }
 
+// Manejar solicitudes PUT para actualizar registros de muestra
+if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
+    try {
+        // Obtener datos del cuerpo de la solicitud
+        $input = json_decode(file_get_contents('php://input'), true);
+        
+        if (!$input) {
+            $response = [
+                'success' => false,
+                'message' => 'Datos no válidos'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+
+        // Validar campos requeridos
+        if (!isset($input['id_muestra']) || empty($input['id_muestra'])) {
+            $response = [
+                'success' => false,
+                'message' => 'ID de muestra requerido'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+
+        if (!isset($input['id_compania']) || empty($input['id_compania'])) {
+            $response = [
+                'success' => false,
+                'message' => 'ID de compañía requerido'
+            ];
+            echo json_encode($response);
+            http_response_code(400);
+            exit();
+        }
+
+        // Verificar que la muestra existe y pertenece a esta compañía
+        $muestraQuery = "SELECT id_muestra FROM muestra WHERE id_muestra = ? AND id_compania = ?";
+        $muestraStmt = $conn->prepare($muestraQuery);
+        $muestraStmt->bindValue(1, $input['id_muestra']);
+        $muestraStmt->bindValue(2, $input['id_compania']);
+        $muestraStmt->execute();
+        $muestraExists = $muestraStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$muestraExists) {
+            $response = [
+                'success' => false,
+                'message' => 'Muestra no encontrada o no pertenece a su compañía'
+            ];
+            echo json_encode($response);
+            http_response_code(404);
+            exit();
+        }
+
+        // Actualizar muestra
+        $updateQuery = "
+        UPDATE muestra SET
+            dias_cultivo = ?,
+            peso_promedio = ?,
+            incremento_peso = ?,
+            biomasa_lbs = ?,
+            balanceado_acumulado = ?,
+            convercion_alimenticia = ?,
+            poblacion_actual = ?,
+            indice_supervivencia = ?,
+            observaciones = ?,
+            fecha_muestra = ?,
+            id_usuario_actualiza = ?
+        WHERE id_muestra = ?
+        ";
+
+        $updateStmt = $conn->prepare($updateQuery);
+        $updateStmt->bindValue(1, $input['dias_cultivo'] ?? null);
+        $updateStmt->bindValue(2, $input['peso'] ?? null);
+        $updateStmt->bindValue(3, $input['incremento_peso'] ?? null);
+        $updateStmt->bindValue(4, $input['biomasa_lbs'] ?? null);
+        $updateStmt->bindValue(5, $input['balanceado_acumulado'] ?? null);
+        $updateStmt->bindValue(6, $input['conversion_alimenticia'] ?? null);
+        $updateStmt->bindValue(7, $input['poblacion_actual'] ?? null);
+        $updateStmt->bindValue(8, $input['supervivencia'] ?? null);
+        $updateStmt->bindValue(9, $input['observaciones'] ?? null);
+        $updateStmt->bindValue(10, $input['fecha_muestra'] ?? date('Y-m-d'));
+        $updateStmt->bindValue(11, $input['id_usuario'] ?? null);
+        $updateStmt->bindValue(12, $input['id_muestra']);
+
+        if ($updateStmt->execute()) {
+            // Eliminar consumos de balanceado antiguos
+            $deleteBalanceadoQuery = "DELETE FROM consumo_balanceado WHERE id_muestra = ?";
+            $deleteStmt = $conn->prepare($deleteBalanceadoQuery);
+            $deleteStmt->execute([$input['id_muestra']]);
+
+            // Insertar nuevos consumos de balanceado
+            if (!empty($input['balanceados']) && is_array($input['balanceados'])) {
+                error_log("Actualizando registros de balanceado dinámicos para muestra ID: " . $input['id_muestra']);
+                $balanceadoQuery = "
+                INSERT INTO consumo_balanceado (
+                    id_muestra, 
+                    id_tipo_balanceado, 
+                    cantidad, 
+                    id_compania, 
+                    id_usuario_crea, 
+                    id_usuario_actualiza
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                ";
+                $balanceadoStmt = $conn->prepare($balanceadoQuery);
+                
+                try {
+                    foreach ($input['balanceados'] as $balanceado) {
+                        if (isset($balanceado['id_tipo_balanceado']) && isset($balanceado['cantidad']) && $balanceado['cantidad'] > 0) {
+                            $balanceadoStmt->execute([
+                                $input['id_muestra'], 
+                                $balanceado['id_tipo_balanceado'], 
+                                $balanceado['cantidad'], 
+                                $input['id_compania'], 
+                                $input['id_usuario'], 
+                                $input['id_usuario']
+                            ]);
+                        }
+                    }
+                } catch (Exception $balanceadoError) {
+                    error_log("Error al insertar balanceado: " . $balanceadoError->getMessage());
+                }
+            }
+
+            $response = [
+                'success' => true,
+                'message' => 'Registro de muestra actualizado exitosamente'
+            ];
+            echo json_encode($response);
+            http_response_code(200);
+        } else {
+            throw new Exception("Error al actualizar el registro");
+        }
+
+    } catch (Exception $e) {
+        error_log("Error al actualizar muestra: " . $e->getMessage());
+        $response = [
+            'success' => false,
+            'message' => 'Error al actualizar el registro de muestra'
+        ];
+        echo json_encode($response);
+        http_response_code(500);
+    }
+    exit();
+}
+
 // Manejar solicitudes GET (código existente)
 try {
+    // Verificar si se solicita una muestra específica por ID
+    if (isset($_GET['id_muestra']) && !isset($_GET['count']) && !isset($_GET['ultimo'])) {
+        $id_muestra = $_GET['id_muestra'];
+        $id_compania = $_GET['id_compania'] ?? null;
+        
+        // Obtener tipos de balanceado de la compañía
+        $tiposBalanceadoQuery = "SELECT id_tipo_balanceado, nombre FROM tipo_balanceado WHERE id_compania = ? ORDER BY id_tipo_balanceado";
+        $tiposBalanceadoStmt = $conn->prepare($tiposBalanceadoQuery);
+        $tiposBalanceadoStmt->bindValue(1, $id_compania);
+        $tiposBalanceadoStmt->execute();
+        $tiposBalanceado = $tiposBalanceadoStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Construir las columnas dinámicas para los tipos de balanceado
+        $balanceadoColumns = "";
+        foreach ($tiposBalanceado as $tipo) {
+            $nombreColumna = str_replace([' ', '.', ',', '(', ')'], '', $tipo['nombre']);
+            $balanceadoColumns .= "COALESCE(SUM(CASE WHEN tb.id_tipo_balanceado = " . intval($tipo['id_tipo_balanceado']) . " AND cb.id_compania = " . intval($id_compania) . " THEN cb.cantidad ELSE 0 END), 0) AS '" . $tipo['nombre'] . "',\n        ";
+        }
+
+        // Consulta para obtener la muestra específica
+        $query = "
+        SELECT
+            s.id_muestra AS 'id_muestra',
+            s.id_ciclo AS 'id_ciclo',
+            p.codigo AS 'Piscina',
+            p.hectareas AS 'Has',
+            cp.fecha_siembra AS 'Fecha de siembra',
+            s.dias_cultivo AS 'Dias cultivo',
+            cp.cantidad_siembra AS 'Siembra / Larvas',
+            cp.densidad AS 'Densidad',
+            cp.tipo_siembra AS 'Tipo Siembra',
+            s.peso_promedio AS 'Peso',
+            s.incremento_peso AS 'Inc.P',
+            s.biomasa_lbs AS 'Biomasa Lbs',
+            " . $balanceadoColumns . "s.balanceado_acumulado AS 'Balanceado Acumulado',
+            s.convercion_alimenticia AS 'Conversión Alimenticia',
+            s.poblacion_actual AS 'Población actual',
+            s.indice_supervivencia AS 'Sobrev. Actual %',
+            s.observaciones AS 'Observaciones',
+            s.fecha_muestra AS 'Fecha Muestra'
+        FROM
+            muestra s
+            INNER JOIN ciclo_productivo cp ON cp.id_ciclo = s.id_ciclo
+            INNER JOIN piscina p ON cp.id_piscina = p.id_piscina
+            LEFT JOIN consumo_balanceado cb ON s.id_muestra = cb.id_muestra AND cb.id_compania = " . intval($id_compania) . "
+            LEFT JOIN tipo_balanceado tb ON cb.id_tipo_balanceado = tb.id_tipo_balanceado AND tb.id_compania = " . intval($id_compania) . "
+        WHERE
+            s.id_muestra = ? AND s.id_compania = ?
+        GROUP BY
+            s.id_muestra, s.id_ciclo, p.id_piscina, cp.id_ciclo
+        ";
+
+        $stmt = $conn->prepare($query);
+        $stmt->bindValue(1, $id_muestra);
+        $stmt->bindValue(2, $id_compania);
+        $stmt->execute();
+        $muestraData = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $response = [
+            'success' => true,
+            'data' => $muestraData,
+            'total' => count($muestraData)
+        ];
+
+        echo json_encode($response);
+        http_response_code(200);
+        exit();
+    }
+    
     // Verificar si se solicita el conteo de muestras de un ciclo específico
     if (isset($_GET['id_ciclo']) && isset($_GET['count'])) {
         $id_ciclo = $_GET['id_ciclo'];
@@ -265,6 +481,82 @@ try {
         exit();
     }
     
+    // Verificar si se solicita la penúltima muestra de un ciclo específico
+    if (isset($_GET['id_ciclo']) && isset($_GET['penultimo'])) {
+        $id_ciclo = $_GET['id_ciclo'];
+        $id_compania = $_GET['id_compania'] ?? null;
+        error_log("Buscando penúltima muestra para ciclo ID: " . $id_ciclo);
+        
+        // Obtener tipos de balanceado de la compañía
+        $tiposBalanceadoQuery = "SELECT id_tipo_balanceado, nombre FROM tipo_balanceado WHERE id_compania = ? ORDER BY id_tipo_balanceado";
+        $tiposBalanceadoStmt = $conn->prepare($tiposBalanceadoQuery);
+        $tiposBalanceadoStmt->bindValue(1, $id_compania);
+        $tiposBalanceadoStmt->execute();
+        $tiposBalanceado = $tiposBalanceadoStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Construir las columnas dinámicas para los tipos de balanceado
+        $balanceadoColumns = "";
+        foreach ($tiposBalanceado as $tipo) {
+            $nombreColumna = str_replace([' ', '.', ',', '(', ')'], '', $tipo['nombre']);
+            $balanceadoColumns .= "COALESCE(SUM(CASE WHEN tb.id_tipo_balanceado = " . intval($tipo['id_tipo_balanceado']) . " AND cb.id_compania = " . intval($id_compania) . " THEN cb.cantidad ELSE 0 END), 0) AS '" . $tipo['nombre'] . "',\n        ";
+        }
+        
+        // Consulta para obtener la penúltima muestra del ciclo
+        $query = "
+        SELECT
+            s.id_muestra AS 'id_muestra',
+            s.id_ciclo AS 'id_ciclo',
+            p.codigo AS 'Piscina',
+            p.hectareas AS 'Has',
+            cp.fecha_siembra AS 'Fecha de siembra',
+            s.dias_cultivo AS 'Dias cultivo',
+            cp.cantidad_siembra AS 'Siembra / Larvas',
+            cp.densidad AS 'Densidad',
+            cp.tipo_siembra AS 'Tipo Siembra',
+            s.peso_promedio AS 'Peso',
+            s.incremento_peso AS 'Inc.P',
+            s.biomasa_lbs AS 'Biomasa Lbs',
+            " . $balanceadoColumns . "s.balanceado_acumulado AS 'Balanceado Acumulado',
+            s.convercion_alimenticia AS 'Conversión Alimenticia',
+            s.poblacion_actual AS 'Población actual',
+            s.indice_supervivencia AS 'Sobrev. Actual %',
+            s.observaciones AS 'Observaciones',
+            s.fecha_muestra AS 'Fecha Muestra'
+        FROM
+            muestra s
+            INNER JOIN ciclo_productivo cp ON cp.id_ciclo = s.id_ciclo
+            INNER JOIN piscina p ON cp.id_piscina = p.id_piscina
+            LEFT JOIN consumo_balanceado cb ON s.id_muestra = cb.id_muestra AND cb.id_compania = " . intval($id_compania) . "
+            LEFT JOIN tipo_balanceado tb ON cb.id_tipo_balanceado = tb.id_tipo_balanceado AND tb.id_compania = " . intval($id_compania) . "
+        WHERE
+            s.id_ciclo = ? AND s.id_compania = ?
+        GROUP BY
+            s.id_muestra, s.id_ciclo, p.id_piscina, cp.id_ciclo
+        ORDER BY 
+            s.fecha_muestra DESC 
+        LIMIT 1 OFFSET 1
+        ";
+
+        $stmt = $conn->prepare($query);
+        $stmt->bindValue(1, $id_ciclo);
+        $stmt->bindValue(2, $id_compania);
+        $stmt->execute();
+        $penultimaMuestra = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        error_log("Resultados encontrados: " . count($penultimaMuestra));
+        error_log("Datos de la penúltima muestra: " . json_encode($penultimaMuestra));
+
+        $response = [
+            'success' => true,
+            'data' => $penultimaMuestra,
+            'total' => count($penultimaMuestra)
+        ];
+
+        echo json_encode($response);
+        http_response_code(200);
+        exit();
+    }
+    
     // Obtener filtros de los parámetros de la consulta
     $filters = [
         'piscina' => isset($_GET['piscina']) && $_GET['piscina'] !== 'todas' ? $_GET['piscina'] : null,
@@ -290,6 +582,7 @@ try {
     // Crear la consulta base con columnas dinámicas
     $query = "
     SELECT
+        s.id_muestra AS 'id_muestra',
         p.codigo AS 'Piscina',
         p.hectareas AS 'Has',
         cp.fecha_siembra AS 'Fecha de siembra',

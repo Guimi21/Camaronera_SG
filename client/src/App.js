@@ -20,6 +20,7 @@ import UsuariosAdmin from "./pages/Modulos/UsuariosAdmin";
 // Formularios
 import PiscinaForm from "./pages/Modulos/Form/PiscinaForm";
 import MuestraForm from "./pages/Modulos/Form/MuestraForm";
+import MuestraEditView from "./pages/Modulos/MuestraEditView";
 import CicloProductivoForm from "./pages/Modulos/Form/CicloProductivoForm";
 import EditarCicloProductivoForm from "./pages/Modulos/Form/EditarCicloProductivoForm";
 import ConsultarCicloProductivoForm from "./pages/Modulos/Form/ConsultarCicloProductivoForm";
@@ -84,6 +85,7 @@ function App() {
             {/* Formularios */}
             <Route path="form/piscina" element={<PiscinaForm />} />
             <Route path="form/muestra" element={<MuestraForm />} />
+            <Route path="dashboard/muestra-edit" element={<MuestraEditView />} />
             <Route path="form/ciclo" element={<CicloProductivoForm />} />
             <Route path="form/editar-ciclo/:id" element={<EditarCicloProductivoForm />} />
             <Route path="form/consultar-ciclo/:id" element={<ConsultarCicloProductivoForm />} />

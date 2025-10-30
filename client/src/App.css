@@ -544,7 +544,6 @@ select {
     color: #374151;
     transition: var(--transition);
     width: 100%;
-    max-width: 300px;
 }
 
 select:focus {
