@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
-import { useScrollToError } from '../../../hooks/useScrollToError';
 
 export default function ConsultarCicloProductivoForm() {
   const navigate = useNavigate();
@@ -25,8 +24,12 @@ export default function ConsultarCicloProductivoForm() {
   const [loadingCiclo, setLoadingCiclo] = useState(true);
   const [error, setError] = useState('');
 
-  // Hook para hacer scroll al principio cuando hay error
-  useScrollToError(error);
+  // Hacer scroll al inicio cuando hay un error
+  useEffect(() => {
+    if (error) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [error]);
 
   // Cargar datos del ciclo productivo a consultar
   useEffect(() => {
@@ -298,6 +301,9 @@ export default function ConsultarCicloProductivoForm() {
               <option value="EN_CURSO">En Curso</option>
               <option value="FINALIZADO">Finalizado</option>
             </select>
+            <p className="text-xs text-gray-500 mt-1 leyenda">
+              Estado actual del ciclo productivo
+            </p>
           </div>
         </div>
 

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
-import { useScrollToError } from '../../../hooks/useScrollToError';
 
 // Función para obtener la fecha local en formato YYYY-MM-DD
 const getLocalDateString = () => {
@@ -36,8 +35,12 @@ export default function EditarCicloProductivoForm() {
   const [error, setError] = useState('');
   const [tieneMuestras, setTieneMuestras] = useState(false); // Nuevo estado para verificar si tiene muestras
 
-  // Hook para hacer scroll al principio cuando hay error
-  useScrollToError(error);
+  // Hacer scroll al inicio cuando hay un error
+  useEffect(() => {
+    if (error) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [error]);
 
   // Referencias para inputs numéricos
   const inputRef1 = useRef(null); // Cantidad de Siembra
@@ -331,6 +334,16 @@ export default function EditarCicloProductivoForm() {
     navigate('/layout/dashboard/monitoreo-ciclos');
   };
 
+  // Componente para mostrar mensaje de validación
+  const ValidationMessage = ({ fieldName }) => (
+    <div className="validation-message">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>Ingresa {fieldName}</span>
+    </div>
+  );
+
   if (loadingCiclo || loadingPiscinas) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -389,15 +402,6 @@ export default function EditarCicloProductivoForm() {
               Este ciclo productivo tiene muestras asociadas. Solo se pueden editar los campos: Fecha de Cosecha, Tipo de Siembra y Estado.
             </p>
           </div>
-        </div>
-      )}
-
-      {formData.estado === 'FINALIZADO' && !formData.fecha_cosecha && (
-        <div className="mb-6 p-4 bg-orange-100 border border-orange-400 text-orange-700 rounded">
-          <p><strong>⚠️ Fecha de cosecha requerida</strong></p>
-          <p className="text-sm mt-1">
-            Para finalizar un ciclo productivo, debe ingresar la fecha de cosecha. El botón "Guardar Cambios" estará deshabilitado hasta que ingrese esta fecha.
-          </p>
         </div>
       )}
 
@@ -475,6 +479,7 @@ export default function EditarCicloProductivoForm() {
               }`}
               required={formData.estado === 'FINALIZADO'}
             />
+            {formData.estado === 'FINALIZADO' && formData.fecha_cosecha === '' && <ValidationMessage fieldName="una Fecha de Cosecha" />}
             <p className="text-xs text-gray-500 mt-1 leyenda">
               {formData.estado === 'FINALIZADO' 
                 ? 'Fecha de cosecha es obligatoria para ciclos finalizados'
@@ -548,6 +553,7 @@ export default function EditarCicloProductivoForm() {
               <option value="transf">transf</option>
               <option value="Directo">Directo</option>
             </select>
+            {formData.tipo_siembra === '' && <ValidationMessage fieldName="un Tipo de Siembra" />}
             <p className="text-xs text-gray-500 mt-1 leyenda">
               Tipo o método de siembra utilizado
             </p>
@@ -577,9 +583,9 @@ export default function EditarCicloProductivoForm() {
         <div className="flex flex-col sm:flex-row gap-4 pt-6">
           <button
             type="submit"
-            disabled={loading || piscinas.length === 0 || (formData.estado === 'FINALIZADO' && !formData.fecha_cosecha)}
+            disabled={loading || piscinas.length === 0}
             className={`flex-1 sm:flex-none px-6 py-3 rounded-md font-medium text-white transition-colors duration-200 ${
-              loading || piscinas.length === 0 || (formData.estado === 'FINALIZADO' && !formData.fecha_cosecha)
+              loading || piscinas.length === 0
                 ? 'bg-gray-400 cursor-not-allowed'
                 : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
             }`}

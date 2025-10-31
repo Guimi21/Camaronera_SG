@@ -443,13 +443,15 @@ try {
             s.balanceado_acumulado,
             s.fecha_muestra,
             s.id_muestra,
-            s.id_ciclo
+            s.id_ciclo,
+            s.fecha_creacion
         FROM 
             muestra s 
         WHERE 
             s.id_ciclo = ?
         ORDER BY 
-            s.fecha_muestra DESC 
+            s.fecha_muestra DESC,
+            s.fecha_creacion DESC
         LIMIT 1
         ";
         
@@ -521,7 +523,8 @@ try {
             s.poblacion_actual AS 'Población actual',
             s.indice_supervivencia AS 'Sobrev. Actual %',
             s.observaciones AS 'Observaciones',
-            s.fecha_muestra AS 'Fecha Muestra'
+            s.fecha_muestra AS 'Fecha Muestra',
+            s.fecha_creacion AS 'Fecha Creación'
         FROM
             muestra s
             INNER JOIN ciclo_productivo cp ON cp.id_ciclo = s.id_ciclo
@@ -531,9 +534,10 @@ try {
         WHERE
             s.id_ciclo = ? AND s.id_compania = ?
         GROUP BY
-            s.id_muestra, s.id_ciclo, p.id_piscina, cp.id_ciclo
+            s.id_muestra, s.id_ciclo, p.id_piscina, cp.id_ciclo, s.fecha_creacion
         ORDER BY 
-            s.fecha_muestra DESC 
+            s.fecha_muestra DESC,
+            s.fecha_creacion DESC
         LIMIT 1 OFFSET 1
         ";
 
@@ -598,7 +602,8 @@ try {
         s.poblacion_actual AS 'Población actual',
         s.indice_supervivencia AS 'Sobrev. Actual %',
         s.observaciones AS 'Observaciones',
-        s.fecha_muestra AS 'Fecha Muestra'
+        s.fecha_muestra AS 'Fecha Muestra',
+        s.fecha_creacion AS 'Fecha Creación'
     FROM
         piscina p
         INNER JOIN ciclo_productivo cp ON cp.id_piscina = p.id_piscina
@@ -640,6 +645,7 @@ try {
     // Continuar con la consulta
     $query .= $whereCondition . "
     GROUP BY
+        s.id_muestra,
         p.id_piscina,
         p.codigo,
         p.hectareas,
@@ -656,9 +662,10 @@ try {
         s.poblacion_actual,
         s.indice_supervivencia,
         s.observaciones,
-        s.fecha_muestra
+        s.fecha_muestra,
+        s.fecha_creacion
     ORDER BY 
-        p.id_piscina, s.fecha_muestra desc;";
+        p.id_piscina, s.fecha_muestra desc, s.fecha_creacion desc;";
 
     // Log para debugging
     error_log("Tipos de balanceado encontrados: " . count($tiposBalanceado));

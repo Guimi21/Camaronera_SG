@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
-import { useScrollToError } from '../../../hooks/useScrollToError';
 
 export default function UsuarioForm() {
   const navigate = useNavigate();
@@ -25,8 +24,12 @@ export default function UsuarioForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Hook para hacer scroll al principio cuando hay error
-  useScrollToError(error);
+  // Hacer scroll al inicio cuando hay un error
+  useEffect(() => {
+    if (error) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [error]);
 
   // Cargar perfiles disponibles
   useEffect(() => {
@@ -220,6 +223,16 @@ export default function UsuarioForm() {
     }
   };
 
+  // Componente para mostrar mensaje de validación
+  const ValidationMessage = ({ fieldName }) => (
+    <div className="validation-message">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>Ingresa {fieldName}</span>
+    </div>
+  );
+
   return (
     <div className="form-container min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -244,18 +257,23 @@ export default function UsuarioForm() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
                 <input type="text" name="nombre" value={formData.nombre} onChange={handleChange}
                   className="w-full p-3 border border-gray-300 rounded-lg" placeholder="Nombre completo" required />
+                {formData.nombre === '' && <ValidationMessage fieldName="un Nombre" />}
+                <p className="leyenda text-sm text-gray-500 mt-1">Nombre completo del usuario.</p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Usuario (username) *</label>
                 <input type="text" name="username" value={formData.username} onChange={handleChange}
                   className="w-full p-3 border border-gray-300 rounded-lg" placeholder="usuario123" required />
+                {formData.username === '' && <ValidationMessage fieldName="un Usuario (username)" />}
+                <p className="leyenda text-sm text-gray-500 mt-1">Nombre de usuario único para acceder al sistema.</p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Contraseña *</label>
                 <input type="password" name="password" value={formData.password} onChange={handleChange}
                   className="w-full p-3 border border-gray-300 rounded-lg" placeholder="Contraseña" required />
+                {formData.password === '' && <ValidationMessage fieldName="una Contraseña" />}
                 <p className="leyenda text-sm text-gray-500 mt-1">Por ahora la contraseña se almacenará tal cual en la base de datos.</p>
               </div>
 
@@ -272,6 +290,7 @@ export default function UsuarioForm() {
                           value={perfil.id_perfil}
                           checked={formData.perfil === String(perfil.id_perfil)}
                           onChange={() => handlePerfilChange(perfil.id_perfil)}
+                          required
                         />
                         <label htmlFor={`perfil-${perfil.id_perfil}`} className="ml-3 text-sm text-gray-700 cursor-pointer font-medium">
                           {perfil.nombre}
@@ -282,6 +301,7 @@ export default function UsuarioForm() {
                     <p className="text-sm text-gray-500 p-3">Cargando perfiles...</p>
                   )}
                 </div>
+                {formData.perfil === '' && <ValidationMessage fieldName="un Perfil" />}
                 <p className="leyenda text-sm text-gray-500 mt-1">Seleccione un perfil para el usuario.</p>
               </div>
 
@@ -297,6 +317,7 @@ export default function UsuarioForm() {
                           id={`compania-${compania.id_compania}`}
                           checked={formData.companias.includes(compania.id_compania)}
                           onChange={() => handleCompaniaChange(compania.id_compania)}
+                          required
                         />
                         <label htmlFor={`compania-${compania.id_compania}`} className="ml-2 text-sm text-gray-700">
                           {compania.nombre}
@@ -307,6 +328,7 @@ export default function UsuarioForm() {
                     <p className="text-sm text-gray-500 p-3">No hay compañías disponibles</p>
                   )}
                 </div>
+                {formData.companias.length === 0 && <ValidationMessage fieldName="al menos una Compañía" />}
                 <p className="leyenda text-sm text-gray-500 mt-1">Seleccione al menos una compañía para el usuario.</p>
               </div>
               )}
@@ -318,7 +340,8 @@ export default function UsuarioForm() {
                   name="idGrupoEmpresarial" 
                   value={formData.idGrupoEmpresarial} 
                   onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg">
+                  className="w-full p-3 border border-gray-300 rounded-lg"
+                  required>
                   <option value="">-- Seleccionar grupo empresarial --</option>
                   {gruposEmpresarialesDisponibles.map(grupo => (
                     <option key={grupo.id_grupo_empresarial} value={grupo.id_grupo_empresarial}>
@@ -326,7 +349,8 @@ export default function UsuarioForm() {
                     </option>
                   ))}
                 </select>
-                <p className="leyenda text-sm text-gray-500 mt-1">Seleccione el grupo empresarial para el usuario Superadministrador.</p>
+                {formData.idGrupoEmpresarial === '' && <ValidationMessage fieldName="un Grupo Empresarial" />}
+                <p className="leyenda text-sm text-gray-500 mt-1">Seleccione el grupo empresarial para el nuevo usuario.</p>
               </div>
               )}
 
@@ -337,6 +361,7 @@ export default function UsuarioForm() {
                   <option value="A">Activo</option>
                   <option value="I">Inactivo</option>
                 </select>
+                <p className="leyenda text-sm text-gray-500 mt-1">Estado actual del usuario en el sistema.</p>
               </div>
             </div>
 

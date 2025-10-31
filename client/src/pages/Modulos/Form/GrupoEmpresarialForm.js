@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import config from '../../../config';
-import { useScrollToError } from '../../../hooks/useScrollToError';
 
 export default function GrupoEmpresarialForm() {
   const navigate = useNavigate();
@@ -15,8 +14,12 @@ export default function GrupoEmpresarialForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Hook para hacer scroll al principio cuando hay error
-  useScrollToError(error);
+  // Hacer scroll al inicio cuando hay un error
+  useEffect(() => {
+    if (error) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [error]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -93,6 +96,16 @@ export default function GrupoEmpresarialForm() {
     navigate('/layout/dashboard/grupos-empresariales');
   };
 
+  // Componente para mostrar mensaje de validación
+  const ValidationMessage = ({ fieldName }) => (
+    <div className="validation-message">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>Ingresa {fieldName}</span>
+    </div>
+  );
+
   return (
     <div className="form-container min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -132,6 +145,7 @@ export default function GrupoEmpresarialForm() {
                   placeholder="Ingrese el nombre del grupo empresarial"
                   required
                 />
+                {formData.nombre === '' && <ValidationMessage fieldName="un Nombre del Grupo Empresarial" />}
                 <p className="text-sm text-gray-500 mt-1 leyenda">
                   El nombre debe ser único y descriptivo
                 </p>

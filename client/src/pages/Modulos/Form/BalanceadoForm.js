@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
-import { useScrollToError } from '../../../hooks/useScrollToError';
 
 export default function BalanceadoForm() {
   const navigate = useNavigate();
@@ -17,8 +16,12 @@ export default function BalanceadoForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Hook para hacer scroll al principio cuando hay error
-  useScrollToError(error);
+  // Hacer scroll al inicio cuando hay un error
+  useEffect(() => {
+    if (error) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [error]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -89,6 +92,16 @@ export default function BalanceadoForm() {
     navigate('/layout/dashboard/monitoreo-balanceados');
   };
 
+  // Componente para mostrar mensaje de validación
+  const ValidationMessage = ({ fieldName }) => (
+    <div className="validation-message">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>Ingresa {fieldName}</span>
+    </div>
+  );
+
   return (
     <div className="form-container max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
       <div className="mb-8">
@@ -124,6 +137,7 @@ export default function BalanceadoForm() {
               maxLength={50}
               required
             />
+            {formData.nombre === '' && <ValidationMessage fieldName="un Nombre del Tipo de Balanceado" />}
             <p className="text-xs text-gray-500 mt-1 leyenda">
               Nombre del tipo de balanceado (máximo 50 caracteres)
             </p>
@@ -145,6 +159,7 @@ export default function BalanceadoForm() {
               maxLength={20}
               required
             />
+            {formData.unidad === '' && <ValidationMessage fieldName="una Unidad" />}
             <p className="text-xs text-gray-500 mt-1 leyenda">
               Unidad de medida (máximo 20 caracteres)
             </p>

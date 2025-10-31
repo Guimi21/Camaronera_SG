@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
-import { useScrollToError } from '../../../hooks/useScrollToError';
 
 export default function CompaniaForm() {
   const navigate = useNavigate();
@@ -19,8 +18,12 @@ export default function CompaniaForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Hook para hacer scroll al principio cuando hay error
-  useScrollToError(error);
+  // Hacer scroll al inicio cuando hay un error
+  React.useEffect(() => {
+    if (error) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [error]);
 
   // Función para obtener los campos requeridos vacíos
   const obtenerCamposVacios = () => {
@@ -166,6 +169,16 @@ export default function CompaniaForm() {
     navigate('/layout/dashboard/companias');
   };
 
+  // Componente para mostrar mensaje de validación
+  const ValidationMessage = ({ fieldName }) => (
+    <div className="validation-message">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>Ingresa {fieldName}</span>
+    </div>
+  );
+
   return (
     <div className="form-container min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -188,31 +201,6 @@ export default function CompaniaForm() {
             </div>
           )}
 
-          {/* Indicador de campos requeridos */}
-          {obtenerCamposVacios().length > 0 && (
-            <div className="bg-blue-50 border border-blue-300 rounded-lg p-4 mb-6">
-              <div className="flex items-start gap-3">
-                <svg className="info w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
-                <div>
-                  <p className="font-semibold text-blue-900 mb-2">Campos requeridos pendientes:</p>
-                  <ul className="text-sm text-blue-800 space-y-1">
-                    {obtenerCamposVacios().map((campo, idx) => (
-                      <li key={idx} className="flex items-center gap-2">
-                        <span className="inline-block w-2 h-2 bg-blue-600 rounded-full"></span>
-                        <span>
-                          <strong>{campo.campo}</strong>
-                          {campo.tipo === 'vacio' ? ' (vacío)' : ` (${campo.razon})`}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} noValidate className="space-y-6">
             {/* Información General */}
             <div className="grid grid-cols-1 gap-6">
@@ -229,6 +217,7 @@ export default function CompaniaForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Ingrese el nombre de la compañía"
                 />
+                {formData.nombre === '' && <ValidationMessage fieldName="un Nombre de la Compañía" />}
                 <p className="text-sm text-gray-500 mt-1 leyenda">
                   El nombre debe ser único y descriptivo
                 </p>

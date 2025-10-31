@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import config from '../../config';
 import { useAuth } from '../../context/AuthContext';
-import { useScrollToError } from '../../hooks/useScrollToError';
 
 // Función para obtener la fecha local en formato YYYY-MM-DD
 const getLocalDateString = () => {
@@ -48,8 +47,6 @@ export default function MuestraEditView() {
   const [loadingTipos, setLoadingTipos] = useState(true);
   const [loadingMuestra, setLoadingMuestra] = useState(true);
   const [error, setError] = useState('');
-
-  useScrollToError(error);
 
   const setUltimoMuestra = (valor) => {
     setUltimoMuestraState(valor);
@@ -176,17 +173,17 @@ export default function MuestraEditView() {
           setFormData({
             id_muestra: muestraData.id_muestra,
             id_ciclo: muestraData.id_ciclo,
-            dias_cultivo: muestraData['Dias cultivo'] || '',
-            peso: muestraData['Peso'] || '',
-            incremento_peso: muestraData['Inc.P'] || '',
-            biomasa_lbs: muestraData['Biomasa Lbs'] || '',
+            dias_cultivo: muestraData['Dias cultivo'] ?? '',
+            peso: muestraData['Peso'] ?? '',
+            incremento_peso: muestraData['Inc.P'] ?? '',
+            biomasa_lbs: muestraData['Biomasa Lbs'] ?? '',
             balanceados: balanceadosObj,
-            balanceado_acumulado: muestraData['Balanceado Acumulado'] || '',
-            conversion_alimenticia: muestraData['Conversión Alimenticia'] || '',
-            poblacion_actual: muestraData['Población actual'] || '',
-            supervivencia: muestraData['Sobrev. Actual %'] || '',
-            observaciones: muestraData['Observaciones'] || '',
-            fecha_muestra: muestraData['Fecha Muestra'] || getLocalDateString()
+            balanceado_acumulado: muestraData['Balanceado Acumulado'] ?? '',
+            conversion_alimenticia: muestraData['Conversión Alimenticia'] ?? '',
+            poblacion_actual: muestraData['Población actual'] ?? '',
+            supervivencia: muestraData['Sobrev. Actual %'] ?? '',
+            observaciones: muestraData['Observaciones'] ?? '',
+            fecha_muestra: muestraData['Fecha Muestra'] ?? getLocalDateString()
           });
 
           // Obtener el último muestra anterior
@@ -213,6 +210,7 @@ export default function MuestraEditView() {
     try {
       // En modo edición, usar el endpoint de penúltima muestra para obtener la muestra anterior
       // En modo view, usar el endpoint de última muestra
+      // El backend ordena por fecha_muestra DESC y fecha_creacion DESC, aplicando el criterio de desempate
       const endpoint = isReadOnly 
         ? `${API_BASE_URL}/module/muestras.php?id_ciclo=${idCiclo}&ultimo=1&id_compania=${idCompania}`
         : `${API_BASE_URL}/module/muestras.php?id_ciclo=${idCiclo}&penultimo=1&id_compania=${idCompania}`;
@@ -397,7 +395,7 @@ export default function MuestraEditView() {
 
   // Funciones de cálculo (idénticas a MuestraForm)
   const calcularDiasCultivo = (fechaSiembra, fechaMuestra) => {
-    if (!fechaSiembra || !fechaMuestra) return '';
+    if (!fechaSiembra || !fechaMuestra) return 0;
     
     const fechaSiembraDate = new Date(fechaSiembra);
     const fechaMuestraDate = new Date(fechaMuestra);
@@ -621,10 +619,6 @@ export default function MuestraEditView() {
     );
     if (!tieneBalanceado) {
       errores.push('Debes ingresar al menos un tipo de balanceado.');
-    }
-
-    if (!formData.observaciones || formData.observaciones.trim() === '') {
-      errores.push('Las observaciones son requeridas.');
     }
 
     if (!idUsuario) {
@@ -941,7 +935,7 @@ export default function MuestraEditView() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Observaciones {!isReadOnly && '*'}
+              Observaciones <span className="text-gray-500 text-xs">(Opcional)</span>
             </label>
             <textarea
               name="observaciones"

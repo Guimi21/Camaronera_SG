@@ -2,7 +2,6 @@
 import { useNavigate } from 'react-router-dom';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
-import { useScrollToError } from '../../../hooks/useScrollToError';
 
 // Función para obtener la fecha local en formato YYYY-MM-DD
 const getLocalDateString = () => {
@@ -33,8 +32,12 @@ export default function CicloProductivoForm() {
   const [loadingPiscinas, setLoadingPiscinas] = useState(true);
   const [error, setError] = useState('');
 
-  // Hook para hacer scroll al principio cuando hay error
-  useScrollToError(error);
+  // Hacer scroll al inicio cuando hay un error
+  useEffect(() => {
+    if (error) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [error]);
 
   // Referencias para inputs numéricos
   const inputRef1 = useRef(null); // Cantidad de Siembra
@@ -210,6 +213,11 @@ export default function CicloProductivoForm() {
       return;
     }
     
+    if (formData.estado === 'FINALIZADO' && !formData.fecha_cosecha) {
+      setError('La fecha de cosecha es requerida cuando el estado es "Finalizado".');
+      return;
+    }
+    
     if (!idCompania || !idUsuario) {
       setError('No se pudo obtener la información del usuario o compañía.');
       return;
@@ -259,6 +267,16 @@ export default function CicloProductivoForm() {
   const handleCancel = () => {
     navigate('/layout/dashboard/monitoreo-ciclos');
   };
+
+  // Componente para mostrar mensaje de validación
+  const ValidationMessage = ({ fieldName }) => (
+    <div className="validation-message">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>Ingresa {fieldName}</span>
+    </div>
+  );
 
   return (
     <div className="form-container max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
@@ -335,6 +353,7 @@ export default function CicloProductivoForm() {
               ))}
             </select>
           )}
+          {formData.id_piscina === '' && <ValidationMessage fieldName="una Piscina" />}
           <p className="text-xs text-gray-500 mt-1 leyenda">
             Solo se muestran piscinas sin ciclos productivos activos (EN_CURSO)
           </p>
@@ -355,6 +374,7 @@ export default function CicloProductivoForm() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required
             />
+            {formData.fecha_siembra === '' && <ValidationMessage fieldName="una Fecha de Siembra" />}
             <p className="text-xs text-gray-500 mt-1 leyenda">
               Fecha en la que se realiza la siembra
             </p>
@@ -362,7 +382,8 @@ export default function CicloProductivoForm() {
 
           <div>
             <label htmlFor="fecha_cosecha" className="block text-sm font-medium text-gray-700 mb-2">
-              Fecha de Cosecha (Estimada)
+              Fecha de Cosecha {formData.estado === 'FINALIZADO' && <span className="text-red-600">*</span>}
+              {formData.estado === 'FINALIZADO' && <span className="text-xs text-red-600"> (Requerida para ciclos finalizados)</span>}
             </label>
             <input
               type="date"
@@ -370,10 +391,19 @@ export default function CicloProductivoForm() {
               name="fecha_cosecha"
               value={formData.fecha_cosecha}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                formData.estado === 'FINALIZADO' && !formData.fecha_cosecha
+                  ? 'border-red-300 bg-red-50'
+                  : 'border-gray-300'
+              }`}
+              required={formData.estado === 'FINALIZADO'}
             />
+            {formData.estado === 'FINALIZADO' && formData.fecha_cosecha === '' && <ValidationMessage fieldName="una Fecha de Cosecha" />}
             <p className="text-xs text-gray-500 mt-1 leyenda">
-              Fecha estimada de cosecha (opcional)
+              {formData.estado === 'FINALIZADO' 
+                ? 'Fecha de cosecha es obligatoria para ciclos finalizados'
+                : 'Fecha estimada de cosecha (opcional)'
+              }
             </p>
           </div>
 
@@ -396,6 +426,7 @@ export default function CicloProductivoForm() {
               step="1"
               required
             />
+            {formData.cantidad_siembra === '' && <ValidationMessage fieldName="una Cantidad de Siembra" />}
             <p className="text-xs text-gray-500 mt-1 leyenda">
               Número de larvas o individuos sembrados
             </p>
@@ -439,6 +470,7 @@ export default function CicloProductivoForm() {
               <option value="transf">transf</option>
               <option value="Directo">Directo</option>
             </select>
+            {formData.tipo_siembra === '' && <ValidationMessage fieldName="un Tipo de Siembra" />}
             <p className="text-xs text-gray-500 mt-1 leyenda">
               Tipo o método de siembra utilizado
             </p>

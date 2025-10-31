@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import config from "../../config";
 import { useAuth } from "../../context/AuthContext";
-import { useScrollToError } from "../../hooks/useScrollToError";
 
 // Función para obtener la fecha local en formato YYYY-MM-DD
 const getLocalDateString = () => {
@@ -28,9 +27,6 @@ export default function Administrador() {
     busqueda: "",
     estado: "todas"
   });
-
-  // Hook para hacer scroll al principio cuando hay error
-  useScrollToError(error);
 
   // Obtener compañías al montar el componente
   useEffect(() => {

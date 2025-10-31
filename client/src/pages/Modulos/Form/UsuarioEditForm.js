@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
-import { useScrollToError } from '../../../hooks/useScrollToError';
 
 export default function UsuarioEditForm() {
   const navigate = useNavigate();
@@ -24,8 +23,12 @@ export default function UsuarioEditForm() {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Hook para hacer scroll al principio cuando hay error
-  useScrollToError(error);
+  // Hacer scroll al inicio cuando hay un error
+  useEffect(() => {
+    if (error) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [error]);
 
   // Cargar datos del usuario a editar
   useEffect(() => {
@@ -293,6 +296,16 @@ export default function UsuarioEditForm() {
     }
   };
 
+  // Componente para mostrar mensaje de validación
+  const ValidationMessage = ({ fieldName }) => (
+    <div className="validation-message">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>Ingresa {fieldName}</span>
+    </div>
+  );
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -338,6 +351,8 @@ export default function UsuarioEditForm() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
                 <input type="text" name="nombre" value={formData.nombre} onChange={handleChange}
                   className="w-full p-3 border border-gray-300 rounded-lg" placeholder="Nombre completo" required />
+                {formData.nombre === '' && <ValidationMessage fieldName="un Nombre" />}
+                <p className="leyenda text-sm text-gray-500 mt-1">Nombre completo del usuario.</p>
               </div>
 
               <div>
@@ -363,6 +378,7 @@ export default function UsuarioEditForm() {
                     <p className="text-sm text-gray-500 p-2">Cargando perfiles...</p>
                   )}
                 </div>
+                {formData.perfil === '' && <ValidationMessage fieldName="un Perfil" />}
                 <p className="leyenda text-sm text-gray-500 mt-1">Seleccione un perfil para el usuario.</p>
               </div>
 
@@ -377,6 +393,7 @@ export default function UsuarioEditForm() {
                           id={`compania-${compania.id_compania}`}
                           checked={formData.companias.includes(compania.id_compania)}
                           onChange={() => handleCompaniaChange(compania.id_compania)}
+                          required
                         />
                         <label htmlFor={`compania-${compania.id_compania}`} className="ml-2 text-sm text-gray-700">
                           {compania.nombre}
@@ -387,6 +404,7 @@ export default function UsuarioEditForm() {
                     <p className="text-sm text-gray-500 p-2">No hay compañías disponibles</p>
                   )}
                 </div>
+                {formData.companias.length === 0 && <ValidationMessage fieldName="al menos una Compañía" />}
                 <p className="leyenda text-sm text-gray-500 mt-1">Seleccione al menos una compañía para el usuario.</p>
               </div>
 
@@ -397,6 +415,7 @@ export default function UsuarioEditForm() {
                   <option value="A">Activo</option>
                   <option value="I">Inactivo</option>
                 </select>
+                <p className="leyenda text-sm text-gray-500 mt-1">Estado actual del usuario en el sistema.</p>
               </div>
             </div>
 

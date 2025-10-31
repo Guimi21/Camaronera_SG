@@ -73,6 +73,7 @@ export default function Directivo() {
         supervivencia: item["Sobrev. Actual %"],
         observaciones: item.Observaciones,
         fecha_muestra: item["Fecha Muestra"],
+        fecha_creacion: item["Fecha Creación"],
         balanceados: {} // Objeto para almacenar dinámicamente los tipos de balanceado
       };
       
@@ -290,10 +291,41 @@ export default function Directivo() {
     if (itemsForPiscina.length === 0) return false;
     
     // Encontrar la fecha más reciente para esta piscina
-    const latestDate = new Date(Math.max(...itemsForPiscina.map(i => new Date(i.fecha_muestra))));
-    const itemDate = new Date(item.fecha_muestra);
+    let latestItem = itemsForPiscina[0];
     
-    return itemDate.getTime() === latestDate.getTime();
+    for (let i = 1; i < itemsForPiscina.length; i++) {
+      const currentItem = itemsForPiscina[i];
+      
+      // Comparar primero por fecha de muestra
+      const currentDate = new Date(currentItem.fecha_muestra);
+      const latestDate = new Date(latestItem.fecha_muestra);
+      
+      if (currentDate > latestDate) {
+        latestItem = currentItem;
+      } else if (currentDate.getTime() === latestDate.getTime()) {
+        // Si las fechas de muestra son iguales, comparar por fecha de creación
+        const currentCreationDate = new Date(currentItem.fecha_creacion);
+        const latestCreationDate = new Date(latestItem.fecha_creacion);
+        
+        if (currentCreationDate > latestCreationDate) {
+          latestItem = currentItem;
+        }
+      }
+    }
+    
+    // Comparar el item actual con el más reciente encontrado
+    const itemDate = new Date(item.fecha_muestra);
+    const latestDate = new Date(latestItem.fecha_muestra);
+    
+    if (itemDate.getTime() === latestDate.getTime()) {
+      // Si las fechas de muestra son iguales, comparar por fecha de creación
+      const itemCreationDate = new Date(item.fecha_creacion);
+      const latestCreationDate = new Date(latestItem.fecha_creacion);
+      
+      return itemCreationDate.getTime() === latestCreationDate.getTime();
+    }
+    
+    return false;
   };
 
   // Función para manejar el click en botón Editar/Consultar

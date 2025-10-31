@@ -1,8 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
-import { useScrollToError } from '../../../hooks/useScrollToError';
 
 export default function PiscinaForm() {
   const navigate = useNavigate();
@@ -18,8 +17,12 @@ export default function PiscinaForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Hook para hacer scroll al principio cuando hay error
-  useScrollToError(error);
+  // Hacer scroll al inicio cuando hay un error
+  useEffect(() => {
+    if (error) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [error]);
 
   // Referencias para inputs numéricos
   const inputRef1 = useRef(null); // Hectáreas
@@ -113,6 +116,17 @@ export default function PiscinaForm() {
   const handleCancel = () => {
     navigate('/layout/dashboard/monitoreo-piscinas');
   };
+
+  // Componente para mostrar mensaje de validación
+  const ValidationMessage = ({ fieldName }) => (
+    <div className="validation-message">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>Ingresa {fieldName}</span>
+    </div>
+  );
+
   return (
     <div className="form-container max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
       <div className="mb-8">
@@ -148,6 +162,7 @@ export default function PiscinaForm() {
               maxLength={50}
               required
             />
+            {formData.codigo === '' && <ValidationMessage fieldName="un Código de la Piscina" />}
             <p className="text-xs text-gray-500 mt-1 leyenda">
               Identificador único de la piscina (máximo 50 caracteres)
             </p>
@@ -173,6 +188,7 @@ export default function PiscinaForm() {
               step="0.01"
               required
             />
+            {formData.hectareas === '' && <ValidationMessage fieldName="unas Hectáreas" />}
             <p className="text-xs text-gray-500 mt-1 leyenda">
               Área de la piscina en hectáreas
             </p>
@@ -196,6 +212,7 @@ export default function PiscinaForm() {
             maxLength={255}
             required
           />
+          {formData.ubicacion === '' && <ValidationMessage fieldName="una Ubicación" />}
           <p className="text-xs text-gray-500 mt-1 leyenda">
             Describa la ubicación o referencias geográficas de la piscina (máximo 255 caracteres)
           </p>
