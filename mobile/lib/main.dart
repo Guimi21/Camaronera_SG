@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'services/api_service.dart';
+import 'models/muestra.dart';
+import 'screens/muestra_form_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,6 +20,9 @@ class MyApp extends StatelessWidget {
       ),
       debugShowCheckedModeBanner: false,
       home: const LoginScreen(),
+      routes: {
+        '/login': (context) => const LoginScreen(),
+      },
     );
   }
 }
@@ -49,18 +54,34 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _showSuccessDialog(String message) {
+  void _showSuccessDialog(UsuarioAutenticado usuario) {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
           icon: const Icon(Icons.check_circle, color: Colors.green, size: 50),
           title: const Text('¡Éxito!'),
-          content: Text(message),
+          content: Text('¡Bienvenido ${usuario.nombre}! Has iniciado sesión correctamente'),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
+                // Verificar si el usuario tiene permiso (Administrador o Directivo)
+                if (usuario.tienePermiso('Administrador') || usuario.tienePermiso('Directivo')) {
+                  print('Usuario autorizado: ${usuario.perfilActivo}');
+                  // Navegar a la pantalla del formulario de muestras
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MuestraFormScreen(usuario: usuario),
+                    ),
+                  );
+                } else {
+                  _showErrorDialog(
+                    'Acceso denegado. Solo administradores y directivos pueden acceder.',
+                  );
+                }
               },
               child: const Text('Aceptar'),
             ),
@@ -73,6 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
           icon: const Icon(Icons.error, color: Colors.red, size: 50),
@@ -109,8 +131,10 @@ class _LoginScreenState extends State<LoginScreen> {
       final result = await ApiService.login(usuario, password);
 
       if (result['success']) {
-        _showSuccessDialog('¡Bienvenido! Has iniciado sesión correctamente');
-        // Aquí puedes navegar a otra pantalla después del login
+        // Crear objeto UsuarioAutenticado desde la respuesta
+        UsuarioAutenticado usuarioAutenticado =
+            UsuarioAutenticado.fromJson(result['data']);
+        _showSuccessDialog(usuarioAutenticado);
       } else {
         _showErrorDialog(
           result['error'] ?? 'Usuario o contraseña incorrectos',
@@ -131,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('lib/fondoCamaronera.jpg'),
+            image: const AssetImage('lib/fondoCamaronera.jpg'),
             fit: BoxFit.cover,
           ),
         ),
@@ -158,6 +182,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     'lib/logo.png',
                     height: 80,
                     width: 80,
+                    fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 20),
                   const Text(
@@ -231,9 +256,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      onPressed: _isLoading ? null : () {
-                        _handleLogin();
-                      },
+                      onPressed: _isLoading ? null : _handleLogin,
                       child: Text(
                         _isLoading ? 'Iniciando sesión...' : 'Entrar',
                         style: const TextStyle(
@@ -241,17 +264,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text(
-                      '¿No tienes cuenta? Volver al inicio',
-                      style: TextStyle(
-                        color: Colors.blue,
-                        fontSize: 14,
                       ),
                     ),
                   ),
