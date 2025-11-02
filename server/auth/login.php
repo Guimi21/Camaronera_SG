@@ -11,8 +11,8 @@ error_log("Datos recibidos del frontend: " . print_r($data, true));
 
 // Validar que se hayan recibido los datos
 if (!isset($data->username) || !isset($data->password)) {
-    echo json_encode(['error' => 'Faltan datos']);
     http_response_code(400);  // Código de estado 400 Bad Request
+    echo json_encode(['error' => 'Faltan datos']);
     exit;
 }
 
@@ -35,8 +35,8 @@ error_log("Datos del usuario desde la base de datos: " . print_r($user, true));
 
 // Si no se encuentra el usuario o las credenciales son incorrectas
 if (!$user || $user['password_hash'] !== $password) {  
-    echo json_encode(['error' => 'Credenciales incorrectas']);
     http_response_code(401);  // Código de estado 401 Unauthorized
+    echo json_encode(['error' => 'Credenciales incorrectas']);
     exit;
 }
 
@@ -113,6 +113,5 @@ $response = [
 // Imprimir la respuesta antes de enviarla
 error_log("Respuesta enviada al frontend: " . print_r($response, true));  
 
-echo json_encode($response);
 http_response_code(200);  // Código de estado 200 OK
-?>
+echo json_encode($response);

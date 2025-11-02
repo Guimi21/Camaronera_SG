@@ -42,4 +42,3 @@ function setupCORS() {
 
 // Llamar automáticamente la función cuando se incluya el archivo
 setupCORS();
-?>

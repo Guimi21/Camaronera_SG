@@ -16,6 +16,3 @@ function sendResponse($data, $status = 200) {
         echo json_encode(["error" => "La respuesta no es un JSON válido"]);
     }
 }
-
-?>
-

@@ -40,8 +40,8 @@ if ($method === 'GET') {
 
     // Validar que se hayan recibido los datos requeridos
     if (!isset($data->nombre) || empty(trim($data->nombre))) {
-        echo json_encode(['success' => false, 'message' => 'El nombre del grupo empresarial es obligatorio']);
         http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'El nombre del grupo empresarial es obligatorio']);
         exit;
     }
 
@@ -89,7 +89,6 @@ if ($method === 'GET') {
         http_response_code(500);
     }
 } else {
-    echo json_encode(['success' => false, 'message' => 'Método HTTP no permitido']);
     http_response_code(405);
+    echo json_encode(['success' => false, 'message' => 'Método HTTP no permitido']);
 }
-?>

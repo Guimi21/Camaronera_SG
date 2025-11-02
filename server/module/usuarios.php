@@ -12,8 +12,8 @@ if (!isset($conn)) {
         'success' => false,
         'message' => 'Error de conexión a la base de datos'
     ];
-    echo json_encode($response);
     http_response_code(500);
+    echo json_encode($response);
     exit();
 }
 
@@ -424,4 +424,3 @@ echo json_encode([
     'message' => 'Método no permitido'
 ]);
 exit();
-

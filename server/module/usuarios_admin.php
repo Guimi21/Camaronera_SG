@@ -7,8 +7,8 @@ require_once(__DIR__ . '/../helpers/cors.php');
 $id_usuario = isset($_GET['id_usuario']) ? $_GET['id_usuario'] : null;
 
 if (!$id_usuario) {
-    echo json_encode(['success' => false, 'message' => 'ID de usuario requerido']);
     http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'ID de usuario requerido']);
     exit;
 }
 
@@ -35,16 +35,15 @@ try {
     $stmt->execute();
     $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    http_response_code(200);
     echo json_encode([
         'success' => true,
         'data' => $usuarios
     ]);
-    http_response_code(200);
 } catch (PDOException $e) {
+    http_response_code(500);
     echo json_encode([
         'success' => false,
         'message' => 'Error al obtener usuarios administradores: ' . $e->getMessage()
     ]);
-    http_response_code(500);
 }
-?>

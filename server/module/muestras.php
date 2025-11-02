@@ -9,8 +9,8 @@ if (!isset($conn)) {
         'success' => false,
         'message' => 'Error de conexión a la base de datos'
     ];
-    echo json_encode($response);
     http_response_code(500);
+    echo json_encode($response);
     exit();
 }
 
@@ -25,8 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 'success' => false,
                 'message' => 'Datos no válidos'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -36,8 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 'success' => false,
                 'message' => 'ID de ciclo requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -46,8 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 'success' => false,
                 'message' => 'ID de usuario requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -56,8 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 'success' => false,
                 'message' => 'ID de compañía requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -94,8 +94,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 'success' => false,
                 'message' => 'Ciclo productivo no encontrado o no pertenece a su compañía'
             ];
-            echo json_encode($response);
             http_response_code(404);
+            echo json_encode($response);
             exit();
         }
 
@@ -162,8 +162,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 'message' => 'Registro de muestra creado exitosamente',
                 'data' => ['id_muestra' => $muestraId]
             ];
-            echo json_encode($response);
             http_response_code(201);
+            echo json_encode($response);
         } else {
             throw new Exception("Error al insertar el registro");
         }
@@ -174,8 +174,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'success' => false,
             'message' => 'Error al crear el registro de muestra'
         ];
-        echo json_encode($response);
         http_response_code(500);
+        echo json_encode($response);
     }
     exit();
 }
@@ -191,8 +191,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
                 'success' => false,
                 'message' => 'Datos no válidos'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -202,8 +202,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
                 'success' => false,
                 'message' => 'ID de muestra requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -212,8 +212,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
                 'success' => false,
                 'message' => 'ID de compañía requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -230,8 +230,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
                 'success' => false,
                 'message' => 'Muestra no encontrada o no pertenece a su compañía'
             ];
-            echo json_encode($response);
             http_response_code(404);
+            echo json_encode($response);
             exit();
         }
 
@@ -309,8 +309,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
                 'success' => true,
                 'message' => 'Registro de muestra actualizado exitosamente'
             ];
-            echo json_encode($response);
             http_response_code(200);
+            echo json_encode($response);
         } else {
             throw new Exception("Error al actualizar el registro");
         }
@@ -321,8 +321,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
             'success' => false,
             'message' => 'Error al actualizar el registro de muestra'
         ];
-        echo json_encode($response);
         http_response_code(500);
+        echo json_encode($response);
     }
     exit();
 }
@@ -393,8 +393,8 @@ try {
             'total' => count($muestraData)
         ];
 
-        echo json_encode($response);
         http_response_code(200);
+        echo json_encode($response);
         exit();
     }
     
@@ -418,8 +418,8 @@ try {
             ]
         ];
         
-        echo json_encode($response);
         http_response_code(200);
+        echo json_encode($response);
         exit();
     }
     
@@ -478,8 +478,8 @@ try {
             'total' => count($ultimoMuestra)
         ];
         
-        echo json_encode($response);
         http_response_code(200);
+        echo json_encode($response);
         exit();
     }
     
@@ -556,8 +556,8 @@ try {
             'total' => count($penultimaMuestra)
         ];
 
-        echo json_encode($response);
         http_response_code(200);
+        echo json_encode($response);
         exit();
     }
     
@@ -692,8 +692,8 @@ try {
         'total' => count($cicloData)
     ];
 
-    echo json_encode($response);
     http_response_code(200);
+    echo json_encode($response);
 
 } catch (PDOException $e) {
     error_log("Error en la consulta: " . $e->getMessage());
@@ -704,8 +704,8 @@ try {
         'error' => $e->getMessage()
     ];
     
-    echo json_encode($response);
     http_response_code(500);
+    echo json_encode($response);
     
 } catch (Exception $e) {
     error_log("Error general: " . $e->getMessage());
@@ -715,7 +715,6 @@ try {
         'message' => 'Error interno del servidor'
     ];
     
-    echo json_encode($response);
     http_response_code(500);
+    echo json_encode($response);
 }
-?>

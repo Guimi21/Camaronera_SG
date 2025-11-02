@@ -9,8 +9,8 @@ if (!isset($conn)) {
         'success' => false,
         'message' => 'Error de conexión a la base de datos'
     ];
-    echo json_encode($response);
     http_response_code(500);
+    echo json_encode($response);
     exit();
 }
 
@@ -26,8 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                 'success' => false,
                 'message' => 'ID de compañía requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -77,8 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
             'success' => false,
             'message' => 'Error: ' . $e->getMessage()
         ];
-        echo json_encode($response);
         http_response_code(500);
+        echo json_encode($response);
     }
 }
 
@@ -93,8 +93,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 'success' => false,
                 'message' => 'Datos no válidos'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -113,8 +113,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 'success' => false,
                 'message' => 'Campos requeridos faltantes: ' . implode(', ', $missing_fields)
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -139,8 +139,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 'success' => false,
                 'message' => 'Ya existe un tipo de balanceado con ese nombre en esta compañía'
             ];
-            echo json_encode($response);
             http_response_code(409);
+            echo json_encode($response);
             exit();
         }
 
@@ -170,8 +170,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     'id_usuario_actualiza' => $id_usuario_actualiza
                 ]
             ];
-            echo json_encode($response);
             http_response_code(201);
+            echo json_encode($response);
         } else {
             throw new Exception("Error al insertar tipo de balanceado");
         }
@@ -181,8 +181,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'success' => false,
             'message' => 'Error: ' . $e->getMessage()
         ];
-        echo json_encode($response);
         http_response_code(500);
+        echo json_encode($response);
     }
 }
 
@@ -196,8 +196,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
                 'success' => false,
                 'message' => 'ID de tipo de balanceado requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -224,8 +224,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
                 'success' => false,
                 'message' => 'No hay campos para actualizar'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -253,8 +253,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
             'success' => false,
             'message' => 'Error: ' . $e->getMessage()
         ];
-        echo json_encode($response);
         http_response_code(500);
+        echo json_encode($response);
     }
 }
 
@@ -268,8 +268,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
                 'success' => false,
                 'message' => 'ID de tipo de balanceado requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -294,8 +294,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
             'success' => false,
             'message' => 'Error: ' . $e->getMessage()
         ];
-        echo json_encode($response);
         http_response_code(500);
+        echo json_encode($response);
     }
 }
 
@@ -305,7 +305,6 @@ else {
         'success' => false,
         'message' => 'Método HTTP no soportado'
     ];
-    echo json_encode($response);
     http_response_code(405);
+    echo json_encode($response);
 }
-?>

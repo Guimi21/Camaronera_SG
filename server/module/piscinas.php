@@ -9,8 +9,8 @@ if (!isset($conn)) {
         'success' => false,
         'message' => 'Error de conexión a la base de datos'
     ];
-    echo json_encode($response);
     http_response_code(500);
+    echo json_encode($response);
     exit();
 }
 
@@ -26,8 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                 'success' => false,
                 'message' => 'ID de compañía requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -79,8 +79,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
             'success' => false,
             'message' => 'Error: ' . $e->getMessage()
         ];
-        echo json_encode($response);
         http_response_code(500);
+        echo json_encode($response);
     }
 }
 
@@ -95,8 +95,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 'success' => false,
                 'message' => 'Datos no válidos'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -108,8 +108,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     'success' => false,
                     'message' => "Campo requerido: $field"
                 ];
-                echo json_encode($response);
                 http_response_code(400);
+                echo json_encode($response);
                 exit();
             }
         }
@@ -127,8 +127,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 'success' => false,
                 'message' => 'Ya existe una piscina con este código en la compañía'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -166,8 +166,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'success' => false,
             'message' => 'Error: ' . $e->getMessage()
         ];
-        echo json_encode($response);
         http_response_code(500);
+        echo json_encode($response);
     }
 }
 
@@ -182,8 +182,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
                 'success' => false,
                 'message' => 'Datos no válidos'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -195,8 +195,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
                     'success' => false,
                     'message' => "Campo requerido: $field"
                 ];
-                echo json_encode($response);
                 http_response_code(400);
+                echo json_encode($response);
                 exit();
             }
         }
@@ -215,8 +215,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
                 'success' => false,
                 'message' => 'Ya existe otra piscina con este código en la compañía'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -243,8 +243,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
                 'success' => false,
                 'message' => 'No se encontró la piscina o no se realizaron cambios'
             ];
-            echo json_encode($response);
             http_response_code(404);
+            echo json_encode($response);
         } else {
             $response = [
                 'success' => true,
@@ -258,8 +258,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
             'success' => false,
             'message' => 'Error: ' . $e->getMessage()
         ];
-        echo json_encode($response);
         http_response_code(500);
+        echo json_encode($response);
     }
 }
 
@@ -275,8 +275,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
                 'success' => false,
                 'message' => 'ID de piscina e ID de compañía requeridos'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -292,8 +292,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
                 'success' => false,
                 'message' => 'No se puede eliminar la piscina porque tiene ciclos asociados'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -317,8 +317,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
                 'success' => false,
                 'message' => 'No se encontró la piscina'
             ];
-            echo json_encode($response);
             http_response_code(404);
+            echo json_encode($response);
         } else {
             $response = [
                 'success' => true,
@@ -332,8 +332,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
             'success' => false,
             'message' => 'Error: ' . $e->getMessage()
         ];
-        echo json_encode($response);
         http_response_code(500);
+        echo json_encode($response);
     }
 }
 
@@ -343,7 +343,6 @@ else {
         'success' => false,
         'message' => 'Método no permitido'
     ];
-    echo json_encode($response);
     http_response_code(405);
+    echo json_encode($response);
 }
-?>

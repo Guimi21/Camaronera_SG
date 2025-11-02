@@ -9,8 +9,8 @@ if (!isset($conn)) {
         'success' => false,
         'message' => 'Error de conexión a la base de datos'
     ];
-    echo json_encode($response);
     http_response_code(500);
+    echo json_encode($response);
     exit();
 }
 
@@ -29,8 +29,8 @@ try {
                 'success' => false,
                 'message' => 'ID de piscina requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -39,8 +39,8 @@ try {
                 'success' => false,
                 'message' => 'Fecha de siembra requerida'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -49,8 +49,8 @@ try {
                 'success' => false,
                 'message' => 'Cantidad de siembra requerida'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -59,8 +59,8 @@ try {
                 'success' => false,
                 'message' => 'Densidad requerida'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -69,8 +69,8 @@ try {
                 'success' => false,
                 'message' => 'Tipo de siembra requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -79,8 +79,8 @@ try {
                 'success' => false,
                 'message' => 'Estado requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -89,8 +89,8 @@ try {
                 'success' => false,
                 'message' => 'ID de compañía requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -99,8 +99,8 @@ try {
                 'success' => false,
                 'message' => 'ID de usuario requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -147,8 +147,8 @@ try {
             'id_ciclo' => $id_ciclo
         ];
         
-        echo json_encode($response);
         http_response_code(201);
+        echo json_encode($response);
         exit();
     }
     
@@ -163,8 +163,8 @@ try {
                 'success' => false,
                 'message' => 'ID de ciclo requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -174,8 +174,8 @@ try {
                 'success' => false,
                 'message' => 'ID de piscina requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -184,8 +184,8 @@ try {
                 'success' => false,
                 'message' => 'Fecha de siembra requerida'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -194,8 +194,8 @@ try {
                 'success' => false,
                 'message' => 'Cantidad de siembra requerida'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -204,8 +204,8 @@ try {
                 'success' => false,
                 'message' => 'Densidad requerida'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -214,8 +214,8 @@ try {
                 'success' => false,
                 'message' => 'Tipo de siembra requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -224,8 +224,8 @@ try {
                 'success' => false,
                 'message' => 'Estado requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -234,8 +234,8 @@ try {
                 'success' => false,
                 'message' => 'ID de compañía requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -244,8 +244,8 @@ try {
                 'success' => false,
                 'message' => 'ID de usuario requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -261,8 +261,8 @@ try {
                 'success' => false,
                 'message' => 'Ciclo productivo no encontrado o no pertenece a su compañía'
             ];
-            echo json_encode($response);
             http_response_code(404);
+            echo json_encode($response);
             exit();
         }
         
@@ -300,8 +300,8 @@ try {
             'message' => 'Ciclo productivo actualizado exitosamente'
         ];
         
-        echo json_encode($response);
         http_response_code(200);
+        echo json_encode($response);
         exit();
     }
     
@@ -315,8 +315,8 @@ try {
                 'success' => false,
                 'message' => 'ID de compañía requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
 
@@ -357,8 +357,8 @@ try {
                     'success' => false,
                     'message' => 'Ciclo productivo no encontrado'
                 ];
-                echo json_encode($response);
                 http_response_code(404);
+                echo json_encode($response);
                 exit();
             }
             
@@ -367,8 +367,8 @@ try {
                 'data' => $ciclo
             ];
             
-            echo json_encode($response);
             http_response_code(200);
+            echo json_encode($response);
             exit();
         }
 
@@ -410,8 +410,8 @@ try {
             'total' => count($ciclos)
         ];
 
-        echo json_encode($response);
         http_response_code(200);
+        echo json_encode($response);
         exit();
     }
     
@@ -420,8 +420,8 @@ try {
         'success' => false,
         'message' => 'Método no permitido'
     ];
-    echo json_encode($response);
     http_response_code(405);
+    echo json_encode($response);
     
 } catch (PDOException $e) {
     error_log("Error en la consulta: " . $e->getMessage());
@@ -432,8 +432,8 @@ try {
         'error' => $e->getMessage()
     ];
     
-    echo json_encode($response);
     http_response_code(500);
+    echo json_encode($response);
     
 } catch (Exception $e) {
     error_log("Error general: " . $e->getMessage());
@@ -443,7 +443,6 @@ try {
         'message' => 'Error interno del servidor'
     ];
     
-    echo json_encode($response);
     http_response_code(500);
+    echo json_encode($response);
 }
-?>

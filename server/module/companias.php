@@ -11,8 +11,8 @@ if (!isset($conn)) {
         'success' => false,
         'message' => 'Error de conexión a la base de datos'
     ];
-    echo json_encode($response);
     http_response_code(500);
+    echo json_encode($response);
     exit();
 }
 
@@ -27,8 +27,8 @@ try {
                 'success' => false,
                 'message' => 'ID de usuario requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -64,8 +64,8 @@ try {
             'message' => 'Compañías obtenidas exitosamente',
             'data' => $companias
         ];
-        echo json_encode($response);
         http_response_code(200);
+        echo json_encode($response);
         
     } elseif ($method === 'POST') {
         // Leer el cuerpo de la solicitud JSON
@@ -77,8 +77,8 @@ try {
                 'success' => false,
                 'message' => 'Nombre de compañía requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -87,8 +87,8 @@ try {
                 'success' => false,
                 'message' => 'Estado requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -97,8 +97,8 @@ try {
                 'success' => false,
                 'message' => 'ID de usuario requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -116,8 +116,8 @@ try {
                 'success' => false,
                 'message' => 'No se pudo obtener el grupo empresarial del usuario'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -139,8 +139,8 @@ try {
                 'success' => false,
                 'message' => 'Ya existe una compañía con este nombre para este grupo empresarial'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -170,8 +170,8 @@ try {
                     'id_grupo_empresarial' => $id_grupo_empresarial
                 ]
             ];
-            echo json_encode($response);
             http_response_code(201);
+            echo json_encode($response);
         } else {
             throw new Exception('Error al insertar la compañía en la base de datos');
         }
@@ -186,8 +186,8 @@ try {
                 'success' => false,
                 'message' => 'ID de compañía requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -196,8 +196,8 @@ try {
                 'success' => false,
                 'message' => 'Nombre de compañía requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -206,8 +206,8 @@ try {
                 'success' => false,
                 'message' => 'Estado requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -216,8 +216,8 @@ try {
                 'success' => false,
                 'message' => 'ID de usuario requerido'
             ];
-            echo json_encode($response);
             http_response_code(400);
+            echo json_encode($response);
             exit();
         }
         
@@ -248,8 +248,8 @@ try {
                 'success' => false,
                 'message' => 'No tiene permiso para editar esta compañía'
             ];
-            echo json_encode($response);
             http_response_code(403);
+            echo json_encode($response);
             exit();
         }
         
@@ -281,8 +281,8 @@ try {
                     'estado' => $estado
                 ]
             ];
-            echo json_encode($response);
             http_response_code(200);
+            echo json_encode($response);
         } else {
             throw new Exception('Error al actualizar la compañía en la base de datos');
         }
@@ -292,8 +292,8 @@ try {
             'success' => false,
             'message' => 'Método no permitido'
         ];
-        echo json_encode($response);
         http_response_code(405);
+        echo json_encode($response);
     }
     
 } catch (PDOException $e) {
@@ -301,7 +301,6 @@ try {
         'success' => false,
         'message' => 'Error en el servidor: ' . $e->getMessage()
     ];
-    echo json_encode($response);
     http_response_code(500);
+    echo json_encode($response);
 }
-?>
