@@ -3,7 +3,21 @@ import 'package:http/http.dart' as http;
 import '../models/muestra.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.0.2.2:5000';
+  /// Obtiene la URL base según el entorno
+  /// En desarrollo: http://10.0.2.2:5000
+  /// En producción: https://camaron360.com/server
+  static String get baseUrl {
+    // Detectar si estamos en modo debug (desarrollo) o release (producción)
+    // En modo debug: usar localhost desde el emulador
+    // En modo release: usar la URL de producción
+    bool isProduction = const bool.fromEnvironment('dart.vm.product');
+    
+    if (isProduction) {
+      return 'https://camaron360.com/server';
+    } else {
+      return 'http://10.0.2.2:5000';
+    }
+  }
 
   /// Realiza el login del usuario y retorna los datos del usuario autenticado
   static Future<Map<String, dynamic>> login(
