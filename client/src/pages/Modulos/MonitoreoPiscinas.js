@@ -293,25 +293,32 @@ export default function MonitoreoPiscinas() {
 
       {/* Filtros y Tabla */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 space-y-4 md:space-y-0">
-          <h2 className="text-xl font-semibold text-gray-800">Lista de Piscinas</h2>
-          
-          {/* Filtros */}
-          <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
-            <input
-              type="text"
-              name="busqueda"
-              value={filters.busqueda}
-              onChange={handleFilterChange}
-              placeholder="Buscar por código o ubicación..."
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+        {/* Filtros */}
+        <div className="filtros-tabla p-4 mb-6">
+          <h3 className="mb-4">Filtros</h3>
+          <div className="flex flex-wrap gap-4">
+            <div className="flex flex-col">
+              <label htmlFor="busqueda">Búsqueda</label>
+              <input
+                type="text"
+                id="busqueda"
+                name="busqueda"
+                value={filters.busqueda}
+                onChange={handleFilterChange}
+                placeholder="Buscar por código o ubicación..."
+              />
+            </div>
           </div>
         </div>
 
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 space-y-4 md:space-y-0">
+          <h2 className="text-xl font-semibold text-gray-800">Lista de Piscinas</h2>
+        </div>
+
         {/* Tabla */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white">
+        <div className="table-container mb-4 bg-white rounded-lg shadow">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
             <thead className="bg-gray-50">
               <tr>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No.</th>
@@ -347,43 +354,46 @@ export default function MonitoreoPiscinas() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
 
         {/* Paginación */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="pagination flex items-center gap-2">
-            <button
-              onClick={prevPage}
-              disabled={currentPage === 1}
-              className="bg-blue-100 text-blue-800 px-3 py-2 rounded disabled:opacity-50 hover:bg-blue-200 transition"
-            >
-              Anterior
-            </button>
-            <span className="text-sm text-gray-600">Página {currentPage} de {Math.ceil(filteredTableData.length / itemsPerPage)}</span>
-            <button
-              onClick={nextPage}
-              disabled={currentPage === totalPages}
-              className="bg-blue-100 text-blue-800 px-3 py-2 rounded disabled:opacity-50 hover:bg-blue-200 transition"
-            >
-              Siguiente
-            </button>
+        <div className="table-controls-wrapper">
+          <div className="pagination-wrapper">
+            <div className="pagination flex items-center gap-2">
+              <button
+                onClick={prevPage}
+                disabled={currentPage === 1}
+                className="bg-blue-100 text-blue-800 px-3 py-2 rounded disabled:opacity-50 hover:bg-blue-200 transition"
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-gray-600">Página {currentPage} de {Math.ceil(filteredTableData.length / itemsPerPage)}</span>
+              <button
+                onClick={nextPage}
+                disabled={currentPage === totalPages}
+                className="bg-blue-100 text-blue-800 px-3 py-2 rounded disabled:opacity-50 hover:bg-blue-200 transition"
+              >
+                Siguiente
+              </button>
 
-            <select
-              value={itemsPerPage}
-              onChange={(e) => {
-                setItemsPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              className="border rounded p-2 text-sm"
-            >
-              <option value={5}>5 por página</option>
-              <option value={10}>10 por página</option>
-              <option value={25}>25 por página</option>
-              <option value={50}>50 por página</option>
-            </select>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="border rounded p-2 text-sm"
+              >
+                <option value={5}>5 por página</option>
+                <option value={10}>10 por página</option>
+                <option value={25}>25 por página</option>
+                <option value={50}>50 por página</option>
+              </select>
+            </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="action-buttons-wrapper">
             {/* Botón para agregar nueva piscina */}
             <button
               onClick={() => navigate('/layout/form/piscina')}

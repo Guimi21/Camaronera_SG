@@ -56,23 +56,22 @@ body {
     flex: 1;
     width: 100%;
     margin: 0 auto;
-    padding: 0 1rem;
 }
 
 /* Header */
 header {
     background: linear-gradient(to right, #1f2937, #111827, #000);
     color: white;
-    padding: 1rem;
     display: flex;
-    justify-content: space-between; /* Alinea los elementos de forma horizontal con espacio entre ellos */
+    justify-content: space-between;
     align-items: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra suave */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     position: sticky;
-    width: calc(100%);
+    width: 100%;
     top: 0;
     z-index: 100;
     height: var(--header-height);
+    box-sizing: border-box;
 }
 
 .header-left {
@@ -111,30 +110,6 @@ header {
     gap: 1rem; /* Espacio entre los elementos del flex */
 }
 
-/* Para pantallas pequeñas y móviles (menores a 600px) */
-@media (max-width: 600px) {
-    .main-container {
-        flex-direction: column; /* En pantallas pequeñas, los elementos se apilan en columna */
-        gap: 0.5rem; /* Reducir el espacio entre elementos */
-    }
-}
-
-/* Para pantallas medianas (entre 600px y 768px) */
-@media (min-width: 600px) and (max-width: 768px) {
-    .main-container {
-        flex-direction: row; /* Asegura que en estas pantallas los elementos estén en fila */
-        gap: 1rem;
-    }
-}
-
-/* Para pantallas grandes (mayores a 1280px) */
-@media (min-width: 1280px) {
-    .main-container {
-        flex-direction: row; /* Mantiene la fila en pantallas grandes */
-        gap: 2rem; /* Mayor espacio entre los elementos */
-    }
-}
-
 /* Contenedor principal de logo */
 .logoContainer {
     display: flex;
@@ -146,11 +121,8 @@ header {
 
 /* Logo principal a la izquierda */
 .logoPrincipal {
-    width: 70px;
-    height: 70px;
     object-fit: contain;
-    margin-bottom: 0.5rem;
-    text-align: left; /* Asegura que el logo se alinee a la izquierda */
+    text-align: left;
 }
 
 /* Contenedor del título y subtítulo alineado a la derecha */
@@ -162,18 +134,16 @@ header {
 
 /* Título del logo */
 .logoTitulo {
-    font-size: 1.1rem;
     font-weight: bold;
     color: #ffffff;
-    text-align: right; /* Alinea el texto a la derecha */
+    text-align: right;
 }
 
 /* Subtítulo del logo */
 .logoSubtitulo {
-    font-size: 0.7rem;
     color: #9ca3af;
-    text-align: right; /* Alinea el texto a la derecha */
-    margin-left: 0.5rem; /* Añadir un pequeño margen */
+    text-align: right;
+    margin-left: 0.5rem;
 }
 
 /* Selector de compañía en el header */
@@ -182,13 +152,9 @@ header {
     color: #ffffff;
     border: 1px solid #4b5563;
     border-radius: 6px;
-    padding: 0.375rem 0.5rem;
-    font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
-    min-width: 150px;
-    max-width: 250px;
 }
 
 .compania-selector:hover {
@@ -214,14 +180,12 @@ nav {
     flex-direction: row;
     align-items: center;
     margin-top: auto;
-    space-x: 6px; /* Espaciado entre los elementos */
 }
 
 /* Menú de navegación con los links */
 nav a {
     display: flex;
     align-items: center;
-    padding: 0.75rem 1rem;
     border-radius: 8px;
     text-decoration: none;
     color: #e5e7eb;
@@ -252,28 +216,6 @@ nav.hidden {
 
 nav.block {
   display: block;
-}
-
-@media (max-width: 768px) {
-  nav {
-    display: flex;
-    flex-direction: column;
-  }
-  .flex-1 {
-    flex: 1;
-  }
-
-  .space-y-4 {
-    gap: 1rem;
-  }
-
-  .md\\:space-y-0 {
-    gap: 0;
-  }
-
-  .md\\:space-x-6 {
-    margin-right: 0;
-  }
 }
 
 /* Mostrar en dispositivos móviles solo cuando el menú esté abierto */
@@ -314,16 +256,13 @@ div.flex {
 
 /* Estilo para el botón */
 button {
-    display: flex;
+    display: inline-flex;
     background-color: #2563eb;
     color: white;
-    padding: 0.75rem 1.25rem;
-    font-size: 0.875rem;
     border-radius: 8px;
     border: none;
     cursor: pointer;
     transition: var(--transition);
-    display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
@@ -350,7 +289,6 @@ button svg {
 main {
     flex: 1;
     background-color: rgba(243, 244, 246, 0.95);
-    padding: 1.5rem;
     min-width: 100vw;
     min-height: calc(100vh - var(--header-height));
     transition: var(--transition);
@@ -375,12 +313,12 @@ main {
 /* Formularios */
 .form-container, .login-form {
     background: var(--bg);
-    padding: 1.5rem;
     border-radius: var(--border-radius);
     box-shadow: 0px 4px 10px var(--shadow);
-    width: 50%;
-    margin: 2rem auto;
     animation: fadeIn 0.8s ease-in-out;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .form-group {
@@ -403,10 +341,8 @@ input:focus, textarea:focus {
 
 input, textarea {
     width: 100%;
-    padding: 0.75rem 1rem;
     border: 1px solid #d1d5db;
     border-radius: 8px;
-    font-size: 1rem;
     transition: var(--transition);
 }
 
@@ -493,8 +429,6 @@ button[type="submit"] {
     width: 100%;
     background: var(--primary);
     color: white;
-    padding: 0.8rem;
-    font-size: 1rem;
     font-weight: 600;
     border-radius: 8px;
     border: none;
@@ -515,16 +449,12 @@ button[type="submit"]:disabled {
 h2 {
     text-align: center;
     color: var(--primary-dark);
-    margin-bottom: 1.5rem;
-    font-size: 1.5rem;
 }
 
 .panel-directivo, .panel-administrador {
     background: var(--bg);
     border-radius: var(--border-radius);
-    padding: 1.5rem;
     box-shadow: 0px 4px 10px var(--shadow);
-    margin-bottom: 2rem;
     overflow: auto;
     max-width: 97vw;
 }
@@ -539,8 +469,6 @@ h2 {
 select {
     border: 1px solid #d1d5db;
     border-radius: 8px;
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
     background-color: #ffffff;
     color: #374151;
     transition: var(--transition);
@@ -555,8 +483,6 @@ select:focus {
 
 /* Estilo para las opciones dentro del select */
 option {
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
     background-color: #ffffff;
     color: #374151;
 }
@@ -565,7 +491,6 @@ option {
 .table-container {
     width: 100%;
     overflow-x: auto;
-    margin-bottom: 1.5rem;
     border-radius: var(--border-radius);
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
@@ -577,7 +502,6 @@ table {
 }
 
 table th, table td {
-    padding: 0.75rem 1rem;
     text-align: left;
     border-bottom: 1px solid #e5e7eb;
 }
@@ -613,180 +537,6 @@ table tr:hover {
 .p-2 { padding: 1rem; }
 .p-3 { padding: 1.5rem; }
 
-/* Pantallas pequeñas (móviles) */
-@media (max-width: 767px) {
-    
-    
-    .menu-toggle {
-        display: block;
-    }
-    
-   
-    main {
-    
-        width: calc(100%); /* Calcular el ancho disponible con padding */
-        padding: 1rem;
-    }
-    
-    .header-title {
-        font-size: 1rem;
-    }
-    
-    .panel-directivo, .panel-administrador {
-        padding: 1rem;
-        max-height: calc(95vh - 2rem); /* Ajuste dinámico */
-    }
-    
-    .form-container, .login-form {
-        margin: 1rem auto;
-        padding: 1rem;
-    }
-    
-    input, select, button {
-        font-size: 16px; /* Previene zoom en iOS */
-    }
-}
-
-/* Tabletas */
-@media (min-width: 768px) and (max-width: 1023px) {
-    .container {
-        padding: calc(1.5rem + 2vw); /* Ajuste dinámico */
-    }
-    
-   
-    main {
-        width: calc(100%); /* Cálculo de ancho */
-        padding: calc(1.5rem + 1vw);
-    }
-    
-    .panel-directivo, .panel-administrador {
-        max-height: calc(68vh - 2rem); /* Ajuste dinámico */
-    }
-}
-
-/* Escritorios pequeños */
-@media (min-width: 1024px) and (max-width: 1279px) {
-   
-    main {
-        width: calc(100%); /* Ancho proporcional */
-    }
-}
-
-/* Pantallas grandes (1280px y mayores) */
-@media (min-width: 1280px) {
-    .container {
-        padding: calc(2rem + 2vw); /* Ajuste dinámico */
-    }
-    
-   
-    header {
-        padding: calc(1rem + 1vw) calc(2rem + 2vw);
-    }
-
-    main {
-        padding: calc(0.4rem);
-    }
-    
-    .panel-directivo, .panel-administrador {
-        margin: 0 auto 2rem;
-    }
-}
-
-/* Para pantallas mayores a 1440px */
-@media (min-width: 1440px) {
-    .container {
-        padding: calc(3rem + 2vw); /* Ajuste dinámico */
-    }
-    
-  
-
-    header {
-        padding: calc(1.5rem + 1vw) calc(3rem + 2vw);
-    }
-
-    main {
-        padding: calc(0.5rem);
-    }
-    
-    .panel-directivo, .panel-administrador {
-        max-width: calc(1300px + 5vw);
-        margin: 0 auto 2rem;
-    }
-}
-
-/* Pantallas muy grandes (1600px y mayores) */
-@media (min-width: 1600px) {
-    .container {
-        padding: calc(4rem + 3vw); /* Ajuste dinámico */
-    }
-    
-
-
-    header {
-        padding: calc(2rem + 1vw) calc(4rem + 3vw);
-    }
-
-    main {
-        padding: calc(0.2rem);
-    }
-    
-    .panel-directivo, .panel-administrador {
-        max-width: calc(1800px + 5vw);
-        margin: 0 auto 2rem;
-    }
-}
-
-/* Pantallas ultra grandes (1920px y mayores) */
-@media (min-width: 1920px) {
-    .container {
-        padding: calc(5rem + 4vw); /* Ajuste dinámico */
-    }
-    
-   
-
-    header {
-        padding: calc(2.5rem + 1vw) calc(5rem + 4vw);
-    }
-
-    main {
-        padding: calc(5rem + 2vw);
-    }
-    
-    .panel-directivo, .panel-administrador {
-        max-width: calc(2600px + 8vw);
-        margin: 0 auto 3rem;
-    }
-}
-
-/* Ajustes para pantallas muy pequeñas (menores a 360px) */
-@media (max-width: 360px) {
-    header {
-        flex-direction: column;
-        height: auto;
-        min-height: var(--header-height);
-        gap: 0.5rem;
-        text-align: center;
-    }
-
-    .header-user {
-        margin-left: 0;
-        justify-content: center;
-    }
-    
-   
-    .form-container, .login-form {
-        padding: calc(0.75rem + 0.5vw);
-    }
-
-    input {
-        padding: calc(0.6rem + 0.2vw) calc(0.8rem + 0.2vw);
-    }
-    
-    .panel-directivo, .panel-administrador {
-        padding: calc(0.75rem + 0.3vw);
-        max-height: calc(60vh - 2rem); /* Ajuste dinámico */
-    }
-}
 
 /* Estilos para mensajes de validación */
 .validation-message {
@@ -804,4 +554,2726 @@ table tr:hover {
     height: 1rem;
     flex-shrink: 0;
     stroke-width: 2;
+}
+
+/* Estilos para filtros de tabla */
+.filtros-tabla {
+    background-color: #f3f4f6;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary);
+}
+
+.filtros-tabla h3 {
+    font-weight: 600;
+    color: var(--primary-dark);
+}
+
+.filtros-tabla .flex {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.filtros-tabla .flex > div {
+    display: flex;
+    flex-direction: column;
+}
+
+.filtros-tabla label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #374151;
+}
+
+.filtros-tabla select,
+.filtros-tabla input {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background-color: #ffffff;
+    color: #374151;
+    transition: var(--transition);
+}
+
+.filtros-tabla select:focus,
+.filtros-tabla input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    outline: none;
+}
+
+.filtros-tabla button {
+    white-space: nowrap;
+}
+
+/* Estilos para paginación y botones de acción */
+.pagination {
+    display: flex;
+    align-items: center;
+    border-radius: 8px;
+}
+
+.pagination button {
+    border: 1px solid #bfdbfe;
+    background-color: #dbeafe;
+    color: #1e40af;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.pagination button:hover:not(:disabled) {
+    background-color: #93c5fd;
+}
+
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination select {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background-color: #ffffff;
+    color: #374151;
+    transition: var(--transition);
+    width: auto;
+}
+
+/* Contenedor de botones de acción (crear, descargar, etc.) */
+.action-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.action-buttons button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.action-buttons button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Botón verde para descargar */
+.btn-download {
+    background-color: #16a34a;
+    color: white;
+}
+
+.btn-download:hover:not(:disabled) {
+    background-color: #15803d;
+}
+
+/* Botón azul para crear */
+.btn-create {
+    background-color: #2563eb;
+    color: white;
+}
+
+.btn-create:hover:not(:disabled) {
+    background-color: #1e40af;
+}
+
+/* Botón gris para cancelar */
+.btn-cancel {
+    background-color: #6b7280;
+    color: white;
+}
+
+.btn-cancel:hover:not(:disabled) {
+    background-color: #4b5563;
+}
+
+/* Contenedor principal para paginación y botones de acción */
+.table-controls-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+}
+
+.table-controls-wrapper .pagination-wrapper {
+    display: flex;
+    width: 100%;
+}
+
+.table-controls-wrapper .action-buttons-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+}
+
+/* Ajustes para pantallas muy pequeñas (menores a 360px) - MEJORADO */
+@media (max-width: 360px) {
+    html {
+        font-size: 13px;
+    }
+
+    /* Ajustar altura del header en móviles ultra pequeños */
+    header {
+        height: auto;
+        padding: 0.25rem 0.375rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .header-left {
+        width: 100%;
+        gap: 0.375rem;
+    }
+
+    .logoPrincipal {
+        width: 40px;
+        height: 40px;
+    }
+
+    .logoTitulo {
+        font-size: 0.75rem;
+    }
+
+    .logoSubtitulo {
+        font-size: 0.5rem;
+    }
+
+    .compania-selector {
+        min-width: 90px;
+        max-width: 150px;
+        padding: 0.2rem 0.375rem;
+        font-size: 0.65rem;
+    }
+
+    /* Navegación en móvil ultra pequeño */
+    nav {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        margin-top: 0.375rem;
+    }
+
+    nav a {
+        padding: 0.4rem 0.5rem;
+        font-size: 0.65rem;
+        flex: 1;
+        min-width: 65px;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .header-user {
+        width: 100%;
+        justify-content: flex-end;
+        gap: 0.25rem;
+        margin-top: 0.25rem;
+        font-size: 0.7rem;
+    }
+
+    .header-user button {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.65rem;
+    }
+
+    .container {
+        padding: 0.5rem;
+    }
+
+    /* Main content */
+    main {
+        min-width: 100vw;
+        padding: 0.75rem 0.375rem;
+    }
+
+    .main-container {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    /* Formularios 100% en móviles ultra pequeños */
+    .form-container, .login-form {
+        width: calc(100% - 1rem);
+        padding: 0.75rem 0.5rem;
+        margin: 0.75rem auto;
+        animation: fadeIn 0.8s ease-in-out;
+    }
+
+    /* Inputs más compactos */
+    input, textarea, select {
+        padding: 0.4rem 0.5rem;
+        font-size: 0.75rem;
+        border-radius: 6px;
+        transition: var(--transition);
+    }
+
+    .dateInput {
+        width: 100%;
+    }
+
+    /* Botones más compactos */
+    button {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.65rem;
+        width: 100%;
+        margin-bottom: 0.375rem;
+    }
+
+    button[type="submit"] {
+        padding: 0.5rem;
+        font-size: 0.75rem;
+        width: 100%;
+    }
+
+    /* Tabla responsive */
+    .table-container {
+        margin-bottom: 0.75rem;
+        border-radius: 6px;
+        overflow-x: auto;
+    }
+
+    table {
+        font-size: 0.65rem;
+    }
+
+    table th, table td {
+        padding: 0.3rem 0.25rem;
+    }
+
+    table th {
+        font-size: 0.6rem;
+        font-weight: 600;
+    }
+
+    /* Paneles ajustados */
+    .panel-directivo, .panel-administrador {
+        padding: 0.75rem 0.5rem;
+        max-width: 100%;
+        border-radius: 8px;
+        background: #ffffff;
+    }
+
+    /* Elementos de utilidad */
+    .info, .info2 {
+        width: 100%;
+    }
+
+    h2 {
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
+        text-align: center;
+        color: #1e40af;
+    }
+
+    .leyenda {
+        padding-left: 0.5rem;
+        font-size: 0.65rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Filtros de tabla en móviles ultra pequeños */
+    .filtros-tabla {
+        padding: 0.5rem 0.375rem;
+        margin-bottom: 0.75rem;
+        background-color: #f3f4f6;
+        border-radius: 6px;
+        border-left: 3px solid var(--primary);
+    }
+
+    .filtros-tabla h3 {
+        font-size: 0.8rem;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #1e40af;
+    }
+
+    .filtros-tabla .flex {
+        flex-direction: column;
+        gap: 0.375rem;
+    }
+
+    .filtros-tabla .flex > div {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filtros-tabla select,
+    .filtros-tabla input {
+        width: 100%;
+        padding: 0.35rem 0.375rem;
+        font-size: 0.65rem;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        background-color: #ffffff;
+        color: #374151;
+        transition: var(--transition);
+    }
+
+    .filtros-tabla select:focus,
+    .filtros-tabla input:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        outline: none;
+    }
+
+    .filtros-tabla button {
+        width: 100%;
+        padding: 0.4rem;
+        font-size: 0.65rem;
+        margin-top: 0.375rem;
+    }
+
+    .filtros-tabla label {
+        font-size: 0.6rem;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+        color: #374151;
+    }
+
+    /* Paginación y botones de acción en móvil ultra pequeño */
+    .pagination {
+        flex-direction: column;
+        gap: 0.375rem;
+        width: 100%;
+    }
+
+    .pagination button {
+        padding: 0.4rem;
+        font-size: 0.65rem;
+        flex: 1;
+        min-width: 55px;
+    }
+
+    .pagination select {
+        padding: 0.35rem;
+        font-size: 0.65rem;
+        width: 100%;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.375rem;
+    }
+
+    .action-buttons button {
+        padding: 0.4rem;
+        font-size: 0.65rem;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .action-buttons svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    /* Layout para mobile ultra pequeño */
+    .table-controls-wrapper {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .table-controls-wrapper .pagination-wrapper {
+        width: 100%;
+    }
+
+    .table-controls-wrapper .action-buttons-wrapper {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.375rem;
+    }
+
+    .table-controls-wrapper .action-buttons-wrapper button {
+        flex: 1 1 calc(50% - 0.1875rem);
+        min-width: 100px;
+    }
+}
+
+@media (min-width: 278px) and (max-width: 360px) {
+    .admin-options {
+        margin-bottom: 205px;
+    }
+
+    .admin-options button {
+        padding: 1rem 0rem;
+    }   
+}
+
+/* Para pantallas pequeñas y móviles (entre 361px y 600px) - MEJORADO */
+@media (min-width: 361px) and (max-width: 600px) {
+    html {
+        font-size: 15px;
+    }
+
+    /* Ajustar altura del header en móviles */
+    header {
+        height: auto;
+        padding: 0.3rem 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .header-left {
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    .logoPrincipal {
+        width: 50px;
+        height: 50px;
+    }
+
+    .logoTitulo {
+        font-size: 0.9rem;
+    }
+
+    .logoSubtitulo {
+        font-size: 0.6rem;
+    }
+
+    /* Selector de compañía más compacto */
+    .compania-selector {
+        min-width: 120px;
+        max-width: 180px;
+        padding: 0.25rem 0.375rem;
+        font-size: 0.75rem;
+    }
+
+    /* Navegación en móvil */
+    nav {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        margin-top: 0.5rem;
+    }
+
+    nav a {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+        flex: 1;
+        min-width: 80px;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .header-user {
+        width: 100%;
+        justify-content: flex-end;
+        gap: 0.25rem;
+        margin-top: 0.25rem;
+    }
+
+    .container {
+        padding: 0.75rem;
+    }
+
+    /* Main content */
+    main {
+        min-width: 100vw;
+        padding: 1rem 0.5rem;
+    }
+
+    .main-container {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    /* Formularios 100% en móviles */
+    .form-container, .login-form {
+        width: 100%;
+        padding: 1rem 0.75rem;
+        margin: 1rem auto;
+        width: calc(100% - 1.5rem);
+        animation: fadeIn 0.8s ease-in-out;
+    }
+
+    /* Inputs más compactos */
+    input, textarea, select {
+        padding: 0.6rem 0.75rem;
+        font-size: 0.875rem;
+        border-radius: 8px;
+        transition: var(--transition);
+    }
+
+    .dateInput {
+        width: 100%;
+    }
+
+    /* Botones más grandes y clickeables */
+    button {
+        padding: 0.65rem 1rem;
+        font-size: 0.8rem;
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    button[type="submit"] {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+        width: 100%;
+    }
+
+    /* Tabla responsive */
+    .table-container {
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        overflow-x: auto;
+    }
+
+    table {
+        font-size: 0.8rem;
+    }
+
+    table th, table td {
+        padding: 0.5rem 0.375rem;
+    }
+
+    table th {
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* Paneles ajustados */
+    .panel-directivo, .panel-administrador {
+        padding: 1rem 0.75rem;
+        max-width: 100%;
+        border-radius: 12px;
+        background: #ffffff;
+    }
+
+    /* Elementos de utilidad */
+    .info, .info2 {
+        width: 100%;
+    }
+
+    h2 {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+        text-align: center;
+        color: #1e40af;
+    }
+
+    .leyenda {
+        padding-left: 0.75rem;
+        font-size: 0.8rem;
+        margin-bottom: 0.75rem;
+    }
+
+    /* Filtros de tabla en móviles - MEJORA */
+    .filtros-tabla {
+        padding: 0.75rem 0.5rem;
+        margin-bottom: 1rem;
+        background-color: #f3f4f6;
+        border-radius: 8px;
+    }
+
+    .filtros-tabla h3 {
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+        color: #1e40af;
+    }
+
+    .filtros-tabla .flex {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filtros-tabla .flex > div {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filtros-tabla select,
+    .filtros-tabla input {
+        width: 100%;
+        padding: 0.5rem;
+        font-size: 0.8rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background-color: #ffffff;
+        color: #374151;
+        transition: var(--transition);
+    }
+
+    .filtros-tabla select:focus,
+    .filtros-tabla input:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        outline: none;
+    }
+
+    .filtros-tabla button {
+        width: 100%;
+        padding: 0.6rem;
+        font-size: 0.8rem;
+    }
+
+    .filtros-tabla label {
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: #374151;
+    }
+
+    .filtros-tabla label:nth-of-type(3) {
+        margin-top: 0.5rem;
+    }
+
+    /* Paginación y botones de acción en móvil pequeño */
+    .pagination {
+        flex-direction: column;
+        gap: 0.75rem;
+        width: 100%;
+    }
+
+    .pagination button {
+        padding: 0.6rem;
+        font-size: 0.8rem;
+        flex: 1;
+        min-width: 70px;
+    }
+
+    .pagination select {
+        padding: 0.5rem;
+        font-size: 0.8rem;
+        width: 100%;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.6rem;
+    }
+
+    .action-buttons button {
+        padding: 0.6rem;
+        font-size: 0.8rem;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .action-buttons svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    /* Layout para mobile pequeño */
+    .table-controls-wrapper {
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+
+    .table-controls-wrapper .pagination-wrapper {
+        width: 100%;
+    }
+
+    .table-controls-wrapper .action-buttons-wrapper {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.6rem;
+    }
+
+    .table-controls-wrapper .action-buttons-wrapper button {
+        flex: 1 1 calc(50% - 0.3rem);
+        min-width: 130px;
+    }
+
+    .admin-options {
+        margin-bottom: 230px;
+    }
+
+    .admin-options button {
+        padding: 1rem 0rem;
+    }
+}
+
+/* Para pantallas medianas (entre 600px y 768px) - MEJORADO */
+@media (min-width: 601px) and (max-width: 768px) {
+    html {
+        font-size: 15px;
+    }
+
+    header {
+        padding: 0.75rem;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        height: auto;
+        align-content: flex-start;
+    }
+
+    .header-left {
+        gap: 0.75rem;
+    }
+
+    .logoPrincipal {
+        width: 60px;
+        height: 60px;
+    }
+
+    .logoTitulo {
+        font-size: 1rem;
+    }
+
+    .logoSubtitulo {
+        font-size: 0.65rem;
+    }
+
+    .compania-selector {
+        min-width: 140px;
+        max-width: 200px;
+        font-size: 0.8rem;
+    }
+
+    nav {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    nav a {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+
+    .header-user {
+        width: 100%;
+        justify-content: flex-end;
+        gap: 0.5rem;
+    }
+
+    .container {
+        padding: 1rem;
+    }
+
+    .main-container {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    main {
+        padding: 1.25rem;
+    }
+
+    .form-container, .login-form {
+        width: 90%;
+        padding: 1.25rem;
+        margin: 1.5rem auto;
+        animation: fadeIn 0.8s ease-in-out;
+    }
+
+    input, select, button {
+        font-size: 16px; /* Previene zoom en iOS */
+    }
+
+    input, textarea, select {
+        padding: 0.6rem 0.75rem;
+        border-radius: 8px;
+        transition: var(--transition);
+    }
+
+    button {
+        padding: 0.6rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    button[type="submit"] {
+        padding: 0.75rem;
+        font-size: 1rem;
+    }
+
+    .panel-directivo, .panel-administrador {
+        padding: 1.25rem;
+        border-radius: 12px;
+        background: #ffffff;
+    }
+
+    .table-container {
+        margin-bottom: 1.25rem;
+    }
+
+    table {
+        font-size: 0.85rem;
+    }
+
+    table th, table td {
+        padding: 0.6rem 0.75rem;
+    }
+
+    table th {
+        font-weight: 600;
+        background-color: #f9fafb;
+    }
+
+    h2 {
+        font-size: 1.35rem;
+        margin-bottom: 1.25rem;
+        text-align: center;
+        color: #1e40af;
+    }
+
+    .leyenda {
+        font-size: 0.85rem;
+        margin-bottom: 0.85rem;
+    }
+
+    /* Filtros de tabla en tablets medianas */
+    .filtros-tabla {
+        padding: 1rem;
+        margin-bottom: 1.25rem;
+        background-color: #f3f4f6;
+        border-radius: 8px;
+    }
+
+    .filtros-tabla h3 {
+        font-size: 1.1rem;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+        color: #1e40af;
+    }
+
+    .filtros-tabla .flex {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: flex-end;
+    }
+
+    .filtros-tabla .flex > div {
+        flex: 0 1 calc(50% - 0.375rem);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filtros-tabla .flex > div:nth-child(4) {
+        flex: 0 1 calc(50% - 0.375rem);
+    }
+
+    .filtros-tabla .flex > label {
+        width: 100%;
+        margin-bottom: 0;
+    }
+
+    .filtros-tabla select,
+    .filtros-tabla input {
+        width: 100%;
+        padding: 0.55rem;
+        font-size: 0.85rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background-color: #ffffff;
+        color: #374151;
+        transition: var(--transition);
+    }
+
+    .filtros-tabla select:focus,
+    .filtros-tabla input:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        outline: none;
+    }
+
+    .filtros-tabla button {
+        width: 100%;
+        padding: 0.55rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .filtros-tabla label {
+        font-size: 0.8rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: #374151;
+    }
+
+    /* Paginación y botones de acción en tablet pequeño */
+    .pagination {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .pagination button {
+        padding: 0.6rem 0.75rem;
+        font-size: 0.85rem;
+        flex: 0 1 auto;
+    }
+
+    .pagination select {
+        padding: 0.5rem;
+        font-size: 0.8rem;
+        flex: 0 1 auto;
+    }
+
+    .action-buttons {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .action-buttons button {
+        padding: 0.6rem 0.85rem;
+        font-size: 0.85rem;
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .action-buttons svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    /* Layout para tablet pequeño - botones en una fila debajo de paginación, CENTRADO */
+    .table-controls-wrapper {
+        flex-direction: column;
+        gap: 0.85rem;
+        align-items: center;
+    }
+
+    .table-controls-wrapper .pagination-wrapper {
+        width: auto;
+    }
+
+    .table-controls-wrapper .action-buttons-wrapper {
+        flex-direction: row;
+        justify-content: center;
+        gap: 0.75rem;
+        width: auto;
+    }
+
+    .table-controls-wrapper .action-buttons-wrapper button {
+        flex: 0 1 auto;
+        min-width: 150px;
+    }
+}
+
+@media (min-width: 714px) and (max-width: 768px) {
+    .admin-options {
+        margin-bottom: 200px;
+    }
+
+    .admin-options button {
+        padding: 1rem 0rem;
+    }
+}
+
+/* Tabletas - MEJORADO */
+@media (min-width: 769px) and (max-width: 1024px) {
+    html {
+        font-size: 16px;
+    }
+
+    header {
+        padding: 1rem;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        height: auto;
+        align-content: flex-start;
+    }
+
+    .header-left {
+        gap: 0.75rem;
+    }
+
+    .logoPrincipal {
+        width: 65px;
+        height: 65px;
+    }
+
+    .logoTitulo {
+        font-size: 1.05rem;
+    }
+
+    .logoSubtitulo {
+        font-size: 0.65rem;
+    }
+
+    .compania-selector {
+        min-width: 160px;
+        max-width: 220px;
+        font-size: 0.85rem;
+    }
+
+    nav {
+        gap: 0.5rem;
+    }
+
+    nav a {
+        padding: 0.65rem 0.85rem;
+        font-size: 0.85rem;
+    }
+
+    .header-user {
+        gap: 0.5rem;
+    }
+
+    .container {
+        padding: 1.25rem;
+    }
+    
+    main {
+        padding: 1.25rem;
+    }
+    
+    .form-container, .login-form {
+        width: 85%;
+        padding: 1.5rem;
+        animation: fadeIn 0.8s ease-in-out;
+    }
+
+    input, textarea, select {
+        padding: 0.65rem 0.85rem;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        transition: var(--transition);
+    }
+
+    button {
+        padding: 0.65rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    button[type="submit"] {
+        padding: 0.75rem;
+        font-size: 0.95rem;
+    }
+    
+    .panel-directivo, .panel-administrador {
+        padding: 1.25rem;
+        border-radius: 12px;
+        background: #ffffff;
+    }
+
+    .table-container {
+        margin-bottom: 1.25rem;
+    }
+
+    table {
+        font-size: 0.85rem;
+    }
+
+    table th, table td {
+        padding: 0.65rem 0.8rem;
+    }
+
+    table th {
+        font-size: 0.8rem;
+        font-weight: 600;
+        background-color: #f9fafb;
+    }
+
+    h2 {
+        font-size: 1.4rem;
+        margin-bottom: 1.25rem;
+        text-align: center;
+        color: #1e40af;
+    }
+
+    .leyenda {
+        font-size: 0.85rem;
+        margin-bottom: 0.85rem;
+    }
+
+    /* Filtros de tabla en tabletas */
+    .filtros-tabla {
+        padding: 1rem;
+        margin-bottom: 1.25rem;
+        background-color: #f3f4f6;
+        border-radius: 8px;
+    }
+
+    .filtros-tabla h3 {
+        font-size: 1.15rem;
+        margin-bottom: 0.85rem;
+        font-weight: 600;
+        color: #1e40af;
+    }
+
+    .filtros-tabla .flex {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: flex-end;
+    }
+
+    .filtros-tabla .flex > div {
+        flex: 0 1 calc(50% - 0.375rem);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filtros-tabla .flex > div:nth-child(4),
+    .filtros-tabla .flex > div:nth-child(5) {
+        flex: 0 1 calc(50% - 0.375rem);
+    }
+
+    .filtros-tabla .flex > label {
+        width: 100%;
+        margin-bottom: 0;
+    }
+
+    .filtros-tabla select,
+    .filtros-tabla input {
+        width: 100%;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.85rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background-color: #ffffff;
+        color: #374151;
+        transition: var(--transition);
+    }
+
+    .filtros-tabla select:focus,
+    .filtros-tabla input:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        outline: none;
+    }
+
+    .filtros-tabla button {
+        width: 100%;
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .filtros-tabla label {
+        font-size: 0.8rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: #374151;
+    }
+
+    /* Paginación y botones de acción en tablet grande */
+    .pagination {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.85rem;
+    }
+
+    .pagination button {
+        padding: 0.65rem 0.85rem;
+        font-size: 0.9rem;
+        flex: 0 1 auto;
+    }
+
+    .pagination select {
+        padding: 0.55rem;
+        font-size: 0.85rem;
+        flex: 0 1 auto;
+    }
+
+    .action-buttons {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.85rem;
+    }
+
+    .action-buttons button {
+        padding: 0.65rem 0.9rem;
+        font-size: 0.9rem;
+        flex: 0 1 auto;
+    }
+
+    .action-buttons svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* Layout para tablet grande - botones en una fila debajo de paginación, CENTRADO */
+    .table-controls-wrapper {
+        flex-direction: column;
+        gap: 0.85rem;
+        align-items: center;
+    }
+
+    .table-controls-wrapper .pagination-wrapper {
+        width: auto;
+    }
+
+    .table-controls-wrapper .action-buttons-wrapper {
+        flex-direction: row;
+        justify-content: center;
+        gap: 0.85rem;
+        width: auto;
+    }
+
+    .table-controls-wrapper .action-buttons-wrapper button {
+        flex: 0 1 auto;
+        min-width: 160px;
+    }
+
+    .admin-options {
+        margin-bottom: 210px;
+    }
+
+    .admin-options button {
+        padding: 1rem 0rem;
+    }
+}
+
+/* Escritorios pequeños - MEJORADO */
+@media (min-width: 1025px) and (max-width: 1280px) {
+    html {
+        font-size: 16px;
+    }
+
+    header {
+        padding: 1rem 1.5rem;
+        gap: 1rem;
+    }
+
+    .header-left {
+        gap: 1rem;
+    }
+
+    .logoPrincipal {
+        width: 70px;
+        height: 70px;
+    }
+
+    .logoTitulo {
+        font-size: 1.15rem;
+    }
+
+    .logoSubtitulo {
+        font-size: 0.7rem;
+    }
+
+    .compania-selector {
+        min-width: 180px;
+        max-width: 240px;
+        font-size: 0.9rem;
+    }
+
+    nav {
+        gap: 0.75rem;
+    }
+
+    nav a {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .header-user {
+        gap: 0.75rem;
+    }
+
+    .container {
+        padding: 1.5rem 2rem;
+    }
+
+    main {
+        padding: 1.5rem;
+    }
+
+    .form-container, .login-form {
+        width: 75%;
+        padding: 2rem;
+        margin: 2rem auto;
+        animation: fadeIn 0.8s ease-in-out;
+    }
+
+    input, textarea, select {
+        padding: 0.7rem 1rem;
+        font-size: 0.95rem;
+        border-radius: 8px;
+        transition: var(--transition);
+    }
+
+    input:focus, textarea:focus, select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    button {
+        padding: 0.7rem 1.25rem;
+        font-size: 0.9rem;
+    }
+
+    button[type="submit"] {
+        padding: 0.85rem;
+        font-size: 1rem;
+    }
+
+    .panel-directivo, .panel-administrador {
+        padding: 1.5rem;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: var(--shadow);
+    }
+
+    .table-container {
+        margin-bottom: 1.5rem;
+    }
+
+    table {
+        font-size: 0.9rem;
+    }
+
+    table th, table td {
+        padding: 0.75rem 1rem;
+    }
+
+    table th {
+        font-size: 0.85rem;
+        font-weight: 600;
+        background-color: #f9fafb;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        color: var(--primary-dark);
+    }
+
+    .leyenda {
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Filtros de tabla en escritorios pequeños */
+    .filtros-tabla {
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        background-color: #f3f4f6;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary);
+    }
+
+    .filtros-tabla h3 {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+    }
+
+    .filtros-tabla .flex {
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: flex-end;
+    }
+
+    .filtros-tabla .flex > div {
+        flex: 0 1 calc(33.333% - 0.666rem);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filtros-tabla .flex > div:nth-child(4),
+    .filtros-tabla .flex > div:nth-child(5) {
+        flex: 0 1 calc(33.333% - 0.666rem);
+    }
+
+    .filtros-tabla .flex > label {
+        width: 100%;
+        margin-bottom: 0;
+    }
+
+    .filtros-tabla select,
+    .filtros-tabla input {
+        width: 100%;
+        padding: 0.7rem 0.9rem;
+        font-size: 0.9rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background-color: #ffffff;
+        color: #374151;
+        transition: var(--transition);
+    }
+
+    .filtros-tabla select:focus,
+    .filtros-tabla input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        outline: none;
+    }
+
+    .filtros-tabla button {
+        width: 100%;
+        padding: 0.7rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .filtros-tabla label {
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: #374151;
+    }
+
+    /* Paginación y botones de acción en tablets medianos */
+    .pagination {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.85rem;
+    }
+
+    .pagination button {
+        padding: 0.65rem 0.85rem;
+        font-size: 0.9rem;
+        flex: 0 1 auto;
+        min-width: 150px;
+    }
+
+    .pagination select {
+        padding: 0.65rem 0.7rem;
+        font-size: 0.9rem;
+    }
+
+    .action-buttons {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.85rem;
+        align-items: center;
+    }
+
+    .action-buttons button {
+        padding: 0.65rem 1rem;
+        font-size: 0.9rem;
+        flex: 0 1 auto;
+        min-width: 160px;
+    }
+}
+
+/* Pantallas medianas (1024px a 1279px) - MEJORADO */
+@media (min-width: 1024px) and (max-width: 1279px) {
+    html {
+        font-size: 15px;
+    }
+
+    header {
+        padding: 0.9rem 1.8rem;
+        gap: 0.9rem;
+    }
+
+    .header-left {
+        gap: 0.9rem;
+    }
+
+    .logoPrincipal {
+        width: 65px;
+        height: 65px;
+    }
+
+    .logoTitulo {
+        font-size: 1rem;
+    }
+
+    .logoSubtitulo {
+        font-size: 0.65rem;
+    }
+
+    .compania-selector {
+        min-width: 160px;
+        max-width: 240px;
+        font-size: 0.85rem;
+    }
+
+    nav {
+        gap: 0.4rem;
+    }
+
+    nav a {
+        padding: 0.7rem 0.9rem;
+        font-size: 0.85rem;
+    }
+
+    .header-user {
+        gap: 0.9rem;
+    }
+
+    .main-container {
+        flex-direction: row;
+        gap: 1.8rem;
+    }
+
+    .container {
+        padding: 1.3rem 1.8rem;
+    }
+
+    main {
+        padding: 1.3rem;
+    }
+
+    input, textarea, select {
+        padding: 0.7rem 0.9rem;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        transition: var(--transition);
+    }
+
+    input:focus, textarea:focus, select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    button {
+        padding: 0.7rem 1.1rem;
+        font-size: 0.85rem;
+        transition: var(--transition);
+    }
+
+    button[type="submit"] {
+        padding: 0.75rem;
+        font-size: 0.95rem;
+    }
+
+    .form-container, .login-form {
+        margin: 0 auto;
+        padding: 1.5rem;
+        max-width: 600px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #ffffff;
+        border: 1px solid #e5e7eb;
+    }
+
+    table th, table td {
+        padding: 0.7rem 0.9rem;
+        text-align: left;
+    }
+
+    table th {
+        font-size: 0.8rem;
+        font-weight: 600;
+        background-color: #f9fafb;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    table tbody tr {
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    h2 {
+        font-size: 1.3rem;
+        margin-bottom: 1.3rem;
+        text-align: center;
+    }
+
+    h3 {
+        font-size: 1.1rem;
+        margin-bottom: 0.9rem;
+    }
+
+    h4 {
+        font-size: 0.95rem;
+        margin-bottom: 0.7rem;
+    }
+
+    .filtros-tabla {
+        padding: 1.1rem;
+        margin-bottom: 1.3rem;
+        background-color: #f3f4f6;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary);
+    }
+
+    .filtros-tabla h3 {
+        font-size: 1.1rem;
+        margin-bottom: 0.9rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+    }
+
+    .filtros-tabla .flex {
+        flex-wrap: wrap;
+        gap: 0.9rem;
+        align-items: flex-end;
+    }
+
+    .filtros-tabla .flex > div {
+        flex: 0 1 calc(33.333% - 0.6rem);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filtros-tabla .flex > div:nth-child(4),
+    .filtros-tabla .flex > div:nth-child(5) {
+        flex: 0 1 calc(33.333% - 0.6rem);
+    }
+
+    .filtros-tabla .flex > label {
+        width: 100%;
+        margin-bottom: 0;
+    }
+
+    .filtros-tabla select,
+    .filtros-tabla input {
+        width: 100%;
+        padding: 0.65rem 0.8rem;
+        font-size: 0.85rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background-color: #ffffff;
+        color: #374151;
+        transition: var(--transition);
+    }
+
+    .filtros-tabla select:focus,
+    .filtros-tabla input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        outline: none;
+    }
+
+    .filtros-tabla button {
+        width: 100%;
+        padding: 0.65rem 0.9rem;
+        font-size: 0.85rem;
+    }
+
+    .filtros-tabla label {
+        font-size: 0.8rem;
+        font-weight: 500;
+        margin-bottom: 0.45rem;
+        color: #374151;
+    }
+
+    /* Paginación y botones de acción en pantallas medianas */
+    .pagination {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.9rem;
+    }
+
+    .pagination button {
+        padding: 0.7rem 0.9rem;
+        font-size: 0.85rem;
+        flex: 0 1 auto;
+        min-width: 160px;
+    }
+
+    .pagination select {
+        padding: 0.7rem 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    .action-buttons {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.9rem;
+        align-items: center;
+    }
+
+    .action-buttons button {
+        padding: 0.7rem 1.1rem;
+        font-size: 0.85rem;
+        flex: 0 1 auto;
+        min-width: 170px;
+    }
+
+    /* Layout para desktop pequeño - botones en una fila debajo de paginación, CENTRADO */
+    .table-controls-wrapper {
+        flex-direction: column;
+        gap: 0.9rem;
+        align-items: center;
+    }
+
+    .table-controls-wrapper .pagination-wrapper {
+        width: auto;
+    }
+
+    .table-controls-wrapper .action-buttons-wrapper {
+        flex-direction: row;
+        justify-content: center;
+        gap: 0.9rem;
+        width: auto;
+    }
+
+    .table-controls-wrapper .action-buttons-wrapper button {
+        flex: 0 1 auto;
+        min-width: 170px;
+    }
+}
+
+/* Pantallas grandes (1280px y mayores) - MEJORADO */
+@media (min-width: 1281px) {
+    html {
+        font-size: 16px;
+    }
+
+    header {
+        padding: 1rem 2rem;
+        gap: 1rem;
+    }
+
+    .header-left {
+        gap: 1rem;
+    }
+
+    .logoPrincipal {
+        width: 70px;
+        height: 70px;
+    }
+
+    .logoTitulo {
+        font-size: 1.1rem;
+    }
+
+    .logoSubtitulo {
+        font-size: 0.7rem;
+    }
+
+    .compania-selector {
+        min-width: 170px;
+        max-width: 260px;
+        font-size: 0.9rem;
+    }
+
+    nav {
+        gap: 0.5rem;
+    }
+
+    nav a {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .header-user {
+        gap: 1rem;
+    }
+
+    .main-container {
+        flex-direction: row;
+        gap: 2rem;
+    }
+
+    .container {
+        padding: 1.5rem 2rem;
+    }
+
+    main {
+        padding: 1.5rem;
+    }
+
+    input, textarea, select {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        border-radius: 8px;
+        transition: var(--transition);
+    }
+
+    input:focus, textarea:focus, select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    button {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.9rem;
+        transition: var(--transition);
+    }
+
+    button[type="submit"] {
+        padding: 0.8rem;
+        font-size: 1rem;
+    }
+
+    .panel-directivo, .panel-administrador {
+        padding: 1.5rem;
+        margin: 0 auto 2rem;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: var(--shadow);
+    }
+
+    .table-container {
+        margin-bottom: 1.5rem;
+    }
+
+    table {
+        font-size: 0.9rem;
+    }
+
+    table th, table td {
+        padding: 0.75rem 1rem;
+    }
+
+    table th {
+        font-size: 0.85rem;
+        font-weight: 600;
+        background-color: #f9fafb;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        color: var(--primary-dark);
+    }
+
+    .form-container, .login-form {
+        width: 50%;
+        padding: 2rem;
+        margin: 2rem auto;
+        animation: fadeIn 0.8s ease-in-out;
+    }
+
+    .leyenda {
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Filtros de tabla en pantallas grandes */
+    .filtros-tabla {
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        background-color: #f3f4f6;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary);
+    }
+
+    .filtros-tabla h3 {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+    }
+
+    .filtros-tabla .flex {
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: flex-end;
+    }
+
+    .filtros-tabla .flex > div {
+        flex: 0 1 auto;
+    }
+
+    .filtros-tabla .flex > div:nth-child(2),
+    .filtros-tabla .flex > div:nth-child(3),
+    .filtros-tabla .flex > div:nth-child(4) {
+        flex: 0 1 calc(20% - 0.2rem);
+    }
+
+    .filtros-tabla .flex > label {
+        width: auto;
+        margin-bottom: 0;
+    }
+
+    .filtros-tabla select,
+    .filtros-tabla input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background-color: #ffffff;
+        color: #374151;
+        transition: var(--transition);
+    }
+
+    .filtros-tabla select:focus,
+    .filtros-tabla input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        outline: none;
+    }
+
+    .filtros-tabla button {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.9rem;
+    }
+
+    .filtros-tabla label {
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: #374151;
+    }
+
+    /* Paginación y botones de acción en pantallas grandes */
+    .pagination {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .pagination button {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        flex: 0 1 auto;
+        min-width: 180px;
+    }
+
+    .pagination select {
+        padding: 0.75rem 0.8rem;
+        font-size: 0.9rem;
+    }
+
+    .action-buttons {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .action-buttons button {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.9rem;
+        flex: 0 1 auto;
+        min-width: 180px;
+    }
+
+    /* Layout para desktop - botones en una fila debajo de paginación, CENTRADO */
+    .table-controls-wrapper {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .table-controls-wrapper .pagination-wrapper {
+        width: auto;
+    }
+
+    .table-controls-wrapper .action-buttons-wrapper {
+        flex-direction: row;
+        justify-content: center;
+        gap: 1rem;
+        width: auto;
+    }
+
+    .table-controls-wrapper .action-buttons-wrapper button {
+        flex: 0 1 auto;
+        min-width: 180px;
+    }
+}
+
+/* Para pantallas mayores a 1440px - MEJORADO */
+@media (min-width: 1440px) {
+    html {
+        font-size: 16.5px;
+    }
+
+    header {
+        padding: 1.5rem 2rem;
+        gap: 1.2rem;
+    }
+
+    .header-left {
+        gap: 1.2rem;
+    }
+
+    .logoPrincipal {
+        width: 72px;
+        height: 72px;
+    }
+
+    .logoTitulo {
+        font-size: 1.15rem;
+    }
+
+    .logoSubtitulo {
+        font-size: 0.75rem;
+    }
+
+    .compania-selector {
+        min-width: 180px;
+        max-width: 270px;
+        font-size: 0.95rem;
+    }
+
+    nav {
+        gap: 0.75rem;
+    }
+
+    nav a {
+        padding: 0.8rem 1.1rem;
+        font-size: 0.95rem;
+    }
+
+    .header-user {
+        gap: 1.1rem;
+    }
+
+    .container {
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    main {
+        padding: 2rem;
+    }
+
+    input, textarea, select {
+        padding: 0.8rem 1rem;
+        font-size: 1rem;
+        border-radius: 8px;
+        transition: var(--transition);
+    }
+
+    input:focus, textarea:focus, select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    button {
+        padding: 0.8rem 1.25rem;
+        font-size: 0.95rem;
+        transition: var(--transition);
+    }
+
+    button[type="submit"] {
+        padding: 0.85rem;
+        font-size: 1.05rem;
+    }
+
+    .panel-directivo, .panel-administrador {
+        padding: 1.75rem;
+        max-width: 1350px;
+        margin: 0 auto 2rem;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: var(--shadow);
+    }
+
+    .table-container {
+        margin-bottom: 1.75rem;
+    }
+
+    table {
+        font-size: 0.95rem;
+    }
+
+    table th, table td {
+        padding: 0.8rem 1rem;
+    }
+
+    table th {
+        font-size: 0.9rem;
+        font-weight: 600;
+        background-color: #f9fafb;
+    }
+
+    h2 {
+        font-size: 1.6rem;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        color: var(--primary-dark);
+    }
+
+    .form-container, .login-form {
+        width: 55%;
+        max-width: 650px;
+        padding: 2.25rem;
+        margin: 2.25rem auto;
+        animation: fadeIn 0.8s ease-in-out;
+    }
+
+    .leyenda {
+        font-size: 0.95rem;
+        margin-bottom: 1.25rem;
+    }
+
+    /* Filtros de tabla en 1440px+ */
+    .filtros-tabla {
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.75rem;
+        background-color: #f3f4f6;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary);
+    }
+
+    .filtros-tabla h3 {
+        font-size: 1.3rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+    }
+
+    .filtros-tabla .flex {
+        gap: 1rem;
+    }
+
+    .filtros-tabla .flex > div {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filtros-tabla select,
+    .filtros-tabla input {
+        padding: 0.8rem 1rem;
+        font-size: 0.95rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background-color: #ffffff;
+        color: #374151;
+        transition: var(--transition);
+    }
+
+    .filtros-tabla select:focus,
+    .filtros-tabla input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        outline: none;
+    }
+
+    .filtros-tabla button {
+        padding: 0.8rem 1.3rem;
+        font-size: 0.95rem;
+    }
+
+    .filtros-tabla label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: #374151;
+    }
+
+    /* Paginación y botones de acción en 1440px+ */
+    .pagination {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .pagination button {
+        padding: 0.8rem 1.1rem;
+        font-size: 0.95rem;
+        flex: 0 1 auto;
+        min-width: 190px;
+    }
+
+    .pagination select {
+        padding: 0.8rem 0.85rem;
+        font-size: 0.95rem;
+    }
+
+    .action-buttons {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .action-buttons button {
+        padding: 0.8rem 1.3rem;
+        font-size: 0.95rem;
+        flex: 0 1 auto;
+        min-width: 190px;
+    }
+
+    /* Layout para desktop grande - botones en una fila debajo de paginación, CENTRADO */
+    .table-controls-wrapper {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .table-controls-wrapper .pagination-wrapper {
+        width: auto;
+    }
+
+    .table-controls-wrapper .action-buttons-wrapper {
+        flex-direction: row;
+        justify-content: center;
+        gap: 1rem;
+        width: auto;
+    }
+
+    .table-controls-wrapper .action-buttons-wrapper button {
+        flex: 0 1 auto;
+        min-width: 190px;
+    }
+}
+
+/* Pantallas muy grandes (1600px y mayores) - MEJORADO */
+@media (min-width: 1600px) {
+    html {
+        font-size: 17px;
+    }
+
+    header {
+        padding: 1.5rem 2.5rem;
+        gap: 1.3rem;
+    }
+
+    .header-left {
+        gap: 1.3rem;
+    }
+
+    .logoPrincipal {
+        width: 74px;
+        height: 74px;
+    }
+
+    .logoTitulo {
+        font-size: 1.2rem;
+    }
+
+    .logoSubtitulo {
+        font-size: 0.8rem;
+    }
+
+    .compania-selector {
+        min-width: 190px;
+        max-width: 280px;
+        font-size: 0.98rem;
+    }
+
+    nav {
+        gap: 0.85rem;
+    }
+
+    nav a {
+        padding: 0.85rem 1.15rem;
+        font-size: 0.97rem;
+    }
+
+    .header-user {
+        gap: 1.2rem;
+    }
+
+    .container {
+        padding: 2.5rem;
+        max-width: 1550px;
+        margin: 0 auto;
+    }
+
+    main {
+        padding: 2.5rem;
+    }
+
+    input, textarea, select {
+        padding: 0.8rem 1.1rem;
+        font-size: 1.05rem;
+        border-radius: 8px;
+        transition: var(--transition);
+    }
+
+    input:focus, textarea:focus, select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    button {
+        padding: 0.85rem 1.3rem;
+        font-size: 0.95rem;
+        transition: var(--transition);
+    }
+
+    button[type="submit"] {
+        padding: 0.9rem;
+        font-size: 1.05rem;
+    }
+
+    .panel-directivo, .panel-administrador {
+        padding: 2rem;
+        max-width: 1500px;
+        margin: 0 auto 2.5rem;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: var(--shadow);
+    }
+
+    .table-container {
+        margin-bottom: 2rem;
+    }
+
+    table {
+        font-size: 0.95rem;
+    }
+
+    table th, table td {
+        padding: 0.85rem 1.1rem;
+    }
+
+    table th {
+        font-size: 0.95rem;
+        font-weight: 600;
+        background-color: #f9fafb;
+    }
+
+    h2 {
+        font-size: 1.65rem;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        color: var(--primary-dark);
+    }
+
+    .form-container, .login-form {
+        width: 55%;
+        max-width: 750px;
+        padding: 2.5rem;
+        margin: 2.5rem auto;
+        animation: fadeIn 0.8s ease-in-out;
+    }
+
+    .leyenda {
+        font-size: 1rem;
+        margin-bottom: 1.35rem;
+    }
+
+    /* Filtros de tabla en 1600px+ */
+    .filtros-tabla {
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        background-color: #f3f4f6;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary);
+    }
+
+    .filtros-tabla h3 {
+        font-size: 1.35rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+    }
+
+    .filtros-tabla .flex {
+        gap: 1.1rem;
+    }
+
+    .filtros-tabla .flex > div {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filtros-tabla select,
+    .filtros-tabla input {
+        padding: 0.85rem 1.1rem;
+        font-size: 1rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background-color: #ffffff;
+        color: #374151;
+        transition: var(--transition);
+    }
+
+    .filtros-tabla select:focus,
+    .filtros-tabla input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        outline: none;
+    }
+
+    .filtros-tabla button {
+        padding: 0.85rem 1.4rem;
+        font-size: 1rem;
+    }
+
+    .filtros-tabla label {
+        font-size: 0.95rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: #374151;
+    }
+
+    /* Paginación y botones de acción en 1600px+ */
+    .pagination {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 1.1rem;
+    }
+
+    .pagination button {
+        padding: 0.85rem 1.2rem;
+        font-size: 1rem;
+        flex: 0 1 auto;
+        min-width: 200px;
+    }
+
+    .pagination select {
+        padding: 0.85rem 0.9rem;
+        font-size: 1rem;
+    }
+
+    .action-buttons {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 1.1rem;
+        align-items: center;
+    }
+
+    .action-buttons button {
+        padding: 0.85rem 1.4rem;
+        font-size: 1rem;
+        flex: 0 1 auto;
+        min-width: 200px;
+    }
+
+    /* Layout para ultra-wide - botones en una fila debajo de paginación, CENTRADO */
+    .table-controls-wrapper {
+        flex-direction: column;
+        gap: 1.1rem;
+        align-items: center;
+    }
+
+    .table-controls-wrapper .pagination-wrapper {
+        width: auto;
+    }
+
+    .table-controls-wrapper .action-buttons-wrapper {
+        flex-direction: row;
+        justify-content: center;
+        gap: 1.1rem;
+        width: auto;
+    }
+
+    .table-controls-wrapper .action-buttons-wrapper button {
+        flex: 0 1 auto;
+        min-width: 200px;
+    }
+}
+
+/* Pantallas ultra grandes (1920px y mayores) - MEJORADO */
+@media (min-width: 1920px) {
+    html {
+        font-size: 18px;
+    }
+
+    header {
+        padding: 2rem 3rem;
+        gap: 1.4rem;
+    }
+
+    .header-left {
+        gap: 1.4rem;
+    }
+
+    .logoPrincipal {
+        width: 76px;
+        height: 76px;
+    }
+
+    .logoTitulo {
+        font-size: 1.15rem;
+    }
+
+    .logoSubtitulo {
+        font-size: 0.85rem;
+    }
+
+    .compania-selector {
+        min-width: 200px;
+        max-width: 300px;
+        font-size: 0.95rem;
+    }
+
+    nav {
+        gap: 0.95rem;
+    }
+
+    nav a {
+        padding: 0.8rem 1.1rem;
+        font-size: 0.95rem;
+    }
+
+    .header-user {
+        gap: 1.3rem;
+    }
+
+    .container {
+        padding: 3rem;
+        max-width: 1850px;
+        margin: 0 auto;
+    }
+
+    main {
+        padding: 3rem;
+    }
+
+    input, textarea, select {
+        padding: 0.85rem 1.15rem;
+        font-size: 1.05rem;
+        border-radius: 8px;
+        transition: var(--transition);
+    }
+
+    input:focus, textarea:focus, select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    button {
+        padding: 0.9rem 1.4rem;
+        font-size: 1rem;
+        transition: var(--transition);
+    }
+
+    button[type="submit"] {
+        padding: 0.85rem;
+        font-size: 1.05rem;
+    }
+
+    .panel-directivo, .panel-administrador {
+        padding: 2.25rem;
+        max-width: 1800px;
+        margin: 0 auto 3rem;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: var(--shadow);
+    }
+
+    .table-container {
+        margin-bottom: 2.25rem;
+    }
+
+    table {
+        font-size: 1rem;
+    }
+
+    table th, table td {
+        padding: 0.9rem 1.2rem;
+    }
+
+    table th {
+        font-size: 0.95rem;
+        font-weight: 600;
+        background-color: #f9fafb;
+    }
+
+    h2 {
+        font-size: 1.75rem;
+        margin-bottom: 1.75rem;
+        text-align: center;
+        color: var(--primary-dark);
+    }
+
+    .form-container, .login-form {
+        width: 50%;
+        max-width: 900px;
+        padding: 3rem;
+        margin: 3rem auto;
+        animation: fadeIn 0.8s ease-in-out;
+    }
+
+    .leyenda {
+        font-size: 1.05rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Filtros de tabla en 1920px+ */
+    .filtros-tabla {
+        padding: 1.5rem 2rem;
+        margin-bottom: 2.25rem;
+        background-color: #f3f4f6;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary);
+    }
+
+    .filtros-tabla h3 {
+        font-size: 1.4rem;
+        margin-bottom: 1.15rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+    }
+
+    .filtros-tabla .flex {
+        gap: 1.2rem;
+    }
+
+    .filtros-tabla .flex > div {
+        flex: 0 1 auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filtros-tabla select,
+    .filtros-tabla input {
+        padding: 0.9rem 1.2rem;
+        font-size: 1.05rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background-color: #ffffff;
+        color: #374151;
+        transition: var(--transition);
+    }
+
+    .filtros-tabla select:focus,
+    .filtros-tabla input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        outline: none;
+    }
+
+    .filtros-tabla button {
+        padding: 0.9rem 1.5rem;
+        font-size: 1.05rem;
+    }
+
+    .filtros-tabla label {
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: #374151;
+    }
+
+    /* Paginación y botones de acción en 1920px+ */
+    .pagination {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 1.2rem;
+    }
+
+    .pagination button {
+        padding: 0.9rem 1.3rem;
+        font-size: 1.05rem;
+        flex: 0 1 auto;
+        min-width: 210px;
+    }
+
+    .pagination select {
+        padding: 0.9rem 1rem;
+        font-size: 1.05rem;
+    }
+
+    .action-buttons {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 1.2rem;
+        align-items: center;
+    }
+
+    .action-buttons button {
+        padding: 0.9rem 1.5rem;
+        font-size: 1.05rem;
+        flex: 0 1 auto;
+        min-width: 210px;
+    }
+
+    /* Layout para ultra-wide máximo - botones en una fila debajo de paginación, CENTRADO */
+    .table-controls-wrapper {
+        flex-direction: column;
+        gap: 1.2rem;
+        align-items: center;
+    }
+
+    .table-controls-wrapper .pagination-wrapper {
+        width: auto;
+    }
+
+    .table-controls-wrapper .action-buttons-wrapper {
+        flex-direction: row;
+        justify-content: center;
+        gap: 1.2rem;
+        width: auto;
+    }
+
+    .table-controls-wrapper .action-buttons-wrapper button {
+        flex: 0 1 auto;
+        min-width: 210px;
+    }
 }

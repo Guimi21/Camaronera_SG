@@ -151,7 +151,7 @@ export default function Header() {
 
       {/* Sección adicional de opciones para Administrador */}
       {isCatalogoOpen && (
-        <div className="mt-auto hidden md:flex items-center gap-4">
+        <div className="mt-auto hidden md:flex items-center gap-4 admin-options">
           {menus.map((menu) => {
             // Mostrar solo "Usuarios" y "Compañías" para Administrador
             if (menu.nombre !== "Usuarios" && menu.nombre !== "Compañías") {

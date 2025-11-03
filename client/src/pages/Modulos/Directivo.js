@@ -599,9 +599,9 @@ export default function Directivo() {
               </div>
             )}
 
-            {/* Tabla de Datos Filtrados con scroll horizontal y vertical */}
-            <div className="table-container mb-4 bg-white rounded-lg shadow overflow-hidden">
-              <div className="overflow-x-auto max-w-full">
+            {/* Tabla de Datos Filtrados con scroll horizontal solo en la tabla */}
+            <div className="table-container mb-4 bg-white rounded-lg shadow">
+              <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead className="sticky top-0 bg-blue-100 z-10">
                     <tr>
@@ -714,50 +714,54 @@ export default function Directivo() {
             </div>
             
             {/* Paginación y botón de descarga */}
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              <div className="pagination flex items-center gap-2">
-                <button 
-                  onClick={() => setCurrentPage(currentPage - 1)} 
-                  disabled={currentPage === 1 || loadingTable}
-                  className="bg-blue-100 text-blue-800 px-3 py-2 rounded disabled:opacity-50 hover:bg-blue-200 transition"
-                >
-                  Anterior
-                </button>
-                <span className="text-sm text-gray-600">Página {currentPage} de {Math.ceil(filteredTableData.length / itemsPerPage)}</span>
-                <button 
-                  onClick={() => setCurrentPage(currentPage + 1)} 
-                  disabled={currentPage * itemsPerPage >= filteredTableData.length || loadingTable}
-                  className="bg-blue-100 text-blue-800 px-3 py-2 rounded disabled:opacity-50 hover:bg-blue-200 transition"
-                >
-                  Siguiente
-                </button>
-                
-                <select 
-                  value={itemsPerPage} 
-                  onChange={(e) => {
-                    setItemsPerPage(Number(e.target.value));
-                    setCurrentPage(1);
-                  }}
-                  className="border rounded p-2 text-sm"
-                >
-                  <option value="5">5 por página</option>
-                  <option value="10">10 por página</option>
-                  <option value="15">15 por página</option>
-                  <option value="20">25 por página</option>
-                  <option value="50">50 por página</option>
-                </select>
+            <div className="table-controls-wrapper">
+              <div className="pagination-wrapper">
+                <div className="pagination flex items-center gap-2">
+                  <button 
+                    onClick={() => setCurrentPage(currentPage - 1)} 
+                    disabled={currentPage === 1 || loadingTable}
+                    className="bg-blue-100 text-blue-800 px-3 py-2 rounded disabled:opacity-50 hover:bg-blue-200 transition"
+                  >
+                    Anterior
+                  </button>
+                  <span className="text-sm text-gray-600">Página {currentPage} de {Math.ceil(filteredTableData.length / itemsPerPage)}</span>
+                  <button 
+                    onClick={() => setCurrentPage(currentPage + 1)} 
+                    disabled={currentPage * itemsPerPage >= filteredTableData.length || loadingTable}
+                    className="bg-blue-100 text-blue-800 px-3 py-2 rounded disabled:opacity-50 hover:bg-blue-200 transition"
+                  >
+                    Siguiente
+                  </button>
+                  
+                  <select 
+                    value={itemsPerPage} 
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="border rounded p-2 text-sm"
+                  >
+                    <option value="5">5 por página</option>
+                    <option value="10">10 por página</option>
+                    <option value="15">15 por página</option>
+                    <option value="20">25 por página</option>
+                    <option value="50">50 por página</option>
+                  </select>
+                </div>
               </div>
 
               {/* Botón de descarga */}
-              <button 
-                onClick={handleDownload}
-                className="bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-700 transition"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Descargar Reporte en Excel
-              </button>
+              <div className="action-buttons-wrapper">
+                <button 
+                  onClick={handleDownload}
+                  className="bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-green-700 transition"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Descargar Reporte en Excel
+                </button>
+              </div>
             </div>
           </>
         )}

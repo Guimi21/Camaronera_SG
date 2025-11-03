@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'services/api_service.dart';
 import 'models/muestra.dart';
 import 'screens/muestra_form_screen.dart';
-import 'dart:io';
 
 void main() {
   runApp(const MyApp());
