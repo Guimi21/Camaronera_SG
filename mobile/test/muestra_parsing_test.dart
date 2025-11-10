@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/models/muestra.dart';
+import 'package:mobile/models/muestra.dart';
 
 void main() {
   group('Muestra.fromJson - Type Conversion Tests', () {

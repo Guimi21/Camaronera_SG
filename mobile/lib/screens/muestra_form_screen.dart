@@ -36,7 +36,7 @@ class _MuestraFormScreenState extends State<MuestraFormScreen> {
   bool _enviandoMuestreo = false;
 
   // Errores de validación
-  Map<String, String> _erroresValidacion = {};
+  final Map<String, String> _erroresValidacion = {};
 
   // Valores calculados
   Map<String, dynamic> _valoresCalculados = {
@@ -330,7 +330,7 @@ class _MuestraFormScreenState extends State<MuestraFormScreen> {
         ...muestreo.balanceados.map((balanceado) {
           final tipoNombre = _obtenerNombreTipoBalanceado(balanceado.idTipoBalanceado);
           return _construirFilaResumen('$tipoNombre:', '${balanceado.cantidad.toStringAsFixed(2)} kg');
-        }).toList(),
+        }),
         
         // Sección: Cálculos finales
         const Padding(
@@ -884,7 +884,7 @@ class _MuestraFormScreenState extends State<MuestraFormScreen> {
               helpText: 'Cantidad consumida en este muestreo',
             ),
           );
-        }).toList(),
+        }),
         _construirCampoCalculado(
           'Balanceado Acumulado',
           _valoresCalculados['balanceadoAcumulado'].toStringAsFixed(2),

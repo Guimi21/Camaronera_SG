@@ -2,6 +2,7 @@
 /// 
 /// Esto es una prueba para verificar que los modelos pueden parsear
 /// correctamente la respuesta del backend sin errores de tipo
+library;
 
 void main() {
   // Simular la respuesta del backend

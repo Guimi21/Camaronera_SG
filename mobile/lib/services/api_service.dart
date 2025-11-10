@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/muestra.dart';
@@ -8,14 +9,21 @@ class ApiService {
   /// En producción: https://camaron360.com/server
   static String get baseUrl {
     // Detectar si estamos en modo debug (desarrollo) o release (producción)
-    // En modo debug: usar localhost desde el emulador
-    // En modo release: usar la URL de producción
     bool isProduction = const bool.fromEnvironment('dart.vm.product');
-    
+
     if (isProduction) {
       return 'https://camaron360.com/server';
     } else {
-      return 'http://10.0.2.2:5000';
+      if (Platform.isAndroid) {
+        // Android emulator usa 10.0.2.2 para acceder al host
+        return 'http://10.0.2.2:5000';
+      } else if (Platform.isIOS) {
+        // iOS simulator puede usar localhost directamente
+        return 'http://localhost:5000';
+      } else {
+        // Fallback para otras plataformas (macOS, Windows, etc.)
+        return 'http://localhost:5000';
+      }
     }
   }
 
