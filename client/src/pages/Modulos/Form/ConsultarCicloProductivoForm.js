@@ -339,100 +339,6 @@ export default function ConsultarCicloProductivoForm() {
             </p>
           </div>
 
-          {formData.estado === 'FINALIZADO' && (
-            <>
-              <div>
-                <label htmlFor="biomasa_cosecha" className="block text-sm font-medium text-gray-700 mb-2">
-                  Biomasa de Cosecha (lbs)
-                </label>
-                <input
-                  type="text"
-                  id="biomasa_cosecha"
-                  name="biomasa_cosecha"
-                  value={formData.biomasa_cosecha}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
-                  disabled
-                />
-                <p className="text-xs text-gray-500 mt-1 leyenda">
-                  Cantidad total de libras de camarones cosechadas
-                </p>
-              </div>
-
-              <div>
-                <label htmlFor="libras_por_hectarea" className="block text-sm font-medium text-gray-700 mb-2">
-                  Libras por Hectárea
-                </label>
-                <input
-                  type="text"
-                  id="libras_por_hectarea"
-                  name="libras_por_hectarea"
-                  value={formData.libras_por_hectarea}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
-                  disabled
-                />
-                <p className="text-xs text-gray-500 mt-1 leyenda">
-                  Biomasa de cosecha ÷ Hectáreas de la piscina
-                  {formData.id_piscina && piscinas.length > 0 && (() => {
-                    const piscinaSeleccionada = piscinas.find(p => p.id_piscina == formData.id_piscina);
-                    return piscinaSeleccionada ? ` (${piscinaSeleccionada.hectareas} ha)` : '';
-                  })()}
-                </p>
-              </div>
-
-              <div>
-                <label htmlFor="promedio_incremento_peso" className="block text-sm font-medium text-gray-700 mb-2">
-                  Promedio de Incremento de Peso
-                </label>
-                <input
-                  type="text"
-                  id="promedio_incremento_peso"
-                  name="promedio_incremento_peso"
-                  value={formData.promedio_incremento_peso}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
-                  disabled
-                />
-                <p className="text-xs text-gray-500 mt-1 leyenda">
-                  Promedio de incremento de peso calculado automáticamente de todas las muestras registradas
-                </p>
-              </div>
-
-              <div>
-                <label htmlFor="ruta_pdf" className="block text-sm font-medium text-gray-700 mb-2">
-                  Informe PDF
-                </label>
-                {formData.ruta_pdf ? (
-                  <div>
-                    <a
-                      href={`${API_BASE_URL}/${formData.ruta_pdf}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium transition-colors duration-200 inline-flex items-center gap-2"
-                      title="Descargar PDF"
-                    >
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        className="h-4 w-4" 
-                        fill="none" 
-                        viewBox="0 0 24 24" 
-                        stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                      Descargar PDF
-                    </a>
-                    <p className="text-xs text-gray-500 mt-2 leyenda">
-                      Informe PDF del ciclo productivo cargado
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-xs text-gray-500 mt-2 leyenda">
-                    No hay informe PDF cargado para este ciclo
-                  </p>
-                )}
-              </div>
-            </>
-          )}
-
           <div>
             <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-2">
               Estado *
@@ -452,6 +358,104 @@ export default function ConsultarCicloProductivoForm() {
             </p>
           </div>
         </div>
+
+        {formData.estado === 'FINALIZADO' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label htmlFor="biomasa_cosecha" className="block text-sm font-medium text-gray-700 mb-2">
+                Cosecha en libras
+              </label>
+              <input
+                type="text"
+                id="biomasa_cosecha"
+                name="biomasa_cosecha"
+                value={formData.biomasa_cosecha}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
+                disabled
+              />
+              <p className="text-xs text-gray-500 mt-1 leyenda">
+                Cantidad total de libras de camarones cosechadas
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="libras_por_hectarea" className="block text-sm font-medium text-gray-700 mb-2">
+                Libras por Hectárea
+              </label>
+              <input
+                type="text"
+                id="libras_por_hectarea"
+                name="libras_por_hectarea"
+                value={formData.libras_por_hectarea}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
+                disabled
+              />
+              <p className="text-xs text-gray-500 mt-1 leyenda">
+                Biomasa de cosecha ÷ Hectáreas de la piscina
+                {formData.id_piscina && piscinas.length > 0 && (() => {
+                  const piscinaSeleccionada = piscinas.find(p => p.id_piscina == formData.id_piscina);
+                  return piscinaSeleccionada ? ` (${piscinaSeleccionada.hectareas} ha)` : '';
+                })()}
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="promedio_incremento_peso" className="block text-sm font-medium text-gray-700 mb-2">
+                Promedio de Incremento de Peso
+              </label>
+              <input
+                type="text"
+                id="promedio_incremento_peso"
+                name="promedio_incremento_peso"
+                value={formData.promedio_incremento_peso}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
+                disabled
+              />
+              <p className="text-xs text-gray-500 mt-1 leyenda">
+                Promedio de incremento de peso calculado automáticamente de todas las muestras registradas
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="ruta_pdf" className="block text-sm font-medium text-gray-700 mb-2">
+                Informe PDF
+              </label>
+              {formData.ruta_pdf ? (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = `${API_BASE_URL}/${formData.ruta_pdf}`;
+                      link.download = formData.ruta_pdf.split('/').pop();
+                      link.click();
+                    }}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium transition-colors duration-200 inline-flex items-center gap-2"
+                    title="Descargar PDF"
+                  >
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      className="h-4 w-4" 
+                      fill="none" 
+                      viewBox="0 0 24 24" 
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Descargar PDF
+                  </button>
+                  <p className="text-xs text-gray-500 mt-2 leyenda">
+                    Informe PDF del ciclo productivo cargado
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 mt-2 leyenda">
+                  No hay informe PDF cargado para este ciclo
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="mt-1 flex flex-col sm:flex-row gap-4 pt-6">
           <button

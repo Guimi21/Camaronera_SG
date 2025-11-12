@@ -171,7 +171,7 @@ export default function MonitoreoCiclos() {
       'Densidad': ciclo.densidad,
       'Tipo Siembra': ciclo.tipo_siembra,
       'Tipo Alimentación': ciclo.nombre_tipo_alimentacion || 'N/A',
-      'Biomasa de Cosecha (lbs)': ciclo.biomasa_cosecha || 'N/A',
+      'Cosecha en libras': ciclo.biomasa_cosecha || 'N/A',
       'Libras por Hectárea': ciclo.libras_por_hectarea || 'N/A',
       'Promedio Incremento Peso': ciclo.promedio_incremento_peso || 'N/A',
       'Informe PDF': ciclo.ruta_pdf ? ciclo.ruta_pdf.split('/').pop() : 'N/A',
@@ -181,7 +181,7 @@ export default function MonitoreoCiclos() {
 
     // Si no hay datos, crear un array con un objeto vacío para mostrar los encabezados
     const finalData = dataToExport.length > 0 ? dataToExport : [
-      { 'No.': '', 'Piscina': '', 'Fecha Siembra': '', 'Fecha Cosecha': '', 'Cantidad Siembra': '', 'Densidad': '', 'Tipo Siembra': '', 'Tipo Alimentación': '', 'Biomasa de Cosecha (lbs)': '', 'Libras por Hectárea': '', 'Promedio Incremento Peso': '', 'Estado': '', 'Última Actualización': '' }
+      { 'No.': '', 'Piscina': '', 'Fecha Siembra': '', 'Fecha Cosecha': '', 'Cantidad Siembra': '', 'Densidad': '', 'Tipo Siembra': '', 'Tipo Alimentación': '', 'Cosecha en libras': '', 'Libras por Hectárea': '', 'Promedio Incremento Peso': '', 'Estado': '', 'Última Actualización': '' }
     ];
 
     const worksheet = XLSX.utils.json_to_sheet(finalData);
@@ -294,7 +294,7 @@ export default function MonitoreoCiclos() {
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Densidad</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo Siembra</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo Alimentación</th>
-                <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Biomasa Cosecha (lbs)</th>
+                <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cosecha en libras</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Libras por Hectárea</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Promedio Inc. Peso</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Informe PDF</th>

@@ -267,15 +267,12 @@ export default function UsuarioEditForm() {
           }
         }
         
-        // Esperar un poco para que el contexto se actualice antes de redirigir
-        setTimeout(() => {
-          // Redirigir según el perfil del usuario autenticado
-          if (perfilActivo === 'Superadministrador') {
-            navigate('/layout/dashboard/usuarios-admin');
-          } else {
-            navigate('/layout/dashboard/usuarios');
-          }
-        }, 100);
+        // Redirigir según el perfil del usuario autenticado
+        if (perfilActivo === 'Superadministrador') {
+          navigate('/layout/dashboard/usuarios-admin');
+        } else {
+          navigate('/layout/dashboard/usuarios');
+        }
       } else {
         throw new Error(result.message || 'Error al actualizar el usuario');
       }
@@ -393,7 +390,6 @@ export default function UsuarioEditForm() {
                           id={`compania-${compania.id_compania}`}
                           checked={formData.companias.includes(compania.id_compania)}
                           onChange={() => handleCompaniaChange(compania.id_compania)}
-                          required
                         />
                         <label htmlFor={`compania-${compania.id_compania}`} className="ml-2 text-sm text-gray-700">
                           {compania.nombre}
