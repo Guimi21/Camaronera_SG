@@ -29,8 +29,12 @@ export default function EditarCicloProductivoForm() {
     id_tipo_alimentacion: '',
     promedio_incremento_peso: '',
     libras_por_hectarea: '',
+    ruta_pdf: '',
     estado: 'EN_CURSO'
   });
+
+  const [pdfFile, setPdfFile] = useState(null);
+  const [pdfFileName, setPdfFileName] = useState('');
   
   const [piscinas, setPiscinas] = useState([]);
   const [tiposAlimentacion, setTiposAlimentacion] = useState([]);
@@ -104,6 +108,7 @@ export default function EditarCicloProductivoForm() {
             id_tipo_alimentacion: ciclo.id_tipo_alimentacion || '',
             promedio_incremento_peso: ciclo.promedio_incremento_peso || '',
             libras_por_hectarea: '',
+            ruta_pdf: ciclo.ruta_pdf || '',
             estado: ciclo.estado || 'EN_CURSO'
           });
           
@@ -380,6 +385,29 @@ export default function EditarCicloProductivoForm() {
     setFormData(newFormData);
   };
 
+  const handlePdfChange = (e) => {
+    const file = e.target.files[0];
+    
+    if (!file) {
+      setPdfFile(null);
+      setPdfFileName('');
+      return;
+    }
+    
+    // Validar que sea PDF
+    if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
+      setError('Solo se permiten archivos en formato PDF.');
+      setPdfFile(null);
+      setPdfFileName('');
+      e.target.value = '';
+      return;
+    }
+    
+    setPdfFile(file);
+    setPdfFileName(file.name);
+    setError('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -423,6 +451,22 @@ export default function EditarCicloProductivoForm() {
       return;
     }
     
+    if (formData.estado === 'FINALIZADO' && (!pdfFile && !formData.ruta_pdf)) {
+      const pdfInput = document.getElementById('ruta_pdf');
+      if (pdfInput) {
+        pdfInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        pdfInput.focus();
+      }
+      return;
+    }
+    
+    if (pdfFile) {
+      if (pdfFile.type !== 'application/pdf' && !pdfFile.name.endsWith('.pdf')) {
+        setError('Solo se permiten archivos en formato PDF.');
+        return;
+      }
+    }
+    
     if (!idCompania || !idUsuario) {
       setError('No se pudo obtener la información del usuario o compañía.');
       return;
@@ -432,6 +476,32 @@ export default function EditarCicloProductivoForm() {
     setError('');
 
     try {
+      // Si hay un archivo PDF nuevo, subirlo primero
+      let rutaPdf = formData.ruta_pdf;
+      
+      if (pdfFile) {
+        const formDataPdf = new FormData();
+        formDataPdf.append('pdf', pdfFile);
+        formDataPdf.append('id_ciclo', id);
+        formDataPdf.append('id_compania', idCompania);
+        
+        const uploadResponse = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php?action=upload_pdf`, {
+          method: 'POST',
+          credentials: 'include',
+          body: formDataPdf
+        });
+        
+        const uploadResult = await uploadResponse.json();
+        
+        if (uploadResponse.ok && uploadResult.success) {
+          rutaPdf = uploadResult.ruta_pdf;
+        } else {
+          setError(uploadResult.message || 'Error al cargar el archivo PDF.');
+          setLoading(false);
+          return;
+        }
+      }
+      
       const dataToSend = {
         id_ciclo: parseInt(id),
         id_piscina: parseInt(formData.id_piscina),
@@ -444,6 +514,7 @@ export default function EditarCicloProductivoForm() {
         tipo_siembra: formData.tipo_siembra.trim(),
         id_tipo_alimentacion: parseInt(formData.id_tipo_alimentacion),
         promedio_incremento_peso: (formData.promedio_incremento_peso !== '' && formData.promedio_incremento_peso !== null) ? parseFloat(formData.promedio_incremento_peso) : null,
+        ruta_pdf: rutaPdf || null,
         estado: formData.estado,
         id_compania: idCompania,
         id_usuario_actualiza: idUsuario
@@ -464,11 +535,11 @@ export default function EditarCicloProductivoForm() {
         navigate('/layout/dashboard/monitoreo-ciclos');
       } else {
         setError(result.message || 'Error al actualizar el ciclo productivo. Por favor intente nuevamente.');
+        setLoading(false);
       }
     } catch (error) {
       console.error('Error updating ciclo:', error);
       setError('Error de conexión. Por favor intente nuevamente.');
-    } finally {
       setLoading(false);
     }
   };
@@ -733,6 +804,44 @@ export default function EditarCicloProductivoForm() {
             </div>
           )}
 
+          {formData.estado === 'FINALIZADO' && (
+            <div>
+              <label htmlFor="ruta_pdf" className="block text-sm font-medium text-gray-700 mb-2">
+                Informe PDF <span className="text-red-600">*</span>
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="file"
+                  id="ruta_pdf"
+                  name="ruta_pdf"
+                  accept=".pdf"
+                  onChange={handlePdfChange}
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    formData.estado === 'FINALIZADO' && !pdfFile && !formData.ruta_pdf
+                      ? 'border-red-300 bg-red-50'
+                      : 'border-gray-300'
+                  }`}
+                />
+                {formData.ruta_pdf && !pdfFile && (
+                  <a
+                    href={`${API_BASE_URL}/${formData.ruta_pdf}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-xs font-medium transition-colors duration-200"
+                    title="Descargar PDF actual"
+                  >
+                    Descargar
+                  </a>
+                )}
+              </div>
+              {pdfFile && <p className="text-xs text-green-600 mt-2">Archivo seleccionado: {pdfFileName}</p>}
+              {formData.estado === 'FINALIZADO' && !pdfFile && !formData.ruta_pdf && <ValidationMessage fieldName="un Informe PDF" />}
+              <p className="text-xs text-gray-500 mt-1 leyenda">
+                Informe PDF del ciclo productivo. Solo se permiten archivos en formato PDF.
+              </p>
+            </div>
+          )}
+
           <div>
             <label htmlFor="densidad" className="block text-sm font-medium text-gray-700 mb-2">
               Densidad (por hectárea) * <span className="text-blue-600 text-xs">(Calculado automáticamente)</span>
@@ -833,17 +942,7 @@ export default function EditarCicloProductivoForm() {
                 : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
             }`}
           >
-            {loading ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Actualizando Ciclo...
-              </span>
-            ) : (
-              'Guardar Cambios'
-            )}
+            Guardar Cambios
           </button>
 
           <button

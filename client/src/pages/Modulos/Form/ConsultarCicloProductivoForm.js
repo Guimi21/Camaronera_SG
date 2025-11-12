@@ -21,6 +21,7 @@ export default function ConsultarCicloProductivoForm() {
     nombre_tipo_alimentacion: '',
     promedio_incremento_peso: '',
     libras_por_hectarea: '',
+    ruta_pdf: '',
     estado: 'EN_CURSO'
   });
   
@@ -84,6 +85,7 @@ export default function ConsultarCicloProductivoForm() {
             nombre_tipo_alimentacion: ciclo.nombre_tipo_alimentacion || '',
             promedio_incremento_peso: ciclo.promedio_incremento_peso || '',
             libras_por_hectarea: ciclo.libras_por_hectarea || '',
+            ruta_pdf: ciclo.ruta_pdf || '',
             estado: ciclo.estado || 'EN_CURSO'
           });
           setError('');
@@ -392,6 +394,41 @@ export default function ConsultarCicloProductivoForm() {
                 <p className="text-xs text-gray-500 mt-1 leyenda">
                   Promedio de incremento de peso calculado automáticamente de todas las muestras registradas
                 </p>
+              </div>
+
+              <div>
+                <label htmlFor="ruta_pdf" className="block text-sm font-medium text-gray-700 mb-2">
+                  Informe PDF
+                </label>
+                {formData.ruta_pdf ? (
+                  <div>
+                    <a
+                      href={`${API_BASE_URL}/${formData.ruta_pdf}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium transition-colors duration-200 inline-flex items-center gap-2"
+                      title="Descargar PDF"
+                    >
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        className="h-4 w-4" 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      Descargar PDF
+                    </a>
+                    <p className="text-xs text-gray-500 mt-2 leyenda">
+                      Informe PDF del ciclo productivo cargado
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-2 leyenda">
+                    No hay informe PDF cargado para este ciclo
+                  </p>
+                )}
               </div>
             </>
           )}

@@ -174,6 +174,7 @@ export default function MonitoreoCiclos() {
       'Biomasa de Cosecha (lbs)': ciclo.biomasa_cosecha || 'N/A',
       'Libras por Hectárea': ciclo.libras_por_hectarea || 'N/A',
       'Promedio Incremento Peso': ciclo.promedio_incremento_peso || 'N/A',
+      'Informe PDF': ciclo.ruta_pdf ? ciclo.ruta_pdf.split('/').pop() : 'N/A',
       'Estado': ciclo.estado,
       'Última Actualización': formatDate(ciclo.fecha_actualizacion, true)
     }));
@@ -296,6 +297,7 @@ export default function MonitoreoCiclos() {
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Biomasa Cosecha (lbs)</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Libras por Hectárea</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Promedio Inc. Peso</th>
+                <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Informe PDF</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Última Actualización</th>
                 <th className="py-2 px-4 border-b text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
@@ -304,7 +306,7 @@ export default function MonitoreoCiclos() {
             <tbody className="bg-white divide-y divide-gray-200">
               {currentData.length === 0 ? (
                 <tr>
-                  <td colSpan="14" className="py-4 text-center text-gray-500">
+                  <td colSpan="15" className="py-4 text-center text-gray-500">
                     No se encontraron ciclos productivos
                   </td>
                 </tr>
@@ -344,6 +346,33 @@ export default function MonitoreoCiclos() {
                     <td className="py-2 px-4 border-b text-sm text-gray-900">
                       {ciclo.promedio_incremento_peso || 'N/A'}
                     </td>
+                    <td className="py-2 px-4 border-b text-sm text-center">
+                      {ciclo.ruta_pdf ? (
+                        <button
+                          onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = `${API_BASE_URL}/${ciclo.ruta_pdf}`;
+                            link.download = ciclo.ruta_pdf.split('/').pop();
+                            link.click();
+                          }}
+                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200 inline-flex items-center gap-1"
+                          title="Descargar informe PDF"
+                        >
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            className="h-4 w-4" 
+                            fill="none" 
+                            viewBox="0 0 24 24" 
+                            stroke="currentColor"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                          Descargar
+                        </button>
+                      ) : (
+                        <span className="text-gray-500">N/A</span>
+                      )}
+                    </td>
                     <td className="py-2 px-4 border-b text-sm">
                       <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
                         ciclo.estado === 'EN_CURSO' 
@@ -357,42 +386,44 @@ export default function MonitoreoCiclos() {
                       {formatDate(ciclo.fecha_actualizacion, true)}
                     </td>
                     <td className="py-2 px-4 border-b text-sm text-center">
-                      {ciclo.estado === 'FINALIZADO' ? (
-                        <button
-                          onClick={() => navigate(`/layout/form/consultar-ciclo/${ciclo.id_ciclo}`)}
-                          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200 flex items-center gap-1 mx-auto"
-                          title="Consultar ciclo productivo"
-                        >
-                          <svg 
-                            xmlns="http://www.w3.org/2000/svg" 
-                            className="h-4 w-4" 
-                            fill="none" 
-                            viewBox="0 0 24 24" 
-                            stroke="currentColor"
+                      <div className="flex items-center justify-center gap-2">
+                        {ciclo.estado === 'FINALIZADO' ? (
+                          <button
+                            onClick={() => navigate(`/layout/form/consultar-ciclo/${ciclo.id_ciclo}`)}
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200 flex items-center gap-1"
+                            title="Consultar ciclo productivo"
                           >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                          Consultar
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => navigate(`/layout/form/editar-ciclo/${ciclo.id_ciclo}`)}
-                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200 flex items-center gap-1 mx-auto"
-                          title="Editar ciclo productivo"
-                        >
-                          <svg 
-                            xmlns="http://www.w3.org/2000/svg" 
-                            className="h-4 w-4" 
-                            fill="none" 
-                            viewBox="0 0 24 24" 
-                            stroke="currentColor"
+                            <svg 
+                              xmlns="http://www.w3.org/2000/svg" 
+                              className="h-4 w-4" 
+                              fill="none" 
+                              viewBox="0 0 24 24" 
+                              stroke="currentColor"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            Consultar
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => navigate(`/layout/form/editar-ciclo/${ciclo.id_ciclo}`)}
+                            className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200 flex items-center gap-1"
+                            title="Editar ciclo productivo"
                           >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                          Editar
-                        </button>
-                      )}
+                            <svg 
+                              xmlns="http://www.w3.org/2000/svg" 
+                              className="h-4 w-4" 
+                              fill="none" 
+                              viewBox="0 0 24 24" 
+                              stroke="currentColor"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Editar
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))

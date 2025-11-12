@@ -18,6 +18,96 @@ if (!isset($conn)) {
 $method = $_SERVER['REQUEST_METHOD'];
 
 try {
+    // Primero, verificar si es una solicitud de carga de PDF
+    if ($method === 'POST' && isset($_GET['action']) && $_GET['action'] === 'upload_pdf') {
+        // Crear el directorio de informes si no existe
+        $informesDir = __DIR__ . '/../Informes';
+        if (!is_dir($informesDir)) {
+            mkdir($informesDir, 0755, true);
+        }
+        
+        // Validar que exista el archivo PDF
+        if (!isset($_FILES['pdf']) || $_FILES['pdf']['error'] !== UPLOAD_ERR_OK) {
+            $response = [
+                'success' => false,
+                'message' => 'No se recibió ningún archivo PDF o hubo un error en la carga'
+            ];
+            http_response_code(400);
+            echo json_encode($response);
+            exit();
+        }
+        
+        $pdfFile = $_FILES['pdf'];
+        $idCiclo = isset($_POST['id_ciclo']) ? $_POST['id_ciclo'] : null;
+        $idCompania = isset($_POST['id_compania']) ? $_POST['id_compania'] : null;
+        
+        // Obtener el nombre de la compañía
+        $nombreCompania = '';
+        if ($idCompania) {
+            $queryCompania = "SELECT nombre FROM compania WHERE id_compania = :id_compania";
+            $stmtCompania = $conn->prepare($queryCompania);
+            $stmtCompania->bindParam(':id_compania', $idCompania);
+            $stmtCompania->execute();
+            $resultCompania = $stmtCompania->fetch(PDO::FETCH_ASSOC);
+            if ($resultCompania) {
+                $nombreCompania = $resultCompania['nombre'];
+            }
+        }
+        
+        // Validar que sea un PDF
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = finfo_file($finfo, $pdfFile['tmp_name']);
+        finfo_close($finfo);
+        
+        $isValidPdf = ($mimeType === 'application/pdf') || preg_match('/\.pdf$/i', $pdfFile['name']);
+        
+        if (!$isValidPdf) {
+            $response = [
+                'success' => false,
+                'message' => 'El archivo debe ser un PDF válido'
+            ];
+            http_response_code(400);
+            echo json_encode($response);
+            exit();
+        }
+        
+        // Generar nombre único para el archivo
+        // Extraer el nombre sin extensión y reemplazar espacios con guiones
+        $nombreSinExtension = pathinfo($pdfFile['name'], PATHINFO_FILENAME);
+        $nombreSinExtension = str_replace(' ', '_', $nombreSinExtension);
+        // Remover caracteres especiales que no sean guiones bajos y letras/números
+        $nombreSinExtension = preg_replace('/[^a-zA-Z0-9_-]/', '', $nombreSinExtension);
+        
+        // Limpiar el nombre de la compañía para el archivo
+        $nombreCompaniaArchivo = str_replace(' ', '_', $nombreCompania);
+        $nombreCompaniaArchivo = preg_replace('/[^a-zA-Z0-9_-]/', '', $nombreCompaniaArchivo);
+        
+        $nombreArchivo = 'ciclo_' . $idCiclo . '_' . $nombreCompaniaArchivo . '_' . $nombreSinExtension . '.pdf';
+        $rutaArchivo = $informesDir . '/' . $nombreArchivo;
+        $rutaRelativa = 'Informes/' . $nombreArchivo;
+        
+        // Mover el archivo a la carpeta de informes
+        if (!move_uploaded_file($pdfFile['tmp_name'], $rutaArchivo)) {
+            $response = [
+                'success' => false,
+                'message' => 'Error al guardar el archivo PDF'
+            ];
+            http_response_code(500);
+            echo json_encode($response);
+            exit();
+        }
+        
+        $response = [
+            'success' => true,
+            'message' => 'PDF cargado exitosamente',
+            'ruta_pdf' => $rutaRelativa
+        ];
+        
+        http_response_code(200);
+        echo json_encode($response);
+        exit();
+    }
+
     // Manejar solicitud POST para crear un nuevo ciclo productivo
     if ($method === 'POST') {
         // Leer el cuerpo de la solicitud JSON
@@ -307,6 +397,7 @@ try {
                 biomasa_cosecha = ?,
                 libras_por_hectarea = ?,
                 promedio_incremento_peso = ?,
+                ruta_pdf = ?,
                 estado = ?,
                 id_usuario_actualiza = ?,
                 fecha_actualizacion = CURRENT_TIMESTAMP
@@ -324,10 +415,11 @@ try {
         $stmt->bindValue(8, $input['biomasa_cosecha'] ?? null);
         $stmt->bindValue(9, $input['libras_por_hectarea'] ?? null);
         $stmt->bindValue(10, $input['promedio_incremento_peso'] ?? null);
-        $stmt->bindValue(11, $input['estado']);
-        $stmt->bindValue(12, $input['id_usuario_actualiza'], PDO::PARAM_INT);
-        $stmt->bindValue(13, $input['id_ciclo'], PDO::PARAM_INT);
-        $stmt->bindValue(14, $input['id_compania'], PDO::PARAM_INT);
+        $stmt->bindValue(11, $input['ruta_pdf'] ?? null);
+        $stmt->bindValue(12, $input['estado']);
+        $stmt->bindValue(13, $input['id_usuario_actualiza'], PDO::PARAM_INT);
+        $stmt->bindValue(14, $input['id_ciclo'], PDO::PARAM_INT);
+        $stmt->bindValue(15, $input['id_compania'], PDO::PARAM_INT);
         
         $stmt->execute();
         
@@ -377,6 +469,7 @@ try {
                 cp.biomasa_cosecha,
                 cp.libras_por_hectarea,
                 cp.promedio_incremento_peso,
+                cp.ruta_pdf,
                 cp.estado,
                 cp.id_compania,
                 cp.fecha_creacion,
@@ -433,6 +526,7 @@ try {
             cp.biomasa_cosecha,
             cp.libras_por_hectarea,
             cp.promedio_incremento_peso,
+            cp.ruta_pdf,
             cp.estado,
             cp.id_compania,
             cp.fecha_creacion,
