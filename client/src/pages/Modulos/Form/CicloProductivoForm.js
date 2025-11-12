@@ -24,10 +24,14 @@ export default function CicloProductivoForm() {
     cantidad_siembra: '',
     densidad: '',
     tipo_siembra: '',
+    id_tipo_alimentacion: '',
+    promedio_incremento_peso: '',
+    libras_por_hectarea: '',
     estado: 'EN_CURSO'
   });
   
   const [piscinas, setPiscinas] = useState([]);
+  const [tiposAlimentacion, setTiposAlimentacion] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingPiscinas, setLoadingPiscinas] = useState(true);
   const [error, setError] = useState('');
@@ -122,6 +126,43 @@ export default function CicloProductivoForm() {
     }
   }, [idCompania, API_BASE_URL]);
 
+  // Cargar tipos de alimentación disponibles
+  useEffect(() => {
+    const fetchTiposAlimentacion = async () => {
+      if (!idCompania) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/module/tipo_alimentacion.php?id_compania=${idCompania}`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+          setTiposAlimentacion(result.data);
+        } else {
+          throw new Error(result.message || "Error al obtener tipos de alimentación");
+        }
+      } catch (err) {
+        console.error("Error fetching tipos de alimentación:", err);
+      }
+    };
+
+    if (idCompania) {
+      fetchTiposAlimentacion();
+    }
+  }, [idCompania, API_BASE_URL]);
+
   // Efecto para recalcular densidad cuando cambien los datos relevantes
   useEffect(() => {
     if (formData.cantidad_siembra && formData.id_piscina && piscinas.length > 0) {
@@ -213,8 +254,8 @@ export default function CicloProductivoForm() {
       return;
     }
     
-    if (formData.estado === 'FINALIZADO' && !formData.fecha_cosecha) {
-      setError('La fecha de cosecha es requerida cuando el estado es "Finalizado".');
+    if (!formData.id_tipo_alimentacion) {
+      setError('El tipo de alimentación es requerido.');
       return;
     }
     
@@ -234,6 +275,8 @@ export default function CicloProductivoForm() {
         cantidad_siembra: parseInt(formData.cantidad_siembra),
         densidad: parseFloat(formData.densidad),
         tipo_siembra: formData.tipo_siembra.trim(),
+        id_tipo_alimentacion: parseInt(formData.id_tipo_alimentacion),
+        promedio_incremento_peso: null,
         estado: formData.estado,
         id_compania: idCompania,
         id_usuario_crea: idUsuario,
@@ -382,8 +425,7 @@ export default function CicloProductivoForm() {
 
           <div>
             <label htmlFor="fecha_cosecha" className="block text-sm font-medium text-gray-700 mb-2">
-              Fecha de Cosecha {formData.estado === 'FINALIZADO' && <span className="text-red-600">*</span>}
-              {formData.estado === 'FINALIZADO' && <span className="text-xs text-red-600"> (Requerida para ciclos finalizados)</span>}
+              Fecha de Cosecha (Opcional)
             </label>
             <input
               type="date"
@@ -391,19 +433,10 @@ export default function CicloProductivoForm() {
               name="fecha_cosecha"
               value={formData.fecha_cosecha}
               onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                formData.estado === 'FINALIZADO' && !formData.fecha_cosecha
-                  ? 'border-red-300 bg-red-50'
-                  : 'border-gray-300'
-              }`}
-              required={formData.estado === 'FINALIZADO'}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
-            {formData.estado === 'FINALIZADO' && formData.fecha_cosecha === '' && <ValidationMessage fieldName="una Fecha de Cosecha" />}
             <p className="text-xs text-gray-500 mt-1 leyenda">
-              {formData.estado === 'FINALIZADO' 
-                ? 'Fecha de cosecha es obligatoria para ciclos finalizados'
-                : 'Fecha estimada de cosecha (opcional)'
-              }
+              Fecha estimada de cosecha
             </p>
           </div>
 
@@ -477,22 +510,44 @@ export default function CicloProductivoForm() {
           </div>
 
           <div>
-            <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-2">
-              Estado *
+            <label htmlFor="id_tipo_alimentacion" className="block text-sm font-medium text-gray-700 mb-2">
+              Tipo de Alimentación *
             </label>
             <select
-              id="estado"
-              name="estado"
-              value={formData.estado}
+              id="id_tipo_alimentacion"
+              name="id_tipo_alimentacion"
+              value={formData.id_tipo_alimentacion}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required
             >
-              <option value="EN_CURSO">En Curso</option>
-              <option value="FINALIZADO">Finalizado</option>
+              <option value="">Seleccione un tipo de alimentación</option>
+              {tiposAlimentacion.map(tipo => (
+                <option key={tipo.id_tipo_alimentacion} value={tipo.id_tipo_alimentacion}>
+                  {tipo.nombre}
+                </option>
+              ))}
             </select>
+            {formData.id_tipo_alimentacion === '' && <ValidationMessage fieldName="un Tipo de Alimentación" />}
             <p className="text-xs text-gray-500 mt-1 leyenda">
-              Estado actual del ciclo productivo
+              Tipo de alimentación a utilizar en el ciclo productivo
+            </p>
+          </div>
+
+          <div>
+            <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-2">
+              Estado *
+            </label>
+            <input
+              type="text"
+              id="estado"
+              name="estado"
+              value="En Curso"
+              readOnly
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
+            />
+            <p className="text-xs text-gray-500 mt-1 leyenda">
+              Los ciclos se crean siempre en estado "En Curso"
             </p>
           </div>
         </div>
@@ -513,10 +568,10 @@ export default function CicloProductivoForm() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Creando Ciclo...
+                Guardando Ciclo...
               </span>
             ) : (
-              'Crear Ciclo Productivo'
+              'Guardar Ciclo Productivo'
             )}
           </button>
 

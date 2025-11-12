@@ -37,7 +37,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                     p.codigo,
                     p.hectareas,
                     p.ubicacion,
-                    p.id_compania
+                    p.id_compania,
+                    p.fecha_creacion,
+                    p.fecha_actualizacion
                 FROM piscina p
                 WHERE p.id_compania = :id_compania
                 ORDER BY p.id_piscina";
@@ -61,7 +63,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                 'codigo' => $row['codigo'],
                 'hectareas' => floatval($row['hectareas']),
                 'ubicacion' => $row['ubicacion'],
-                'id_compania' => $row['id_compania']
+                'id_compania' => $row['id_compania'],
+                'fecha_creacion' => $row['fecha_creacion'],
+                'fecha_actualizacion' => $row['fecha_actualizacion']
             ];
         }
 

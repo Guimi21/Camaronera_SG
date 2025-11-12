@@ -761,7 +761,7 @@ export default function MuestraForm() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Peso (g)
+                  Peso Promedio (g)
                 </label>
                 <input
                   type="number"
@@ -777,10 +777,10 @@ export default function MuestraForm() {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Ej: 15.5"
                 />
-                {formData.peso === '' && <ValidationMessage fieldName="un Peso (g)" />}
+                {formData.peso === '' && <ValidationMessage fieldName="un Peso Promedio (g)" />}
                 <p className="text-sm text-gray-500 mt-1 leyenda">
                   {ultimoMuestra 
-                    ? `Peso anterior: ${ultimoMuestra.peso}g` 
+                    ? `Peso promedio anterior: ${ultimoMuestra.peso}g` 
                     : formData.id_ciclo 
                       ? "Buscando último muestra..."
                       : "Selecciona un ciclo primero"
@@ -990,12 +990,7 @@ export default function MuestraForm() {
                     Guardando...
                   </>
                 ) : (
-                  <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Guardar Registro
-                  </>
+                  'Guardar Registro'
                 )}
               </button>
 
@@ -1005,9 +1000,6 @@ export default function MuestraForm() {
                 disabled={loading || loadingCiclos || loadingTipos}
                 className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
                 Cancelar
               </button>
             </div>

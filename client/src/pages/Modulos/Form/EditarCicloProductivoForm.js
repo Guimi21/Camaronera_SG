@@ -24,11 +24,16 @@ export default function EditarCicloProductivoForm() {
     fecha_cosecha: '',
     cantidad_siembra: '',
     densidad: '',
+    biomasa_cosecha: '',
     tipo_siembra: '',
+    id_tipo_alimentacion: '',
+    promedio_incremento_peso: '',
+    libras_por_hectarea: '',
     estado: 'EN_CURSO'
   });
   
   const [piscinas, setPiscinas] = useState([]);
+  const [tiposAlimentacion, setTiposAlimentacion] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingPiscinas, setLoadingPiscinas] = useState(true);
   const [loadingCiclo, setLoadingCiclo] = useState(true);
@@ -94,7 +99,11 @@ export default function EditarCicloProductivoForm() {
             fecha_cosecha: formatDateForInput(ciclo.fecha_cosecha),
             cantidad_siembra: ciclo.cantidad_siembra || '',
             densidad: ciclo.densidad || '',
+            biomasa_cosecha: ciclo.biomasa_cosecha || '',
             tipo_siembra: ciclo.tipo_siembra || '',
+            id_tipo_alimentacion: ciclo.id_tipo_alimentacion || '',
+            promedio_incremento_peso: ciclo.promedio_incremento_peso || '',
+            libras_por_hectarea: '',
             estado: ciclo.estado || 'EN_CURSO'
           });
           
@@ -194,6 +203,81 @@ export default function EditarCicloProductivoForm() {
     }
   }, [idCompania, API_BASE_URL]);
 
+  // Cargar tipos de alimentación disponibles
+  useEffect(() => {
+    const fetchTiposAlimentacion = async () => {
+      if (!idCompania) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/module/tipo_alimentacion.php?id_compania=${idCompania}`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+          setTiposAlimentacion(result.data);
+        } else {
+          throw new Error(result.message || "Error al obtener tipos de alimentación");
+        }
+      } catch (err) {
+        console.error("Error fetching tipos de alimentación:", err);
+      }
+    };
+
+    if (idCompania) {
+      fetchTiposAlimentacion();
+    }
+  }, [idCompania, API_BASE_URL]);
+
+  // Cargar promedio de incremento de peso cuando el ciclo se finaliza
+  useEffect(() => {
+    const fetchPromedioIncrementoPeso = async () => {
+      if (formData.estado === 'FINALIZADO' && id && formData.promedio_incremento_peso === '') {
+        try {
+          const response = await fetch(`${API_BASE_URL}/module/muestras.php?id_ciclo=${id}&promedio_incremento_peso=true`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+          }
+
+          const result = await response.json();
+          
+          if (result.success && result.data) {
+            // Mostrar el promedio incluso si es 0 o null
+            const promedio = result.data.promedio_incremento_peso !== null && result.data.promedio_incremento_peso !== undefined 
+              ? result.data.promedio_incremento_peso 
+              : '';
+            setFormData(prevData => ({
+              ...prevData,
+              promedio_incremento_peso: promedio
+            }));
+          }
+        } catch (err) {
+          console.error("Error fetching promedio incremento peso:", err);
+        }
+      }
+    };
+
+    fetchPromedioIncrementoPeso();
+  }, [formData.estado, id, API_BASE_URL]);
+
   // Efecto para recalcular densidad cuando cambien los datos relevantes
   useEffect(() => {
     if (formData.cantidad_siembra && formData.id_piscina && piscinas.length > 0) {
@@ -206,6 +290,27 @@ export default function EditarCicloProductivoForm() {
       }
     }
   }, [formData.cantidad_siembra, formData.id_piscina, piscinas]);
+
+  // Efecto para recalcular libras por hectárea cuando cambien biomasa_cosecha o piscina
+  useEffect(() => {
+    if (formData.estado === 'FINALIZADO' && formData.biomasa_cosecha && formData.id_piscina && piscinas.length > 0) {
+      const librasCalculadas = calcularLibrasPorHectarea(formData.biomasa_cosecha, formData.id_piscina);
+      if (librasCalculadas !== formData.libras_por_hectarea) {
+        setFormData(prevData => ({
+          ...prevData,
+          libras_por_hectarea: librasCalculadas
+        }));
+      }
+    } else if (formData.estado !== 'FINALIZADO') {
+      // Limpiar el valor si el estado no es FINALIZADO
+      if (formData.libras_por_hectarea !== '') {
+        setFormData(prevData => ({
+          ...prevData,
+          libras_por_hectarea: ''
+        }));
+      }
+    }
+  }, [formData.biomasa_cosecha, formData.id_piscina, formData.estado, piscinas]);
 
   // Función para calcular densidad
   const calcularDensidad = (cantidadSiembra, idPiscina) => {
@@ -223,11 +328,35 @@ export default function EditarCicloProductivoForm() {
     return densidad.toFixed(2);
   };
 
+  // Función para calcular libras por hectárea
+  const calcularLibrasPorHectarea = (cantidadCosecha, idPiscina) => {
+    if (!cantidadCosecha || !idPiscina) return '';
+    
+    const piscinaSeleccionada = piscinas.find(p => p.id_piscina == idPiscina);
+    if (!piscinaSeleccionada || !piscinaSeleccionada.hectareas) return '';
+    
+    const cantidadNum = parseFloat(cantidadCosecha);
+    const hectareasNum = parseFloat(piscinaSeleccionada.hectareas);
+    
+    if (isNaN(cantidadNum) || isNaN(hectareasNum) || hectareasNum === 0) return '';
+    
+    const libras = cantidadNum / hectareasNum;
+    return libras.toFixed(2);
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     
     // Validación para cantidad_siembra
     if (name === 'cantidad_siembra') {
+      const numericValue = parseFloat(value);
+      if (value !== '' && (isNaN(numericValue) || numericValue <= 0)) {
+        return;
+      }
+    }
+    
+    // Validación para biomasa_cosecha
+    if (name === 'biomasa_cosecha') {
       const numericValue = parseFloat(value);
       if (value !== '' && (isNaN(numericValue) || numericValue <= 0)) {
         return;
@@ -279,8 +408,18 @@ export default function EditarCicloProductivoForm() {
       return;
     }
     
+    if (!formData.id_tipo_alimentacion) {
+      setError('El tipo de alimentación es requerido.');
+      return;
+    }
+    
     if (formData.estado === 'FINALIZADO' && !formData.fecha_cosecha) {
       setError('La fecha de cosecha es requerida cuando el estado es "Finalizado".');
+      return;
+    }
+    
+    if (formData.estado === 'FINALIZADO' && (!formData.biomasa_cosecha || parseFloat(formData.biomasa_cosecha) <= 0)) {
+      setError('La biomasa de cosecha debe ser un número positivo cuando el estado es "Finalizado".');
       return;
     }
     
@@ -300,7 +439,11 @@ export default function EditarCicloProductivoForm() {
         fecha_cosecha: formData.fecha_cosecha || null,
         cantidad_siembra: parseInt(formData.cantidad_siembra),
         densidad: parseFloat(formData.densidad),
+        biomasa_cosecha: (formData.estado === 'FINALIZADO' && formData.biomasa_cosecha) ? parseInt(formData.biomasa_cosecha) : null,
+        libras_por_hectarea: (formData.estado === 'FINALIZADO' && formData.libras_por_hectarea) ? parseFloat(formData.libras_por_hectarea) : null,
         tipo_siembra: formData.tipo_siembra.trim(),
+        id_tipo_alimentacion: parseInt(formData.id_tipo_alimentacion),
+        promedio_incremento_peso: (formData.promedio_incremento_peso !== '' && formData.promedio_incremento_peso !== null) ? parseFloat(formData.promedio_incremento_peso) : null,
         estado: formData.estado,
         id_compania: idCompania,
         id_usuario_actualiza: idUsuario
@@ -515,6 +658,81 @@ export default function EditarCicloProductivoForm() {
             </p>
           </div>
 
+          {formData.estado === 'FINALIZADO' && (
+            <div>
+              <label htmlFor="biomasa_cosecha" className="block text-sm font-medium text-gray-700 mb-2">
+                Biomasa de Cosecha (lbs) <span className="text-red-600">*</span>
+                <span className="text-xs text-red-600"> (Requerida para ciclos finalizados)</span>
+              </label>
+              <input
+                type="number"
+                id="biomasa_cosecha"
+                name="biomasa_cosecha"
+                value={formData.biomasa_cosecha}
+                onFocus={(e) => e.target.addEventListener('wheel', handleWheel, { passive: false })}
+                onBlur={(e) => e.target.removeEventListener('wheel', handleWheel)}
+                onChange={handleChange}
+                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  formData.biomasa_cosecha === ''
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-300'
+                }`}
+                placeholder="Ej: 450000"
+                min="1"
+                step="1"
+                required
+              />
+              {formData.biomasa_cosecha === '' && <ValidationMessage fieldName="una Biomasa de Cosecha" />}
+              <p className="text-xs text-gray-500 mt-1 leyenda">
+                Cantidad total de libras de camarones cosechadas
+              </p>
+            </div>
+          )}
+
+          {formData.estado === 'FINALIZADO' && (
+            <div>
+              <label htmlFor="libras_por_hectarea" className="block text-sm font-medium text-gray-700 mb-2">
+                Libras por Hectárea
+              </label>
+              <input
+                type="text"
+                id="libras_por_hectarea"
+                name="libras_por_hectarea"
+                value={formData.libras_por_hectarea}
+                readOnly
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
+                placeholder="Se calcula automáticamente"
+              />
+              <p className="text-xs text-gray-500 mt-1 leyenda">
+                Biomasa de cosecha ÷ Hectáreas de la piscina
+                {formData.id_piscina && piscinas.length > 0 && (() => {
+                  const piscinaSeleccionada = piscinas.find(p => p.id_piscina == formData.id_piscina);
+                  return piscinaSeleccionada ? ` (${piscinaSeleccionada.hectareas} ha)` : '';
+                })()}
+              </p>
+            </div>
+          )}
+
+          {formData.estado === 'FINALIZADO' && (
+            <div>
+              <label htmlFor="promedio_incremento_peso" className="block text-sm font-medium text-gray-700 mb-2">
+                Promedio de Incremento de Peso
+              </label>
+              <input
+                type="text"
+                id="promedio_incremento_peso"
+                name="promedio_incremento_peso"
+                value={formData.promedio_incremento_peso}
+                readOnly
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
+                placeholder="Se calcula automáticamente desde las muestras"
+              />
+              <p className="text-xs text-gray-500 mt-1 leyenda">
+                Promedio de incremento de peso calculado automáticamente de todas las muestras registradas
+              </p>
+            </div>
+          )}
+
           <div>
             <label htmlFor="densidad" className="block text-sm font-medium text-gray-700 mb-2">
               Densidad (por hectárea) * <span className="text-blue-600 text-xs">(Calculado automáticamente)</span>
@@ -556,6 +774,31 @@ export default function EditarCicloProductivoForm() {
             {formData.tipo_siembra === '' && <ValidationMessage fieldName="un Tipo de Siembra" />}
             <p className="text-xs text-gray-500 mt-1 leyenda">
               Tipo o método de siembra utilizado
+            </p>
+          </div>
+
+          <div>
+            <label htmlFor="id_tipo_alimentacion" className="block text-sm font-medium text-gray-700 mb-2">
+              Tipo de Alimentación *
+            </label>
+            <select
+              id="id_tipo_alimentacion"
+              name="id_tipo_alimentacion"
+              value={formData.id_tipo_alimentacion}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            >
+              <option value="">Seleccione un tipo de alimentación</option>
+              {tiposAlimentacion.map(tipo => (
+                <option key={tipo.id_tipo_alimentacion} value={tipo.id_tipo_alimentacion}>
+                  {tipo.nombre}
+                </option>
+              ))}
+            </select>
+            {formData.id_tipo_alimentacion === '' && <ValidationMessage fieldName="un Tipo de Alimentación" />}
+            <p className="text-xs text-gray-500 mt-1 leyenda">
+              Tipo de alimentación a utilizar en el ciclo productivo
             </p>
           </div>
 

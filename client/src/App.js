@@ -13,6 +13,7 @@ import Dashboard from "./pages/Modulos/Dashboard";
 import GruposEmpresariales from "./pages/Modulos/GruposEmpresariales";
 import MonitoreoPiscinas from "./pages/Modulos/MonitoreoPiscinas";
 import MonitoreoBalanceados from "./pages/Modulos/MonitoreoBalanceados";
+import MonitoreoAlimentaciones from "./pages/Modulos/MonitoreoAlimentaciones";
 import MonitoreoCiclos from "./pages/Modulos/MonitoreoCiclos";
 import Usuarios from "./pages/Modulos/Usuarios";
 import UsuariosAdmin from "./pages/Modulos/UsuariosAdmin";
@@ -25,6 +26,7 @@ import CicloProductivoForm from "./pages/Modulos/Form/CicloProductivoForm";
 import EditarCicloProductivoForm from "./pages/Modulos/Form/EditarCicloProductivoForm";
 import ConsultarCicloProductivoForm from "./pages/Modulos/Form/ConsultarCicloProductivoForm";
 import BalanceadoForm from "./pages/Modulos/Form/BalanceadoForm";
+import AlimentacionForm from "./pages/Modulos/Form/AlimentacionForm";
 import CompaniaForm from "./pages/Modulos/Form/CompaniaForm";
 import CompaniaEditForm from "./pages/Modulos/Form/CompaniaEditForm";
 import GrupoEmpresarialForm from "./pages/Modulos/Form/GrupoEmpresarialForm";
@@ -90,6 +92,7 @@ function App() {
             <Route path="form/editar-ciclo/:id" element={<EditarCicloProductivoForm />} />
             <Route path="form/consultar-ciclo/:id" element={<ConsultarCicloProductivoForm />} />
             <Route path="form/balanceado" element={<BalanceadoForm />} />
+            <Route path="form/alimentacion" element={<AlimentacionForm />} />
             <Route path="form/compania" element={<CompaniaForm />} />
             <Route path="form/compania/:idCompania" element={<CompaniaEditForm />} />
             <Route path="form/grupo-empresarial" element={<GrupoEmpresarialForm />} />
@@ -99,6 +102,7 @@ function App() {
             {/* Dashboard - Monitoreo */}
             <Route path="dashboard/monitoreo-piscinas" element={<MonitoreoPiscinas />} />
             <Route path="dashboard/monitoreo-balanceados" element={<MonitoreoBalanceados />} />
+            <Route path="dashboard/monitoreo-alimentaciones" element={<MonitoreoAlimentaciones />} />
             <Route path="dashboard/monitoreo-ciclos" element={<MonitoreoCiclos />} />
           </Route>
 

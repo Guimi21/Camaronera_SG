@@ -74,6 +74,16 @@ try {
             exit();
         }
         
+        if (!isset($input['id_tipo_alimentacion']) || empty($input['id_tipo_alimentacion'])) {
+            $response = [
+                'success' => false,
+                'message' => 'Tipo de alimentación requerido'
+            ];
+            http_response_code(400);
+            echo json_encode($response);
+            exit();
+        }
+        
         if (!isset($input['estado']) || empty($input['estado'])) {
             $response = [
                 'success' => false,
@@ -118,11 +128,15 @@ try {
                 cantidad_siembra,
                 densidad,
                 tipo_siembra,
+                id_tipo_alimentacion,
+                biomasa_cosecha,
+                libras_por_hectarea,
+                promedio_incremento_peso,
                 estado,
                 id_compania,
                 id_usuario_crea,
                 id_usuario_actualiza
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ";
         
         $stmt = $conn->prepare($query);
@@ -132,10 +146,14 @@ try {
         $stmt->bindValue(4, $input['cantidad_siembra'], PDO::PARAM_INT);
         $stmt->bindValue(5, $input['densidad']);
         $stmt->bindValue(6, $input['tipo_siembra']);
-        $stmt->bindValue(7, $input['estado']);
-        $stmt->bindValue(8, $input['id_compania'], PDO::PARAM_INT);
-        $stmt->bindValue(9, $input['id_usuario_crea'], PDO::PARAM_INT);
-        $stmt->bindValue(10, $id_usuario_actualiza, PDO::PARAM_INT);
+        $stmt->bindValue(7, $input['id_tipo_alimentacion'], PDO::PARAM_INT);
+        $stmt->bindValue(8, $input['biomasa_cosecha'] ?? null);
+        $stmt->bindValue(9, $input['libras_por_hectarea'] ?? null);
+        $stmt->bindValue(10, $input['promedio_incremento_peso'] ?? null);
+        $stmt->bindValue(11, $input['estado']);
+        $stmt->bindValue(12, $input['id_compania'], PDO::PARAM_INT);
+        $stmt->bindValue(13, $input['id_usuario_crea'], PDO::PARAM_INT);
+        $stmt->bindValue(14, $id_usuario_actualiza, PDO::PARAM_INT);
         
         $stmt->execute();
         
@@ -219,6 +237,16 @@ try {
             exit();
         }
         
+        if (!isset($input['id_tipo_alimentacion']) || empty($input['id_tipo_alimentacion'])) {
+            $response = [
+                'success' => false,
+                'message' => 'Tipo de alimentación requerido'
+            ];
+            http_response_code(400);
+            echo json_encode($response);
+            exit();
+        }
+        
         if (!isset($input['estado']) || empty($input['estado'])) {
             $response = [
                 'success' => false,
@@ -275,6 +303,10 @@ try {
                 cantidad_siembra = ?,
                 densidad = ?,
                 tipo_siembra = ?,
+                id_tipo_alimentacion = ?,
+                biomasa_cosecha = ?,
+                libras_por_hectarea = ?,
+                promedio_incremento_peso = ?,
                 estado = ?,
                 id_usuario_actualiza = ?,
                 fecha_actualizacion = CURRENT_TIMESTAMP
@@ -288,10 +320,14 @@ try {
         $stmt->bindValue(4, $input['cantidad_siembra'], PDO::PARAM_INT);
         $stmt->bindValue(5, $input['densidad']);
         $stmt->bindValue(6, $input['tipo_siembra']);
-        $stmt->bindValue(7, $input['estado']);
-        $stmt->bindValue(8, $input['id_usuario_actualiza'], PDO::PARAM_INT);
-        $stmt->bindValue(9, $input['id_ciclo'], PDO::PARAM_INT);
-        $stmt->bindValue(10, $input['id_compania'], PDO::PARAM_INT);
+        $stmt->bindValue(7, $input['id_tipo_alimentacion'], PDO::PARAM_INT);
+        $stmt->bindValue(8, $input['biomasa_cosecha'] ?? null);
+        $stmt->bindValue(9, $input['libras_por_hectarea'] ?? null);
+        $stmt->bindValue(10, $input['promedio_incremento_peso'] ?? null);
+        $stmt->bindValue(11, $input['estado']);
+        $stmt->bindValue(12, $input['id_usuario_actualiza'], PDO::PARAM_INT);
+        $stmt->bindValue(13, $input['id_ciclo'], PDO::PARAM_INT);
+        $stmt->bindValue(14, $input['id_compania'], PDO::PARAM_INT);
         
         $stmt->execute();
         
@@ -336,11 +372,19 @@ try {
                 cp.cantidad_siembra,
                 cp.densidad,
                 cp.tipo_siembra,
+                cp.id_tipo_alimentacion,
+                ta.nombre AS nombre_tipo_alimentacion,
+                cp.biomasa_cosecha,
+                cp.libras_por_hectarea,
+                cp.promedio_incremento_peso,
                 cp.estado,
-                cp.id_compania
+                cp.id_compania,
+                cp.fecha_creacion,
+                cp.fecha_actualizacion
             FROM 
                 ciclo_productivo cp
                 INNER JOIN piscina p ON cp.id_piscina = p.id_piscina
+                LEFT JOIN tipo_alimentacion ta ON cp.id_tipo_alimentacion = ta.id_tipo_alimentacion
             WHERE 
                 cp.id_ciclo = ? AND cp.id_compania = ?
             ";
@@ -384,15 +428,24 @@ try {
             cp.cantidad_siembra,
             cp.densidad,
             cp.tipo_siembra,
+            cp.id_tipo_alimentacion,
+            ta.nombre AS nombre_tipo_alimentacion,
+            cp.biomasa_cosecha,
+            cp.libras_por_hectarea,
+            cp.promedio_incremento_peso,
             cp.estado,
-            cp.id_compania
+            cp.id_compania,
+            cp.fecha_creacion,
+            cp.fecha_actualizacion
         FROM 
             ciclo_productivo cp
             INNER JOIN piscina p ON cp.id_piscina = p.id_piscina
+            LEFT JOIN tipo_alimentacion ta ON cp.id_tipo_alimentacion = ta.id_tipo_alimentacion
         WHERE 
             cp.id_compania = ?
         ORDER BY 
-            cp.id_ciclo DESC
+            CASE WHEN cp.estado = 'EN_CURSO' THEN 0 ELSE 1 END,
+            cp.fecha_siembra DESC
         ";
 
         // Preparar y ejecutar la consulta

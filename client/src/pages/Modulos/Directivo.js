@@ -73,7 +73,8 @@ export default function Directivo() {
         supervivencia: item["Sobrev. Actual %"],
         observaciones: item.Observaciones,
         fecha_muestra: item["Fecha Muestra"],
-        fecha_creacion: item["Fecha Creación"],
+        fecha_creacion: item["Fecha Creación"] || null,
+        fecha_actualizacion: item["Última Actualización"] || null,
         balanceados: {} // Objeto para almacenar dinámicamente los tipos de balanceado
       };
       
@@ -420,13 +421,51 @@ export default function Directivo() {
   };
 
   // Formatear fecha para mostrar (evita problemas de zona horaria)
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    // Dividir la fecha en partes (YYYY-MM-DD) para evitar problemas de zona horaria
-    const [year, month, day] = dateString.split('T')[0].split('-');
-    // Crear fecha sin conversión de zona horaria
-    const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString('es-ES');
+  const formatDate = (dateString, includeTime = true) => {
+    if (!dateString || dateString === null || dateString === undefined || dateString === 'null') return "N/A";
+    
+    try {
+      if (!includeTime) {
+        // Para fechas sin hora, extraer solo la parte de fecha para evitar problemas de zona horaria
+        const dateStr = String(dateString).trim();
+        
+        if (!dateStr) return "N/A";
+        
+        // Extraer solo la parte de fecha (YYYY-MM-DD)
+        let datePart = dateStr.split('T')[0]; // Maneja formato ISO
+        if (datePart === dateStr && dateStr.includes(' ')) {
+          datePart = dateStr.split(' ')[0]; // Maneja formato con espacio
+        }
+        
+        const [year, month, day] = datePart.split('-');
+        
+        // Validar que los valores sean válidos
+        if (!year || !month || !day || isNaN(year) || isNaN(month) || isNaN(day)) {
+          return "N/A";
+        }
+        
+        // Crear fecha sin conversión de zona horaria
+        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        return date.toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        });
+      } else {
+        // Para fechas con hora, usar el método estándar
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+    } catch (error) {
+      console.error("Error formatting date:", dateString, error);
+      return "N/A";
+    }
   };
 
   // Descargar los datos filtrados como Excel
@@ -436,7 +475,7 @@ export default function Directivo() {
       const baseData = {
         "Piscina": item.piscina,
         "Has": item.has,
-        "Fecha Siembra": formatDate(item.fecha_siembra),
+        "Fecha Siembra": formatDate(item.fecha_siembra, false),
         "Días de Cultivo": item.dias_cultivo,
         "Siembra/Larvas": item.siembra_larvas,
         "Densidad (/ha)": item.densidad_ha,
@@ -457,7 +496,9 @@ export default function Directivo() {
       baseData["Población Actual"] = item.poblacion_actual;
       baseData["Supervivencia (%)"] = item.supervivencia;
       baseData["Observaciones"] = item.observaciones;
-      baseData["Fecha Muestra"] = formatDate(item.fecha_muestra);
+      baseData["Fecha Muestra"] = formatDate(item.fecha_muestra, false);
+      baseData["Fecha Creación"] = formatDate(item.fecha_creacion, true);
+      baseData["Última Actualización"] = formatDate(item.fecha_actualizacion, true);
       
       return baseData;
     });
@@ -490,6 +531,8 @@ export default function Directivo() {
       emptyRow["Supervivencia (%)"] = "";
       emptyRow["Observaciones"] = "";
       emptyRow["Fecha Muestra"] = "";
+      emptyRow["Fecha Creación"] = "";
+      emptyRow["Última Actualización"] = "";
       
       finalData = [emptyRow];
     }
@@ -612,7 +655,7 @@ export default function Directivo() {
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Siembra Larvas</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Densidad (/ha)</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Tipo Siembra</th>
-                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Peso (g)</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Peso Promedio (g)</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Inc.P (%)</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Biomasa (lbs)</th>
                       {tiposBalanceado.map((tipo) => (
@@ -626,6 +669,8 @@ export default function Directivo() {
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Supervivencia (%)</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Observaciones</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Fecha Muestra</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Fecha Creación</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Última Actualización</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Acciones</th>
                     </tr>
                   </thead>
@@ -637,7 +682,7 @@ export default function Directivo() {
                           <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.piscina}</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.has}</td>
-                            <td className="py-3 px-4 border-b whitespace-nowrap">{formatDate(item.fecha_siembra)}</td>
+                            <td className="py-3 px-4 border-b whitespace-nowrap">{formatDate(item.fecha_siembra, false)}</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.dias_cultivo}</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.siembra_larvas ? parseInt(item.siembra_larvas) : 0}</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.densidad_ha}</td>
@@ -655,7 +700,9 @@ export default function Directivo() {
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.poblacion_actual ? parseInt(item.poblacion_actual) : 0}</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.supervivencia}%</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.observaciones}</td>
-                            <td className="py-3 px-4 border-b whitespace-nowrap">{formatDate(item.fecha_muestra)}</td>
+                            <td className="py-3 px-4 border-b whitespace-nowrap">{formatDate(item.fecha_muestra, false)}</td>
+                            <td className="py-3 px-4 border-b whitespace-nowrap">{formatDate(item.fecha_creacion, true)}</td>
+                            <td className="py-3 px-4 border-b whitespace-nowrap">{formatDate(item.fecha_actualizacion, true)}</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">
                               <button
                                 onClick={() => handleOpenMuestraView(item.id_muestra, isLatest)}

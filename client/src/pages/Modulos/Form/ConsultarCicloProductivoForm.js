@@ -15,7 +15,12 @@ export default function ConsultarCicloProductivoForm() {
     fecha_cosecha: '',
     cantidad_siembra: '',
     densidad: '',
+    biomasa_cosecha: '',
     tipo_siembra: '',
+    id_tipo_alimentacion: '',
+    nombre_tipo_alimentacion: '',
+    promedio_incremento_peso: '',
+    libras_por_hectarea: '',
     estado: 'EN_CURSO'
   });
   
@@ -73,7 +78,12 @@ export default function ConsultarCicloProductivoForm() {
             fecha_cosecha: formatDateForInput(ciclo.fecha_cosecha),
             cantidad_siembra: ciclo.cantidad_siembra || '',
             densidad: ciclo.densidad || '',
+            biomasa_cosecha: ciclo.biomasa_cosecha || '',
             tipo_siembra: ciclo.tipo_siembra || '',
+            id_tipo_alimentacion: ciclo.id_tipo_alimentacion || '',
+            nombre_tipo_alimentacion: ciclo.nombre_tipo_alimentacion || '',
+            promedio_incremento_peso: ciclo.promedio_incremento_peso || '',
+            libras_por_hectarea: ciclo.libras_por_hectarea || '',
             estado: ciclo.estado || 'EN_CURSO'
           });
           setError('');
@@ -191,32 +201,33 @@ export default function ConsultarCicloProductivoForm() {
       )}
 
       <form className="space-y-6">
-        <div>
-          <label htmlFor="id_piscina" className="block text-sm font-medium text-gray-700 mb-2">
-            Piscina *
-          </label>
-          <select
-            id="id_piscina"
-            name="id_piscina"
-            value={formData.id_piscina}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
-            disabled
-          >
-            <option value="">
-              {piscinas.length === 0 
-                ? "No hay piscinas disponibles" 
-                : "Seleccione una piscina"
-              }
-            </option>
-            {piscinas.map(piscina => (
-              <option key={piscina.id_piscina} value={piscina.id_piscina}>
-                {piscina.codigo} - {piscina.hectareas} ha - {piscina.ubicacion}
+          <div>
+            <label htmlFor="id_piscina" className="block text-sm font-medium text-gray-700 mb-2">
+              Piscina *
+            </label>
+            <select
+              id="id_piscina"
+              name="id_piscina"
+              value={formData.id_piscina}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
+              disabled
+            >
+              <option value="">
+                {piscinas.length === 0 
+                  ? "No hay piscinas disponibles" 
+                  : "Seleccione una piscina"
+                }
               </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {piscinas.map(piscina => (
+                <option key={piscina.id_piscina} value={piscina.id_piscina}>
+                  {piscina.codigo} - {piscina.hectareas} ha - {piscina.ubicacion}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1 leyenda">
+              Seleccione la piscina donde se realiza el ciclo productivo
+            </p>
+          </div>        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label htmlFor="fecha_siembra" className="block text-sm font-medium text-gray-700 mb-2">
               Fecha de Siembra *
@@ -229,11 +240,14 @@ export default function ConsultarCicloProductivoForm() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
               disabled
             />
+            <p className="text-xs text-gray-500 mt-1 leyenda">
+              Fecha en la que se realiza la siembra
+            </p>
           </div>
 
           <div>
             <label htmlFor="fecha_cosecha" className="block text-sm font-medium text-gray-700 mb-2">
-              Fecha de Cosecha (Estimada)
+              Fecha de Cosecha {formData.estado === 'FINALIZADO' && <span className="text-red-600">*</span>}
             </label>
             <input
               type="date"
@@ -243,6 +257,12 @@ export default function ConsultarCicloProductivoForm() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
               disabled
             />
+            <p className="text-xs text-gray-500 mt-1 leyenda">
+              {formData.estado === 'FINALIZADO' 
+                ? 'Fecha de cosecha es obligatoria para ciclos finalizados'
+                : 'Fecha estimada de cosecha (opcional)'
+              }
+            </p>
           </div>
 
           <div>
@@ -257,11 +277,14 @@ export default function ConsultarCicloProductivoForm() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
               disabled
             />
+            <p className="text-xs text-gray-500 mt-1 leyenda">
+              Número de larvas o individuos sembrados
+            </p>
           </div>
 
           <div>
             <label htmlFor="densidad" className="block text-sm font-medium text-gray-700 mb-2">
-              Densidad (por hectárea) *
+              Densidad (por hectárea) * <span className="text-blue-600 text-xs">(Calculado automáticamente)</span>
             </label>
             <input
               type="text"
@@ -271,6 +294,13 @@ export default function ConsultarCicloProductivoForm() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
               disabled
             />
+            <p className="text-xs text-gray-500 mt-1 leyenda">
+              Cantidad de siembra ÷ Hectáreas de la piscina
+              {formData.id_piscina && piscinas.length > 0 && (() => {
+                const piscinaSeleccionada = piscinas.find(p => p.id_piscina == formData.id_piscina);
+                return piscinaSeleccionada ? ` (${piscinaSeleccionada.hectareas} ha)` : '';
+              })()}
+            </p>
           </div>
 
           <div>
@@ -285,7 +315,86 @@ export default function ConsultarCicloProductivoForm() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
               disabled
             />
+            <p className="text-xs text-gray-500 mt-1 leyenda">
+              Tipo o método de siembra utilizado
+            </p>
           </div>
+
+          <div>
+            <label htmlFor="id_tipo_alimentacion" className="block text-sm font-medium text-gray-700 mb-2">
+              Tipo de Alimentación *
+            </label>
+            <input
+              type="text"
+              id="id_tipo_alimentacion"
+              name="id_tipo_alimentacion"
+              value={formData.nombre_tipo_alimentacion}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
+              disabled
+            />
+            <p className="text-xs text-gray-500 mt-1 leyenda">
+              Tipo de alimentación a utilizar en el ciclo productivo
+            </p>
+          </div>
+
+          {formData.estado === 'FINALIZADO' && (
+            <>
+              <div>
+                <label htmlFor="biomasa_cosecha" className="block text-sm font-medium text-gray-700 mb-2">
+                  Biomasa de Cosecha (lbs)
+                </label>
+                <input
+                  type="text"
+                  id="biomasa_cosecha"
+                  name="biomasa_cosecha"
+                  value={formData.biomasa_cosecha}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
+                  disabled
+                />
+                <p className="text-xs text-gray-500 mt-1 leyenda">
+                  Cantidad total de libras de camarones cosechadas
+                </p>
+              </div>
+
+              <div>
+                <label htmlFor="libras_por_hectarea" className="block text-sm font-medium text-gray-700 mb-2">
+                  Libras por Hectárea
+                </label>
+                <input
+                  type="text"
+                  id="libras_por_hectarea"
+                  name="libras_por_hectarea"
+                  value={formData.libras_por_hectarea}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
+                  disabled
+                />
+                <p className="text-xs text-gray-500 mt-1 leyenda">
+                  Biomasa de cosecha ÷ Hectáreas de la piscina
+                  {formData.id_piscina && piscinas.length > 0 && (() => {
+                    const piscinaSeleccionada = piscinas.find(p => p.id_piscina == formData.id_piscina);
+                    return piscinaSeleccionada ? ` (${piscinaSeleccionada.hectareas} ha)` : '';
+                  })()}
+                </p>
+              </div>
+
+              <div>
+                <label htmlFor="promedio_incremento_peso" className="block text-sm font-medium text-gray-700 mb-2">
+                  Promedio de Incremento de Peso
+                </label>
+                <input
+                  type="text"
+                  id="promedio_incremento_peso"
+                  name="promedio_incremento_peso"
+                  value={formData.promedio_incremento_peso}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
+                  disabled
+                />
+                <p className="text-xs text-gray-500 mt-1 leyenda">
+                  Promedio de incremento de peso calculado automáticamente de todas las muestras registradas
+                </p>
+              </div>
+            </>
+          )}
 
           <div>
             <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-2">

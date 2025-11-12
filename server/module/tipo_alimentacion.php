@@ -14,7 +14,7 @@ if (!isset($conn)) {
     exit();
 }
 
-// Manejar solicitudes GET para obtener tipos de balanceado
+// Manejar solicitudes GET para obtener tipos de alimentación
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     try {
         // Obtener parámetros de consulta
@@ -33,15 +33,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 
         // Construir la consulta SQL
         $sql = "SELECT 
-                    tb.id_tipo_balanceado,
-                    tb.nombre,
-                    tb.unidad,
-                    tb.id_compania,
-                    tb.fecha_creacion,
-                    tb.fecha_actualizacion
-                FROM tipo_balanceado tb
-                WHERE tb.id_compania = :id_compania
-                ORDER BY tb.id_tipo_balanceado";
+                    ta.id_tipo_alimentacion,
+                    ta.nombre,
+                    ta.id_compania,
+                    ta.fecha_creacion,
+                    ta.fecha_actualizacion
+                FROM tipo_alimentacion ta
+                WHERE ta.id_compania = :id_compania
+                ORDER BY ta.id_tipo_alimentacion DESC";
 
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
@@ -54,13 +53,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
             throw new Exception("Error ejecutando consulta: " . implode(", ", $stmt->errorInfo()));
         }
 
-        $tipos_balanceado = [];
+        $tipos_alimentacion = [];
 
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $tipos_balanceado[] = [
-                'id_tipo_balanceado' => $row['id_tipo_balanceado'],
+            $tipos_alimentacion[] = [
+                'id_tipo_alimentacion' => $row['id_tipo_alimentacion'],
                 'nombre' => $row['nombre'],
-                'unidad' => $row['unidad'],
                 'id_compania' => $row['id_compania'],
                 'fecha_creacion' => $row['fecha_creacion'],
                 'fecha_actualizacion' => $row['fecha_actualizacion']
@@ -69,9 +67,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 
         $response = [
             'success' => true,
-            'data' => $tipos_balanceado,
-            'message' => 'Tipos de balanceado obtenidos exitosamente',
-            'total' => count($tipos_balanceado)
+            'data' => $tipos_alimentacion,
+            'message' => 'Tipos de alimentación obtenidos exitosamente',
+            'total' => count($tipos_alimentacion)
         ];
 
         echo json_encode($response);
@@ -86,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     }
 }
 
-// Manejar solicitudes POST para crear nuevo tipo de balanceado
+// Manejar solicitudes POST para crear nuevo tipo de alimentación
 elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
         // Obtener datos del cuerpo de la solicitud
@@ -103,7 +101,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         // Validar campos requeridos
-        $required_fields = ['nombre', 'unidad', 'id_compania', 'id_usuario_crea', 'id_usuario_actualiza'];
+        $required_fields = ['nombre', 'id_compania', 'id_usuario_crea', 'id_usuario_actualiza'];
         $missing_fields = [];
         
         foreach ($required_fields as $field) {
@@ -124,13 +122,12 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Extraer datos
         $nombre = trim($input['nombre']);
-        $unidad = trim($input['unidad']);
         $id_compania = intval($input['id_compania']);
         $id_usuario_crea = intval($input['id_usuario_crea']);
         $id_usuario_actualiza = intval($input['id_usuario_actualiza']);
 
-        // Verificar si el tipo de balanceado ya existe en esta compañía
-        $checkSql = "SELECT COUNT(*) as count FROM tipo_balanceado 
+        // Verificar si el tipo de alimentación ya existe en esta compañía
+        $checkSql = "SELECT COUNT(*) as count FROM tipo_alimentacion 
                      WHERE nombre = :nombre AND id_compania = :id_compania";
         $checkStmt = $conn->prepare($checkSql);
         $checkStmt->bindParam(':nombre', $nombre);
@@ -141,34 +138,32 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($checkResult['count'] > 0) {
             $response = [
                 'success' => false,
-                'message' => 'Ya existe un tipo de balanceado con ese nombre en esta compañía'
+                'message' => 'Ya existe un tipo de alimentación con ese nombre en esta compañía'
             ];
             http_response_code(409);
             echo json_encode($response);
             exit();
         }
 
-        // Insertar el nuevo tipo de balanceado
-        $insertSql = "INSERT INTO tipo_balanceado (nombre, unidad, id_compania, id_usuario_crea, id_usuario_actualiza) 
-                      VALUES (:nombre, :unidad, :id_compania, :id_usuario_crea, :id_usuario_actualiza)";
+        // Insertar el nuevo tipo de alimentación
+        $insertSql = "INSERT INTO tipo_alimentacion (nombre, id_compania, id_usuario_crea, id_usuario_actualiza) 
+                      VALUES (:nombre, :id_compania, :id_usuario_crea, :id_usuario_actualiza)";
         
         $insertStmt = $conn->prepare($insertSql);
         $insertStmt->bindParam(':nombre', $nombre);
-        $insertStmt->bindParam(':unidad', $unidad);
         $insertStmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
         $insertStmt->bindParam(':id_usuario_crea', $id_usuario_crea, PDO::PARAM_INT);
         $insertStmt->bindParam(':id_usuario_actualiza', $id_usuario_actualiza, PDO::PARAM_INT);
         
         if ($insertStmt->execute()) {
-            $id_tipo_balanceado = $conn->lastInsertId();
+            $id_tipo_alimentacion = $conn->lastInsertId();
             
             $response = [
                 'success' => true,
-                'message' => 'Tipo de balanceado creado exitosamente',
+                'message' => 'Tipo de alimentación creado exitosamente',
                 'data' => [
-                    'id_tipo_balanceado' => $id_tipo_balanceado,
+                    'id_tipo_alimentacion' => $id_tipo_alimentacion,
                     'nombre' => $nombre,
-                    'unidad' => $unidad,
                     'id_compania' => $id_compania,
                     'id_usuario_crea' => $id_usuario_crea,
                     'id_usuario_actualiza' => $id_usuario_actualiza
@@ -177,7 +172,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
             http_response_code(201);
             echo json_encode($response);
         } else {
-            throw new Exception("Error al insertar tipo de balanceado");
+            throw new Exception("Error al insertar tipo de alimentación");
         }
 
     } catch (Exception $e) {
@@ -190,37 +185,31 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-// Manejar solicitudes PUT para actualizar tipo de balanceado
+// Manejar solicitudes PUT para actualizar tipo de alimentación
 elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
     try {
         $input = json_decode(file_get_contents('php://input'), true);
         
-        if (!$input || !isset($input['id_tipo_balanceado'])) {
+        if (!$input || !isset($input['id_tipo_alimentacion'])) {
             $response = [
                 'success' => false,
-                'message' => 'ID de tipo de balanceado requerido'
+                'message' => 'ID de tipo de alimentación requerido'
             ];
             http_response_code(400);
             echo json_encode($response);
             exit();
         }
 
-        $id_tipo_balanceado = intval($input['id_tipo_balanceado']);
+        $id_tipo_alimentacion = intval($input['id_tipo_alimentacion']);
         $nombre = isset($input['nombre']) ? trim($input['nombre']) : null;
-        $unidad = isset($input['unidad']) ? trim($input['unidad']) : null;
 
         // Construir consulta de actualización dinámica
         $updates = [];
-        $params = [':id_tipo_balanceado' => $id_tipo_balanceado];
+        $params = [':id_tipo_alimentacion' => $id_tipo_alimentacion];
 
         if ($nombre !== null && $nombre !== '') {
             $updates[] = "nombre = :nombre";
             $params[':nombre'] = $nombre;
-        }
-
-        if ($unidad !== null && $unidad !== '') {
-            $updates[] = "unidad = :unidad";
-            $params[':unidad'] = $unidad;
         }
 
         if (empty($updates)) {
@@ -233,8 +222,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
             exit();
         }
 
-        $updateSql = "UPDATE tipo_balanceado SET " . implode(', ', $updates) . " 
-                      WHERE id_tipo_balanceado = :id_tipo_balanceado";
+        $updateSql = "UPDATE tipo_alimentacion SET " . implode(', ', $updates) . " 
+                      WHERE id_tipo_alimentacion = :id_tipo_alimentacion";
         
         $updateStmt = $conn->prepare($updateSql);
         
@@ -245,11 +234,11 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
         if ($updateStmt->execute()) {
             $response = [
                 'success' => true,
-                'message' => 'Tipo de balanceado actualizado exitosamente'
+                'message' => 'Tipo de alimentación actualizado exitosamente'
             ];
             echo json_encode($response);
         } else {
-            throw new Exception("Error al actualizar tipo de balanceado");
+            throw new Exception("Error al actualizar tipo de alimentación");
         }
 
     } catch (Exception $e) {
@@ -262,35 +251,35 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
     }
 }
 
-// Manejar solicitudes DELETE para eliminar tipo de balanceado
+// Manejar solicitudes DELETE para eliminar tipo de alimentación
 elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
     try {
         $input = json_decode(file_get_contents('php://input'), true);
         
-        if (!$input || !isset($input['id_tipo_balanceado'])) {
+        if (!$input || !isset($input['id_tipo_alimentacion'])) {
             $response = [
                 'success' => false,
-                'message' => 'ID de tipo de balanceado requerido'
+                'message' => 'ID de tipo de alimentación requerido'
             ];
             http_response_code(400);
             echo json_encode($response);
             exit();
         }
 
-        $id_tipo_balanceado = intval($input['id_tipo_balanceado']);
+        $id_tipo_alimentacion = intval($input['id_tipo_alimentacion']);
 
-        $deleteSql = "DELETE FROM tipo_balanceado WHERE id_tipo_balanceado = :id_tipo_balanceado";
+        $deleteSql = "DELETE FROM tipo_alimentacion WHERE id_tipo_alimentacion = :id_tipo_alimentacion";
         $deleteStmt = $conn->prepare($deleteSql);
-        $deleteStmt->bindParam(':id_tipo_balanceado', $id_tipo_balanceado, PDO::PARAM_INT);
+        $deleteStmt->bindParam(':id_tipo_alimentacion', $id_tipo_alimentacion, PDO::PARAM_INT);
         
         if ($deleteStmt->execute()) {
             $response = [
                 'success' => true,
-                'message' => 'Tipo de balanceado eliminado exitosamente'
+                'message' => 'Tipo de alimentación eliminado exitosamente'
             ];
             echo json_encode($response);
         } else {
-            throw new Exception("Error al eliminar tipo de balanceado");
+            throw new Exception("Error al eliminar tipo de alimentación");
         }
 
     } catch (Exception $e) {

@@ -1,20 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-// import { Bar, Doughnut } from 'react-chartjs-2';
 import * as XLSX from "xlsx";
 import config from "../../config";
 import { useAuth } from "../../context/AuthContext";
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-);
 
 // Función para obtener la fecha local en formato YYYY-MM-DD
 const getLocalDateString = () => {
@@ -25,12 +13,12 @@ const getLocalDateString = () => {
   return `${year}-${month}-${day}`;
 };
 
-export default function MonitoreoPiscinas() {
+export default function MonitoreoAlimentaciones() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
   const { idCompania, compania } = useAuth(); // Obtener ID de compañía y nombre del usuario autenticado
-  const [piscinas, setPiscinas] = useState([]);
-  const [filteredTableData, setfilteredTableData] = useState([]);
+  const [tiposAlimentacion, setTiposAlimentacion] = useState([]);
+  const [filteredTableData, setFilteredTableData] = useState([]);
   const [filters, setFilters] = useState({
     busqueda: ""
   });
@@ -39,8 +27,8 @@ export default function MonitoreoPiscinas() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Función para obtener datos de piscinas del backend
-  const fetchPiscinasData = async () => {
+  // Función para obtener datos de tipos de alimentación del backend
+  const fetchTiposAlimentacionData = async () => {
     // Verificar que el usuario tenga idCompania antes de hacer la petición
     if (!idCompania) {
       setError("No se pudo obtener la información de la compañía del usuario.");
@@ -54,7 +42,7 @@ export default function MonitoreoPiscinas() {
       const queryParams = new URLSearchParams();
       queryParams.append('id_compania', idCompania);
       
-      const response = await fetch(`${API_BASE_URL}/module/piscinas.php?${queryParams.toString()}`, {
+      const response = await fetch(`${API_BASE_URL}/module/tipo_alimentacion.php?${queryParams.toString()}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -69,16 +57,16 @@ export default function MonitoreoPiscinas() {
       const result = await response.json();
       
       if (result.success) {
-        setPiscinas(result.data);
-        setfilteredTableData(result.data);
+        setTiposAlimentacion(result.data);
+        setFilteredTableData(result.data);
         setError(null);
       } else {
-        throw new Error(result.message || "Error al obtener datos de piscinas");
+        throw new Error(result.message || "Error al obtener datos de tipos de alimentación");
       }
       
     } catch (err) {
-      console.error("Error fetching piscinas data:", err);
-      setError(err.message || "No se pudieron cargar los datos de piscinas.");
+      console.error("Error fetching tipos alimentacion data:", err);
+      setError(err.message || "No se pudieron cargar los datos de tipos de alimentación.");
       
     } finally {
       setLoading(false);
@@ -88,63 +76,25 @@ export default function MonitoreoPiscinas() {
   // Cargar datos iniciales al montar el componente
   useEffect(() => {
     if (idCompania) {
-      fetchPiscinasData();
+      fetchTiposAlimentacionData();
     }
   }, [idCompania]);
 
   // Aplicar filtros cuando cambien los filtros o los datos
   useEffect(() => {
-    let filtered = [...piscinas];
+    let filtered = [...tiposAlimentacion];
 
-    // Filtrar por búsqueda (código, ubicación)
+    // Filtrar por búsqueda (nombre)
     if (filters.busqueda) {
       const searchTerm = filters.busqueda.toLowerCase();
-      filtered = filtered.filter(p => 
-        p.codigo.toLowerCase().includes(searchTerm) ||
-        p.ubicacion.toLowerCase().includes(searchTerm)
+      filtered = filtered.filter(ta => 
+        ta.nombre.toLowerCase().includes(searchTerm)
       );
     }
 
-    setfilteredTableData(filtered);
+    setFilteredTableData(filtered);
     setCurrentPage(1); // Resetear página al filtrar
-  }, [filters, piscinas]);
-
-  // Cálculos estadísticos
-  const totalPiscinas = piscinas.length;
-  const hectareasTotal = piscinas.reduce((total, p) => total + p.hectareas, 0);
-  const promedioHectareasPorPiscina = totalPiscinas > 0 ? 
-    (hectareasTotal / totalPiscinas).toFixed(2) : 0;
-
-  // Configuración de gráficos
-  const hectareasPorPiscinaData = {
-    labels: piscinas.map(p => p.codigo),
-    datasets: [
-      {
-        label: 'Hectáreas',
-        data: piscinas.map(p => p.hectareas),
-        backgroundColor: 'rgba(59, 130, 246, 0.6)',
-        borderColor: 'rgba(59, 130, 246, 1)',
-        borderWidth: 1,
-      }
-    ]
-  };
-
-  // Distribución de tamaños de piscinas
-  const distribucionTamanoData = {
-    labels: ['Pequeñas (<5 ha)', 'Medianas (5-15 ha)', 'Grandes (>15 ha)'],
-    datasets: [
-      {
-        data: [
-          piscinas.filter(p => p.hectareas < 5).length,
-          piscinas.filter(p => p.hectareas >= 5 && p.hectareas <= 15).length,
-          piscinas.filter(p => p.hectareas > 15).length
-        ],
-        backgroundColor: ['rgba(34, 197, 94, 0.8)', 'rgba(59, 130, 246, 0.8)', 'rgba(168, 85, 247, 0.8)'],
-        borderColor: ['rgba(34, 197, 94, 1)', 'rgba(59, 130, 246, 1)', 'rgba(168, 85, 247, 1)'],
-        borderWidth: 1,
-      }
-    ]
-  };
+  }, [filters, tiposAlimentacion]);
 
   // Manejo de cambios en los filtros
   const handleFilterChange = (event) => {
@@ -176,26 +126,24 @@ export default function MonitoreoPiscinas() {
 
   // Descargar los datos filtrados como Excel
   const handleDownload = () => {
-    const dataToExport = filteredTableData.map((piscina, index) => ({
+    const dataToExport = filteredTableData.map((tipo, index) => ({
       'No.': index + 1,
-      'Código': piscina.codigo,
-      'Hectáreas': piscina.hectareas,
-      'Ubicación': piscina.ubicacion,
-      'Fecha Creación': formatDate(piscina.fecha_creacion),
-      'Última Actualización': formatDate(piscina.fecha_actualizacion)
+      'Nombre': tipo.nombre,
+      'Fecha Creación': formatDate(tipo.fecha_creacion),
+      'Última Actualización': formatDate(tipo.fecha_actualizacion)
     }));
 
     // Si no hay datos, crear un array con un objeto vacío para mostrar los encabezados
     const finalData = dataToExport.length > 0 ? dataToExport : [
-      { 'No.': '', 'Código': '', 'Hectáreas': '', 'Ubicación': '', 'Fecha Creación': '', 'Última Actualización': '' }
+      { 'No.': '', 'Nombre': '', 'Fecha Creación': '', 'Última Actualización': '' }
     ];
 
     const worksheet = XLSX.utils.json_to_sheet(finalData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Piscinas');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Tipos de Alimentación');
 
     const companiaSlug = compania ? compania.replace(/\s+/g, '_').toLowerCase() : 'compania';
-    const fileName = `monitoreo_piscinas_${companiaSlug}_${getLocalDateString()}.xlsx`;
+    const fileName = `monitoreo_alimentaciones_${companiaSlug}_${getLocalDateString()}.xlsx`;
     XLSX.writeFile(workbook, fileName);
   };
 
@@ -235,7 +183,7 @@ export default function MonitoreoPiscinas() {
         <div className="text-center">
           <p className="text-red-600 text-xl mb-4">Error: {error}</p>
           <button 
-            onClick={fetchPiscinasData}
+            onClick={fetchTiposAlimentacionData}
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
           >
             Reintentar
@@ -249,68 +197,9 @@ export default function MonitoreoPiscinas() {
     <div className="panel-directivo mx-auto p-4 space-y-6">
       {/* Header */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Monitoreo de Piscinas</h1>
-        <p className="text-gray-600">Panel de control para el muestra de piscinas de la compañía</p>
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">Monitoreo de Alimentaciones</h1>
+        <p className="text-gray-600">Panel de control para el monitoreo de tipos de alimentación de la compañía</p>
       </div>
-
-      {/* 
-      Estadísticas Generales
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Total de Piscinas</h3>
-          <p className="text-3xl font-bold text-blue-600">{totalPiscinas}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Hectáreas Totales</h3>
-          <p className="text-3xl font-bold text-purple-600">{hectareasTotal.toFixed(2)}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Promedio Hectáreas</h3>
-          <p className="text-3xl font-bold text-orange-600">{promedioHectareasPorPiscina}</p>
-        </div>
-      </div>
-
-      Gráficos
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="grafico-container bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">Hectáreas por Piscina</h3>
-          <Bar 
-            data={hectareasPorPiscinaData}
-            options={{
-              responsive: true,
-              plugins: {
-                legend: {
-                  display: false,
-                }
-              },
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  title: {
-                    display: true,
-                    text: 'Hectáreas'
-                  }
-                }
-              }
-            }}
-          />
-        </div>
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">Distribución por Tamaño</h3>
-          <Doughnut 
-            data={distribucionTamanoData}
-            options={{
-              responsive: true,
-              plugins: {
-                legend: {
-                  position: 'bottom',
-                }
-              }
-            }}
-          />
-        </div>
-      </div>
-      */}
 
       {/* Filtros y Tabla */}
       <div className="bg-white rounded-lg shadow-md p-6">
@@ -326,14 +215,14 @@ export default function MonitoreoPiscinas() {
                 name="busqueda"
                 value={filters.busqueda}
                 onChange={handleFilterChange}
-                placeholder="Buscar por código o ubicación..."
+                placeholder="Buscar por nombre..."
               />
             </div>
           </div>
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 space-y-4 md:space-y-0">
-          <h2 className="text-xl font-semibold text-gray-800">Lista de Piscinas</h2>
+          <h2 className="text-xl font-semibold text-gray-800">Lista de Tipos de Alimentación</h2>
         </div>
 
         {/* Tabla */}
@@ -343,9 +232,7 @@ export default function MonitoreoPiscinas() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No.</th>
-                <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
-                <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hectáreas</th>
-                <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ubicación</th>
+                <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Creación</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Última Actualización</th>
               </tr>
@@ -353,30 +240,24 @@ export default function MonitoreoPiscinas() {
             <tbody className="bg-white divide-y divide-gray-200">
               {currentData.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="py-4 text-center text-gray-500">
-                    No se encontraron piscinas
+                  <td colSpan="4" className="py-4 text-center text-gray-500">
+                    No se encontraron tipos de alimentación
                   </td>
                 </tr>
               ) : (
-                currentData.map((piscina, index) => (
-                  <tr key={piscina.id_piscina} className="hover:bg-gray-50">
+                currentData.map((tipo, index) => (
+                  <tr key={tipo.id_tipo_alimentacion} className="hover:bg-gray-50">
                     <td className="py-2 px-4 border-b text-sm text-gray-900">
                       {indexOfFirstItem + index + 1}
                     </td>
                     <td className="py-2 px-4 border-b text-sm font-medium text-gray-900">
-                      {piscina.codigo}
+                      {tipo.nombre}
                     </td>
                     <td className="py-2 px-4 border-b text-sm text-gray-900">
-                      {piscina.hectareas}
+                      {formatDate(tipo.fecha_creacion)}
                     </td>
                     <td className="py-2 px-4 border-b text-sm text-gray-900">
-                      {piscina.ubicacion}
-                    </td>
-                    <td className="py-2 px-4 border-b text-sm text-gray-900">
-                      {formatDate(piscina.fecha_creacion)}
-                    </td>
-                    <td className="py-2 px-4 border-b text-sm text-gray-900">
-                      {formatDate(piscina.fecha_actualizacion)}
+                      {formatDate(tipo.fecha_actualizacion)}
                     </td>
                   </tr>
                 ))
@@ -387,7 +268,7 @@ export default function MonitoreoPiscinas() {
         </div>
 
         {/* Paginación */}
-        <div className="table-controls-wrapper">
+        <div className="table-controls-wrapper mt-4">
           <div className="pagination-wrapper">
             <div className="pagination flex items-center gap-2">
               <button
@@ -423,11 +304,11 @@ export default function MonitoreoPiscinas() {
           </div>
 
           <div className="action-buttons-wrapper">
-            {/* Botón para agregar nueva piscina */}
+            {/* Botón para agregar nuevo tipo de alimentación */}
             <button
-              onClick={() => navigate('/layout/form/piscina')}
+              onClick={() => navigate('/layout/form/alimentacion')}
               className="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-blue-700 transition-colors duration-200"
-              title="Agregar nueva piscina"
+              title="Agregar nuevo tipo de alimentación"
             >
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
@@ -438,7 +319,7 @@ export default function MonitoreoPiscinas() {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Agregar Piscina
+              Agregar Alimentación
             </button>
 
             <button

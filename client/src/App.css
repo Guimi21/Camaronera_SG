@@ -1560,15 +1560,7 @@ table tr:hover {
     }
 }
 
-@media (min-width: 714px) and (max-width: 768px) {
-    .admin-options {
-        margin-bottom: 200px;
-    }
 
-    .admin-options button {
-        padding: 1rem 0rem;
-    }
-}
 
 /* Tabletas - MEJORADO */
 @media (min-width: 769px) and (max-width: 1024px) {

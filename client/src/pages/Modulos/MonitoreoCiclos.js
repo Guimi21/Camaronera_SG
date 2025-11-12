@@ -113,13 +113,51 @@ export default function MonitoreoCiclos() {
   };
 
   // Formatear fecha para mostrar
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    // Dividir la fecha en partes (YYYY-MM-DD) para evitar problemas de zona horaria
-    const [year, month, day] = dateString.split('T')[0].split('-');
-    // Crear fecha sin conversión de zona horaria
-    const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString('es-ES');
+  const formatDate = (dateString, includeTime = true) => {
+    if (!dateString || dateString === null || dateString === undefined || dateString === 'null') return "N/A";
+    
+    try {
+      if (!includeTime) {
+        // Para fechas sin hora, extraer solo la parte de fecha para evitar problemas de zona horaria
+        const dateStr = String(dateString).trim();
+        
+        if (!dateStr) return "N/A";
+        
+        // Extraer solo la parte de fecha (YYYY-MM-DD)
+        let datePart = dateStr.split('T')[0]; // Maneja formato ISO
+        if (datePart === dateStr && dateStr.includes(' ')) {
+          datePart = dateStr.split(' ')[0]; // Maneja formato con espacio
+        }
+        
+        const [year, month, day] = datePart.split('-');
+        
+        // Validar que los valores sean válidos
+        if (!year || !month || !day || isNaN(year) || isNaN(month) || isNaN(day)) {
+          return "N/A";
+        }
+        
+        // Crear fecha sin conversión de zona horaria
+        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        return date.toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        });
+      } else {
+        // Para fechas con hora, usar el método estándar
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+    } catch (error) {
+      console.error("Error formatting date:", dateString, error);
+      return "N/A";
+    }
   };
 
   // Descargar los datos filtrados como Excel
@@ -127,17 +165,22 @@ export default function MonitoreoCiclos() {
     const dataToExport = filteredTableData.map((ciclo, index) => ({
       'No.': index + 1,
       'Piscina': ciclo.codigo_piscina,
-      'Fecha Siembra': formatDate(ciclo.fecha_siembra),
-      'Fecha Cosecha': formatDate(ciclo.fecha_cosecha),
+      'Fecha Siembra': formatDate(ciclo.fecha_siembra, false),
+      'Fecha Cosecha': formatDate(ciclo.fecha_cosecha, false),
       'Cantidad Siembra': ciclo.cantidad_siembra,
       'Densidad': ciclo.densidad,
       'Tipo Siembra': ciclo.tipo_siembra,
-      'Estado': ciclo.estado
+      'Tipo Alimentación': ciclo.nombre_tipo_alimentacion || 'N/A',
+      'Biomasa de Cosecha (lbs)': ciclo.biomasa_cosecha || 'N/A',
+      'Libras por Hectárea': ciclo.libras_por_hectarea || 'N/A',
+      'Promedio Incremento Peso': ciclo.promedio_incremento_peso || 'N/A',
+      'Estado': ciclo.estado,
+      'Última Actualización': formatDate(ciclo.fecha_actualizacion, true)
     }));
 
     // Si no hay datos, crear un array con un objeto vacío para mostrar los encabezados
     const finalData = dataToExport.length > 0 ? dataToExport : [
-      { 'No.': '', 'Piscina': '', 'Fecha Siembra': '', 'Fecha Cosecha': '', 'Cantidad Siembra': '', 'Densidad': '', 'Tipo Siembra': '', 'Estado': '' }
+      { 'No.': '', 'Piscina': '', 'Fecha Siembra': '', 'Fecha Cosecha': '', 'Cantidad Siembra': '', 'Densidad': '', 'Tipo Siembra': '', 'Tipo Alimentación': '', 'Biomasa de Cosecha (lbs)': '', 'Libras por Hectárea': '', 'Promedio Incremento Peso': '', 'Estado': '', 'Última Actualización': '' }
     ];
 
     const worksheet = XLSX.utils.json_to_sheet(finalData);
@@ -249,14 +292,19 @@ export default function MonitoreoCiclos() {
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad Siembra</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Densidad</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo Siembra</th>
+                <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo Alimentación</th>
+                <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Biomasa Cosecha (lbs)</th>
+                <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Libras por Hectárea</th>
+                <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Promedio Inc. Peso</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Última Actualización</th>
                 <th className="py-2 px-4 border-b text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {currentData.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="py-4 text-center text-gray-500">
+                  <td colSpan="14" className="py-4 text-center text-gray-500">
                     No se encontraron ciclos productivos
                   </td>
                 </tr>
@@ -266,23 +314,35 @@ export default function MonitoreoCiclos() {
                     <td className="py-2 px-4 border-b text-sm text-gray-900">
                       {indexOfFirstItem + index + 1}
                     </td>
-                    <td className="py-2 px-4 border-b text-sm font-medium text-gray-900">
+                    <td className="py-2 px-4 border-b text-sm text-gray-900">
                       {ciclo.codigo_piscina}
                     </td>
                     <td className="py-2 px-4 border-b text-sm text-gray-900">
-                      {formatDate(ciclo.fecha_siembra)}
+                      {formatDate(ciclo.fecha_siembra, false)}
                     </td>
                     <td className="py-2 px-4 border-b text-sm text-gray-900">
-                      {formatDate(ciclo.fecha_cosecha)}
+                      {formatDate(ciclo.fecha_cosecha, false)}
                     </td>
                     <td className="py-2 px-4 border-b text-sm text-gray-900">
-                      {ciclo.cantidad_siembra ? ciclo.cantidad_siembra.toLocaleString() : 'N/A'}
+                      {ciclo.cantidad_siembra ? ciclo.cantidad_siembra : 'N/A'}
                     </td>
                     <td className="py-2 px-4 border-b text-sm text-gray-900">
                       {ciclo.densidad}
                     </td>
                     <td className="py-2 px-4 border-b text-sm text-gray-900">
                       {ciclo.tipo_siembra}
+                    </td>
+                    <td className="py-2 px-4 border-b text-sm text-gray-900">
+                      {ciclo.nombre_tipo_alimentacion ? ciclo.nombre_tipo_alimentacion : 'N/A'}
+                    </td>
+                    <td className="py-2 px-4 border-b text-sm text-gray-900">
+                      {ciclo.biomasa_cosecha ? ciclo.biomasa_cosecha : 'N/A'}
+                    </td>
+                    <td className="py-2 px-4 border-b text-sm text-gray-900">
+                      {ciclo.libras_por_hectarea || 'N/A'}
+                    </td>
+                    <td className="py-2 px-4 border-b text-sm text-gray-900">
+                      {ciclo.promedio_incremento_peso || 'N/A'}
                     </td>
                     <td className="py-2 px-4 border-b text-sm">
                       <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
@@ -292,6 +352,9 @@ export default function MonitoreoCiclos() {
                       }`}>
                         {ciclo.estado === 'EN_CURSO' ? 'En Curso' : 'Finalizado'}
                       </span>
+                    </td>
+                    <td className="py-2 px-4 border-b text-sm text-gray-900">
+                      {formatDate(ciclo.fecha_actualizacion, true)}
                     </td>
                     <td className="py-2 px-4 border-b text-sm text-center">
                       {ciclo.estado === 'FINALIZADO' ? (

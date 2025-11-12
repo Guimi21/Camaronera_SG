@@ -3,14 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
 
-export default function BalanceadoForm() {
+export default function AlimentacionForm() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
   const { idCompania, idUsuario } = useAuth();
   
   const [formData, setFormData] = useState({
-    nombre: '',
-    unidad: ''
+    nombre: ''
   });
   
   const [loading, setLoading] = useState(false);
@@ -37,12 +36,7 @@ export default function BalanceadoForm() {
     
     // Validaciones básicas
     if (!formData.nombre.trim()) {
-      setError('El nombre del tipo de balanceado es requerido.');
-      return;
-    }
-    
-    if (!formData.unidad.trim()) {
-      setError('La unidad es requerida.');
+      setError('El nombre del tipo de alimentación es requerido.');
       return;
     }
     
@@ -57,13 +51,12 @@ export default function BalanceadoForm() {
     try {
       const dataToSend = {
         nombre: formData.nombre.trim(),
-        unidad: formData.unidad.trim(),
         id_compania: idCompania,
         id_usuario_crea: idUsuario,
         id_usuario_actualiza: idUsuario
       };
 
-      const response = await fetch(`${API_BASE_URL}/module/tipos_balanceado.php`, {
+      const response = await fetch(`${API_BASE_URL}/module/tipo_alimentacion.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -75,13 +68,13 @@ export default function BalanceadoForm() {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        // Éxito - redirigir al monitoreo de balanceados
-        navigate('/layout/dashboard/monitoreo-balanceados');
+        // Éxito - redirigir al monitoreo de alimentaciones
+        navigate('/layout/dashboard/monitoreo-alimentaciones');
       } else {
-        setError(result.message || 'Error al crear el tipo de balanceado. Por favor intente nuevamente.');
+        setError(result.message || 'Error al crear el tipo de alimentación. Por favor intente nuevamente.');
       }
     } catch (error) {
-      console.error('Error creating tipo balanceado:', error);
+      console.error('Error creating tipo alimentacion:', error);
       setError('Error de conexión. Por favor intente nuevamente.');
     } finally {
       setLoading(false);
@@ -89,7 +82,7 @@ export default function BalanceadoForm() {
   };
 
   const handleCancel = () => {
-    navigate('/layout/dashboard/monitoreo-balanceados');
+    navigate('/layout/dashboard/monitoreo-alimentaciones');
   };
 
   // Componente para mostrar mensaje de validación
@@ -105,8 +98,8 @@ export default function BalanceadoForm() {
   return (
     <div className="form-container max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Agregar Nuevo Tipo de Balanceado</h1>
-        <p className="text-gray-600">Complete los campos para registrar un nuevo tipo de balanceado en el sistema.</p>
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">Agregar Nuevo Tipo de Alimentación</h1>
+        <p className="text-gray-600">Complete los campos para registrar un nuevo tipo de alimentación en el sistema.</p>
       </div>
 
       {error && (
@@ -121,10 +114,10 @@ export default function BalanceadoForm() {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
-          {/* Nombre del Tipo de Balanceado */}
+          {/* Nombre del Tipo de Alimentación */}
           <div>
             <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-2">
-              Nombre del Tipo de Balanceado *
+              Nombre del Tipo de Alimentación *
             </label>
             <input
               type="text"
@@ -133,35 +126,13 @@ export default function BalanceadoForm() {
               value={formData.nombre}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Ej: Balanceado Premium, Iniciador, etc."
+              placeholder="Ej: Alimento Natural, Balanceado Pelletizado, etc."
               maxLength={50}
               required
             />
-            {formData.nombre === '' && <ValidationMessage fieldName="un Nombre del Tipo de Balanceado" />}
+            {formData.nombre === '' && <ValidationMessage fieldName="un Nombre del Tipo de Alimentación" />}
             <p className="text-xs text-gray-500 mt-1 leyenda">
-              Nombre del tipo de balanceado (máximo 50 caracteres)
-            </p>
-          </div>
-
-          {/* Unidad */}
-          <div>
-            <label htmlFor="unidad" className="block text-sm font-medium text-gray-700 mb-2">
-              Unidad *
-            </label>
-            <input
-              type="text"
-              id="unidad"
-              name="unidad"
-              value={formData.unidad}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Ej: kg, lb, sacos, etc."
-              maxLength={20}
-              required
-            />
-            {formData.unidad === '' && <ValidationMessage fieldName="una Unidad" />}
-            <p className="text-xs text-gray-500 mt-1 leyenda">
-              Unidad de medida (máximo 20 caracteres)
+              Nombre del tipo de alimentación (máximo 50 caracteres)
             </p>
           </div>
 
@@ -184,10 +155,10 @@ export default function BalanceadoForm() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Guardando Tipo de Balanceado...
+                Guardando Tipo de Alimentación...
               </span>
             ) : (
-              'Guardar Tipo de Balanceado'
+              'Guardar Tipo de Alimentación'
             )}
           </button>
 

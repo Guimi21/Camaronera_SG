@@ -423,6 +423,37 @@ try {
         exit();
     }
     
+    // Verificar si se solicita el promedio de incremento de peso de un ciclo específico
+    if (isset($_GET['id_ciclo']) && isset($_GET['promedio_incremento_peso'])) {
+        $id_ciclo = $_GET['id_ciclo'];
+        
+        // Consulta para calcular el promedio de incremento de peso del ciclo
+        $promedioQuery = "
+            SELECT 
+                AVG(incremento_peso) as promedio_incremento_peso,
+                COUNT(*) as total_muestras
+            FROM muestra 
+            WHERE id_ciclo = ? AND incremento_peso IS NOT NULL
+        ";
+        $promedioStmt = $conn->prepare($promedioQuery);
+        $promedioStmt->bindValue(1, $id_ciclo);
+        $promedioStmt->execute();
+        $promedioResult = $promedioStmt->fetch(PDO::FETCH_ASSOC);
+        
+        $response = [
+            'success' => true,
+            'data' => [
+                'id_ciclo' => $id_ciclo,
+                'promedio_incremento_peso' => $promedioResult['promedio_incremento_peso'] ? floatval($promedioResult['promedio_incremento_peso']) : null,
+                'total_muestras' => (int)$promedioResult['total_muestras']
+            ]
+        ];
+        
+        http_response_code(200);
+        echo json_encode($response);
+        exit();
+    }
+    
     // Verificar si se solicita el último muestra de un ciclo específico
     if (isset($_GET['id_ciclo']) && isset($_GET['ultimo'])) {
         $id_ciclo = $_GET['id_ciclo'];
@@ -524,7 +555,8 @@ try {
             s.indice_supervivencia AS 'Sobrev. Actual %',
             s.observaciones AS 'Observaciones',
             s.fecha_muestra AS 'Fecha Muestra',
-            s.fecha_creacion AS 'Fecha Creación'
+            s.fecha_creacion AS 'Fecha Creación',
+            s.fecha_actualizacion AS 'Última Actualización'
         FROM
             muestra s
             INNER JOIN ciclo_productivo cp ON cp.id_ciclo = s.id_ciclo
@@ -534,7 +566,7 @@ try {
         WHERE
             s.id_ciclo = ? AND s.id_compania = ?
         GROUP BY
-            s.id_muestra, s.id_ciclo, p.id_piscina, cp.id_ciclo, s.fecha_creacion
+            s.id_muestra, s.id_ciclo, p.id_piscina, cp.id_ciclo, s.fecha_creacion, s.fecha_actualizacion
         ORDER BY 
             s.fecha_muestra DESC,
             s.fecha_creacion DESC
@@ -603,7 +635,8 @@ try {
         s.indice_supervivencia AS 'Sobrev. Actual %',
         s.observaciones AS 'Observaciones',
         s.fecha_muestra AS 'Fecha Muestra',
-        s.fecha_creacion AS 'Fecha Creación'
+        s.fecha_creacion AS 'Fecha Creación',
+        s.fecha_actualizacion AS 'Última Actualización'
     FROM
         piscina p
         INNER JOIN ciclo_productivo cp ON cp.id_piscina = p.id_piscina
@@ -663,7 +696,8 @@ try {
         s.indice_supervivencia,
         s.observaciones,
         s.fecha_muestra,
-        s.fecha_creacion
+        s.fecha_creacion,
+        s.fecha_actualizacion
     ORDER BY 
         p.id_piscina, s.fecha_muestra desc, s.fecha_creacion desc;";
 
