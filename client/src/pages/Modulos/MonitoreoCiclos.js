@@ -20,7 +20,9 @@ export default function MonitoreoCiclos() {
   const [ciclos, setCiclos] = useState([]);
   const [filteredTableData, setFilteredTableData] = useState([]);
   const [filters, setFilters] = useState({
-    busqueda: "",
+    piscina: "todos",
+    tipo_siembra: "todos",
+    tipo_alimentacion: "todos",
     estado: "todos"
   });
   const [currentPage, setCurrentPage] = useState(1);
@@ -85,13 +87,19 @@ export default function MonitoreoCiclos() {
   useEffect(() => {
     let filtered = [...ciclos];
 
-    // Filtrar por búsqueda (código de piscina, tipo de siembra)
-    if (filters.busqueda) {
-      const searchTerm = filters.busqueda.toLowerCase();
-      filtered = filtered.filter(c => 
-        c.codigo_piscina.toLowerCase().includes(searchTerm) ||
-        c.tipo_siembra.toLowerCase().includes(searchTerm)
-      );
+    // Filtrar por piscina
+    if (filters.piscina && filters.piscina !== "todos") {
+      filtered = filtered.filter(c => String(c.codigo_piscina) === String(filters.piscina));
+    }
+
+    // Filtrar por tipo de siembra
+    if (filters.tipo_siembra && filters.tipo_siembra !== "todos") {
+      filtered = filtered.filter(c => String(c.tipo_siembra) === String(filters.tipo_siembra));
+    }
+
+    // Filtrar por tipo de alimentación
+    if (filters.tipo_alimentacion && filters.tipo_alimentacion !== "todos") {
+      filtered = filtered.filter(c => String(c.nombre_tipo_alimentacion || "") === String(filters.tipo_alimentacion));
     }
 
     // Filtrar por estado
@@ -102,6 +110,19 @@ export default function MonitoreoCiclos() {
     setFilteredTableData(filtered);
     setCurrentPage(1); // Resetear página al filtrar
   }, [filters, ciclos]);
+
+  // Helper para obtener valores únicos para selects
+  const uniqueValues = (key) => {
+    const set = new Set();
+    ciclos.forEach(c => {
+      let v = c[key];
+      if (key === 'tipo_alimentacion') {
+        v = c.nombre_tipo_alimentacion;
+      }
+      if (v !== null && v !== undefined && String(v).trim() !== '') set.add(String(v));
+    });
+    return Array.from(set).sort();
+  };
 
   // Manejo de cambios en los filtros
   const handleFilterChange = (event) => {
@@ -250,16 +271,50 @@ export default function MonitoreoCiclos() {
           <h3 className="mb-4">Filtros</h3>
           <div className="flex flex-wrap gap-4">
             <div className="flex flex-col">
-              <label htmlFor="busqueda">Búsqueda</label>
-              <input
-                type="text"
-                id="busqueda"
-                name="busqueda"
-                value={filters.busqueda}
+              <label htmlFor="piscina">Piscina</label>
+              <select
+                id="piscina"
+                name="piscina"
+                value={filters.piscina}
                 onChange={handleFilterChange}
-                placeholder="Buscar por piscina o tipo siembra..."
-              />
+              >
+                <option value="todos">Todas las piscinas</option>
+                {uniqueValues('codigo_piscina').map(v => (
+                  <option key={v} value={v}>{v}</option>
+                ))}
+              </select>
             </div>
+
+            <div className="flex flex-col">
+              <label htmlFor="tipo_siembra">Tipo Siembra</label>
+              <select
+                id="tipo_siembra"
+                name="tipo_siembra"
+                value={filters.tipo_siembra}
+                onChange={handleFilterChange}
+              >
+                <option value="todos">Todos los tipos</option>
+                {uniqueValues('tipo_siembra').map(v => (
+                  <option key={v} value={v}>{v}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col">
+              <label htmlFor="tipo_alimentacion">Tipo Alimentación</label>
+              <select
+                id="tipo_alimentacion"
+                name="tipo_alimentacion"
+                value={filters.tipo_alimentacion}
+                onChange={handleFilterChange}
+              >
+                <option value="todos">Todos los tipos</option>
+                {uniqueValues('tipo_alimentacion').map(v => (
+                  <option key={v} value={v}>{v}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="flex flex-col">
               <label htmlFor="estado">Estado</label>
               <select
