@@ -12,11 +12,11 @@ const getLocalDateString = () => {
   return `${year}-${month}-${day}`;
 };
 
-export default function GruposEmpresariales() {
+export default function Perfiles() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
-  const [grupos, setGrupos] = useState([]);
-  const [filteredGrupos, setFilteredGrupos] = useState([]);
+  const [perfiles, setPerfiles] = useState([]);
+  const [filteredPerfiles, setFilteredPerfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -25,16 +25,16 @@ export default function GruposEmpresariales() {
     busqueda: ""
   });
 
-  // Obtener grupos empresariales al montar el componente
+  // Obtener perfiles al montar el componente
   useEffect(() => {
-    fetchGrupos();
+    fetchPerfiles();
   }, []);
 
-  const fetchGrupos = async () => {
+  const fetchPerfiles = async () => {
     try {
       setLoading(true);
 
-      const response = await fetch(`${API_BASE_URL}/module/grupos_empresariales.php`, {
+      const response = await fetch(`${API_BASE_URL}/module/perfiles.php`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -49,16 +49,16 @@ export default function GruposEmpresariales() {
       const result = await response.json();
 
       if (result.success) {
-        setGrupos(result.data);
-        setFilteredGrupos(result.data);
+        setPerfiles(result.data);
+        setFilteredPerfiles(result.data);
         setError(null);
       } else {
-        throw new Error(result.message || "Error al obtener grupos empresariales");
+        throw new Error(result.message || "Error al obtener perfiles");
       }
 
     } catch (err) {
-      console.error("Error fetching grupos:", err);
-      setError(err.message || "No se pudieron cargar los grupos empresariales.");
+      console.error("Error fetching perfiles:", err);
+      setError(err.message || "No se pudieron cargar los perfiles.");
     } finally {
       setLoading(false);
     }
@@ -66,20 +66,20 @@ export default function GruposEmpresariales() {
 
   // Aplicar filtros cuando cambien los filtros o los datos
   useEffect(() => {
-    let filtered = [...grupos];
+    let filtered = [...perfiles];
 
     // Filtrar por búsqueda (nombre, descripción)
     if (filters.busqueda) {
       const searchTerm = filters.busqueda.toLowerCase();
-      filtered = filtered.filter(g =>
-        g.nombre.toLowerCase().includes(searchTerm) ||
-        (g.descripcion && g.descripcion.toLowerCase().includes(searchTerm))
+      filtered = filtered.filter(p =>
+        p.nombre.toLowerCase().includes(searchTerm) ||
+        (p.descripcion && p.descripcion.toLowerCase().includes(searchTerm))
       );
     }
 
-    setFilteredGrupos(filtered);
+    setFilteredPerfiles(filtered);
     setCurrentPage(1); // Resetear página al filtrar
-  }, [filters, grupos]);
+  }, [filters, perfiles]);
 
   // Manejo de cambios en los filtros
   const handleFilterChange = (event) => {
@@ -103,43 +103,44 @@ export default function GruposEmpresariales() {
     });
   };
 
-
-
   // Descargar los datos filtrados como Excel
   const handleDownload = () => {
     // Preparar datos para Excel
-    const excelData = filteredGrupos.map((grupo, index) => ({
+    const excelData = filteredPerfiles.map((perfil, index) => ({
       'No.': index + 1,
-      'Nombre': grupo.nombre,
-      'Descripción': grupo.descripcion || 'N/A',
-      'Fecha Creación': formatDate(grupo.fecha_creacion),
-      'Última Actualización': formatDate(grupo.fecha_actualizacion)
+      'Nombre': perfil.nombre,
+      'Descripción': perfil.descripcion || 'N/A',
+      'Menús Asociados': perfil.menus && perfil.menus.length > 0 
+        ? perfil.menus.map(m => m.nombre).join(', ')
+        : 'Sin menús',
+      'Fecha Creación': formatDate(perfil.fecha_creacion),
+      'Última Actualización': formatDate(perfil.fecha_actualizacion)
     }));
 
     // Si no hay datos, crear un array con un objeto vacío para mostrar los encabezados
     const finalData = excelData.length > 0 ? excelData : [
-      { 'No.': '', 'Nombre': '', 'Descripción': '', 'Fecha Creación': '', 'Última Actualización': '' }
+      { 'No.': '', 'Nombre': '', 'Descripción': '', 'Menús Asociados': '', 'Fecha Creación': '', 'Última Actualización': '' }
     ];
 
     const worksheet = XLSX.utils.json_to_sheet(finalData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Grupos Empresariales');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Perfiles');
 
-    const fileName = `reporte_grupos_empresariales_${getLocalDateString()}.xlsx`;
+    const fileName = `reporte_perfiles_${getLocalDateString()}.xlsx`;
     XLSX.writeFile(workbook, fileName);
   };
 
   // Paginación
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentGrupos = filteredGrupos.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredGrupos.length / itemsPerPage);
+  const currentPerfiles = filteredPerfiles.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredPerfiles.length / itemsPerPage);
 
   return (
     <div className="panel-administrador bg-white rounded-lg shadow-md p-4 sm:p-6 lg:p-8 max-w-full">
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h1 className="text-2xl font-bold mb-2 text-blue-800">Gestión de Grupos Empresariales</h1>
-        <p className="text-gray-600 mb-6">Monitoreo y creación de grupos empresariales.</p>
+        <h1 className="text-2xl font-bold mb-2 text-blue-800">Gestión de Perfiles</h1>
+        <p className="text-gray-600 mb-6">Monitoreo y administración de perfiles del sitio web.</p>
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -150,7 +151,7 @@ export default function GruposEmpresariales() {
         {loading && (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-            <span className="ml-3">Cargando grupos empresariales...</span>
+            <span className="ml-3">Cargando perfiles...</span>
           </div>
         )}
 
@@ -175,7 +176,7 @@ export default function GruposEmpresariales() {
               </div>
             </div>
 
-            {/* Tabla de grupos empresariales */}
+            {/* Tabla de perfiles */}
             <div className="table-container mb-4 bg-white rounded-lg shadow">
               <div className="overflow-x-auto">
                 <table className="min-w-full">
@@ -184,35 +185,62 @@ export default function GruposEmpresariales() {
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">#</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Nombre</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Descripción</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Menús Asociados</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Fecha Creación</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Última Actualización</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {currentGrupos.length > 0 ? (
-                      currentGrupos.map((grupo, index) => (
-                        <tr key={grupo.id_grupo_empresarial} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                    {currentPerfiles.length > 0 ? (
+                      currentPerfiles.map((perfil, index) => (
+                        <tr key={perfil.id_perfil} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                           <td className="py-3 px-4 border-b whitespace-nowrap font-semibold text-blue-600">
                             {indexOfFirstItem + index + 1}
                           </td>
                           <td className="py-3 px-4 border-b whitespace-nowrap font-medium">
-                            {grupo.nombre}
+                            {perfil.nombre}
                           </td>
                           <td className="py-3 px-4 border-b">
-                            {grupo.descripcion || 'N/A'}
+                            {perfil.descripcion || 'N/A'}
+                          </td>
+                          <td className="py-3 px-4 border-b">
+                            {perfil.menus && perfil.menus.length > 0 ? (
+                              <div className="space-y-1">
+                                {perfil.menus.map((menu) => (
+                                  <div key={menu.id_menu} className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs border border-blue-200 w-fit">
+                                    {menu.nombre}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-gray-500 italic">Sin menús</span>
+                            )}
                           </td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">
-                            {formatDate(grupo.fecha_creacion)}
+                            {formatDate(perfil.fecha_creacion)}
                           </td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">
-                            {formatDate(grupo.fecha_actualizacion)}
+                            {formatDate(perfil.fecha_actualizacion)}
+                          </td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">
+                            <button
+                              onClick={() => navigate(`/layout/form/perfil/${perfil.id_perfil}`)}
+                              className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors duration-200"
+                              title="Editar perfil"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              Editar
+                            </button>
                           </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="5" className="py-4 px-4 text-center text-gray-500">
-                          No hay grupos empresariales disponibles
+                        <td colSpan="7" className="py-4 px-4 text-center text-gray-500">
+                          No hay perfiles disponibles
                         </td>
                       </tr>
                     )}
@@ -261,22 +289,16 @@ export default function GruposEmpresariales() {
               </div>
 
               <div className="action-buttons-wrapper">
-                {/* Botón para agregar nuevo grupo empresarial */}
+                {/* Botón para crear nuevo perfil */}
                 <button
-                  onClick={() => navigate('/layout/form/grupo-empresarial')}
-                  className="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-blue-700 transition-colors duration-200"
-                  title="Agregar nuevo grupo empresarial"
+                  onClick={() => navigate('/layout/form/perfil')}
+                  className="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-blue-700 transition"
+                  disabled={loading}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
-                  Agregar Grupo
+                  Nuevo Perfil
                 </button>
 
                 {/* Botón de descarga */}

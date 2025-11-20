@@ -315,8 +315,18 @@ export default function Usuarios() {
                           <td className="py-3 px-4 border-b whitespace-nowrap">
                             {usuario.perfiles || 'N/A'}
                           </td>
-                          <td className="py-3 px-4 border-b whitespace-nowrap">
-                            {usuario.companias || 'N/A'}
+                          <td className="py-3 px-4 border-b">
+                            {usuario.companias ? (
+                              <div className="space-y-1">
+                                {usuario.companias.split(', ').map((compania, idx) => (
+                                  <div key={idx} className="bg-purple-50 text-purple-700 px-2 py-1 rounded text-xs border border-purple-200 w-fit">
+                                    {compania}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <span>N/A</span>
+                            )}
                           </td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">
                             {getEstadoBadge(usuario.estado)}

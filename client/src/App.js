@@ -7,10 +7,11 @@ import Home from "./pages/Home";
 
 // Módulos
 import Administrador from "./pages/Modulos/Administrador";
-import Digitador from "./pages/Modulos/Digitador";
 import Directivo from "./pages/Modulos/Directivo";
-import Dashboard from "./pages/Modulos/Dashboard";
 import GruposEmpresariales from "./pages/Modulos/GruposEmpresariales";
+import Modulos from "./pages/Modulos/Modulos";
+import Menus from "./pages/Modulos/Menus";
+import Perfiles from "./pages/Modulos/Perfiles";
 import MonitoreoPiscinas from "./pages/Modulos/MonitoreoPiscinas";
 import MonitoreoBalanceados from "./pages/Modulos/MonitoreoBalanceados";
 import MonitoreoAlimentaciones from "./pages/Modulos/MonitoreoAlimentaciones";
@@ -30,6 +31,9 @@ import AlimentacionForm from "./pages/Modulos/Form/AlimentacionForm";
 import CompaniaForm from "./pages/Modulos/Form/CompaniaForm";
 import CompaniaEditForm from "./pages/Modulos/Form/CompaniaEditForm";
 import GrupoEmpresarialForm from "./pages/Modulos/Form/GrupoEmpresarialForm";
+import ModuloForm from "./pages/Modulos/Form/ModuloForm";
+import MenuForm from "./pages/Modulos/Form/MenuForm";
+import PerfilForm from "./pages/Modulos/Form/PerfilForm";
 import UsuarioForm from "./pages/Modulos/Form/UsuarioForm";
 import UsuarioEditForm from "./pages/Modulos/Form/UsuarioEditForm";
 
@@ -44,8 +48,6 @@ function DefaultModuleRedirect() {
       return <Navigate to="dashboard/grupos-empresariales" replace />;
     case "Administrador":
       return <Navigate to="dashboard/companias" replace />;
-    case "Digitador":
-      return <Navigate to="digitador" replace />;
     case "Directivo":
       return <Navigate to="dashboard/reporte" replace />;
     default:
@@ -79,9 +81,11 @@ function App() {
             {/* Módulos */}
             <Route path="dashboard/companias" element={<Administrador />} />
             <Route path="dashboard/grupos-empresariales" element={<GruposEmpresariales />} />
+            <Route path="dashboard/modulos" element={<Modulos />} />
+            <Route path="dashboard/menus" element={<Menus />} />
+            <Route path="dashboard/perfiles" element={<Perfiles />} />
             <Route path="dashboard/usuarios" element={<Usuarios />} />
             <Route path="dashboard/usuarios-admin" element={<UsuariosAdmin />} />
-            <Route path="digitador" element={<Digitador />} />
             <Route path="dashboard/reporte" element={<Directivo />} />
 
             {/* Formularios */}
@@ -96,6 +100,12 @@ function App() {
             <Route path="form/compania" element={<CompaniaForm />} />
             <Route path="form/compania/:idCompania" element={<CompaniaEditForm />} />
             <Route path="form/grupo-empresarial" element={<GrupoEmpresarialForm />} />
+            <Route path="form/modulo" element={<ModuloForm />} />
+            <Route path="form/modulo/:idModulo" element={<ModuloForm />} />
+            <Route path="form/menu" element={<MenuForm />} />
+            <Route path="form/menu/:idMenu" element={<MenuForm />} />
+            <Route path="form/perfil" element={<PerfilForm />} />
+            <Route path="form/perfil/:idPerfil" element={<PerfilForm />} />
             <Route path="form/usuario" element={<UsuarioForm />} />
             <Route path="form/usuario/:idUsuario" element={<UsuarioEditForm />} />
 

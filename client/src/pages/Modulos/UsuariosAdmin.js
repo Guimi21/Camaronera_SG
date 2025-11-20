@@ -26,7 +26,7 @@ export default function UsuariosAdmin() {
   const [filters, setFilters] = useState({
     busqueda: "",
     estado: "todos",
-    compania: "todos"
+    grupoEmpresarial: "todos"
   });
 
   // Obtener usuarios administradores al montar el componente
@@ -89,7 +89,7 @@ export default function UsuariosAdmin() {
       filtered = filtered.filter(u =>
         u.nombre.toLowerCase().includes(searchTerm) ||
         u.username.toLowerCase().includes(searchTerm) ||
-        (u.companias && u.companias.toLowerCase().includes(searchTerm))
+        (u.grupo_empresarial && u.grupo_empresarial.toLowerCase().includes(searchTerm))
       );
     }
 
@@ -98,9 +98,9 @@ export default function UsuariosAdmin() {
       filtered = filtered.filter(u => u.estado === filters.estado);
     }
 
-    // Filtrar por compañía
-    if (filters.compania !== "todos") {
-      filtered = filtered.filter(u => u.companias && u.companias.includes(filters.compania));
+    // Filtrar por grupo empresarial
+    if (filters.grupoEmpresarial !== "todos") {
+      filtered = filtered.filter(u => u.grupo_empresarial && u.grupo_empresarial.includes(filters.grupoEmpresarial));
     }
 
     setFilteredUsuarios(filtered);
@@ -150,7 +150,7 @@ export default function UsuariosAdmin() {
       'No.': index + 1,
       'Nombre': usuario.nombre,
       'Usuario': usuario.username,
-      'Compañías': usuario.companias || 'N/A',
+      'Grupo Empresarial': usuario.grupo_empresarial || 'N/A',
       'Estado': usuario.estado === 'A' || usuario.estado === 'a' ? 'ACTIVO' : 'INACTIVO',
       'Fecha Creación': formatDate(usuario.fecha_creacion),
       'Última Actualización': formatDate(usuario.fecha_actualizacion)
@@ -158,7 +158,7 @@ export default function UsuariosAdmin() {
 
     // Si no hay datos, crear un array con un objeto vacío para mostrar los encabezados
     const finalData = excelData.length > 0 ? excelData : [
-      { 'No.': '', 'Nombre': '', 'Usuario': '', 'Compañías': '', 'Estado': '', 'Fecha Creación': '', 'Última Actualización': '' }
+      { 'No.': '', 'Nombre': '', 'Usuario': '', 'Grupo Empresarial': '', 'Estado': '', 'Fecha Creación': '', 'Última Actualización': '' }
     ];
 
     const worksheet = XLSX.utils.json_to_sheet(finalData);
@@ -169,9 +169,9 @@ export default function UsuariosAdmin() {
     XLSX.writeFile(workbook, fileName);
   };
 
-  // Obtener compañías únicas para el filtro
-  const companiasUnicas = [...new Set(
-    usuarios.flatMap(u => u.companias ? u.companias.split(', ') : [])
+  // Obtener grupos empresariales únicos para el filtro
+  const gruposEmpresarialesUnicos = [...new Set(
+    usuarios.flatMap(u => u.grupo_empresarial ? [u.grupo_empresarial] : [])
   )].sort();
 
   // Paginación
@@ -213,7 +213,7 @@ export default function UsuariosAdmin() {
                     name="busqueda"
                     value={filters.busqueda}
                     onChange={handleFilterChange}
-                    placeholder="Nombre, usuario, compañía..."
+                    placeholder="Nombre, usuario, grupo empresarial..."
                     className="border rounded p-2 text-sm w-64"
                   />
                 </div>
@@ -233,18 +233,18 @@ export default function UsuariosAdmin() {
                   </select>
                 </div>
 
-                {/* Filtro de compañía */}
+                {/* Filtro de grupo empresarial */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Compañía:</label>
+                  <label className="text-sm font-medium mb-1">Grupo Empresarial:</label>
                   <select
-                    name="compania"
-                    value={filters.compania}
+                    name="grupoEmpresarial"
+                    value={filters.grupoEmpresarial}
                     onChange={handleFilterChange}
                     className="border rounded p-2 text-sm"
                   >
                     <option value="todos">Todos</option>
-                    {companiasUnicas.map(compania => (
-                      <option key={compania} value={compania}>{compania}</option>
+                    {gruposEmpresarialesUnicos.map(grupo => (
+                      <option key={grupo} value={grupo}>{grupo}</option>
                     ))}
                   </select>
                 </div>
@@ -260,7 +260,7 @@ export default function UsuariosAdmin() {
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">#</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Nombre</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Usuario</th>
-                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Compañías</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Grupo Empresarial</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Estado</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Fecha Creación</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Última Actualización</th>
@@ -280,7 +280,7 @@ export default function UsuariosAdmin() {
                             {usuario.username}
                           </td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">
-                            {usuario.companias || 'N/A'}
+                            {usuario.grupo_empresarial || 'N/A'}
                           </td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">
                             {getEstadoBadge(usuario.estado)}

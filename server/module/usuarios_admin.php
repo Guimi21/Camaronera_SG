@@ -20,12 +20,11 @@ $query = "SELECT
     u.fecha_creacion,
     u.fecha_actualizacion,
     GROUP_CONCAT(DISTINCT p.nombre SEPARATOR ', ') as perfiles,
-    GROUP_CONCAT(DISTINCT c.nombre SEPARATOR ', ') as companias
+    ge.nombre as grupo_empresarial
 FROM usuario u
 LEFT JOIN usuario_perfil up ON u.id_usuario = up.id_usuario
 LEFT JOIN perfil p ON up.id_perfil = p.id_perfil
-LEFT JOIN usuario_compania uc ON u.id_usuario = uc.id_usuario
-LEFT JOIN compania c ON uc.id_compania = c.id_compania
+LEFT JOIN grupo_empresarial ge ON u.id_grupo_empresarial = ge.id_grupo_empresarial
 WHERE p.nombre = 'Administrador'
 GROUP BY u.id_usuario
 ORDER BY u.fecha_actualizacion DESC";

@@ -13,9 +13,6 @@ export default function Home() {
         case "Administrador":
           navigate("/administrador");
           break;
-        case "Digitador":
-          navigate("/digitador");
-          break;
         case "Directivo":
           navigate("/directivo");
           break;

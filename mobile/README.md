@@ -214,7 +214,7 @@ lib/
 ```dart
 class Perfil {
   final int idPerfil;
-  final String nombre;  // "Administrador", "Directivo", "Digitador", etc.
+  final String nombre;  // "Administrador", "Directivo", etc.
 }
 ```
 
