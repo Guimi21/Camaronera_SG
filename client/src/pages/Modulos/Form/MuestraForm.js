@@ -18,18 +18,19 @@ export default function MuestraForm() {
   const { idCompania, idUsuario } = useAuth();
   
   const [formData, setFormData] = useState({
-    id_ciclo: '', // Reemplaza los campos de ciclo_productivo
+    id_ciclo: '',
     dias_cultivo: '',
     peso: '',
     incremento_peso: '',
-    biomasa_lbs: '', // Calculado automáticamente
-    balanceados: {}, // Objeto dinámico para almacenar consumos de balanceado
+    biomasa_lbs: '',
+    balanceados: {},
     balanceado_acumulado: '',
-    conversion_alimenticia: '', // Calculado automáticamente
-    poblacion_actual: '', // Calculado automáticamente
+    conversion_alimenticia: '',
+    poblacion_actual: '',
     supervivencia: '',
     observaciones: '',
-    fecha_muestra: getLocalDateString()
+    fecha_muestra: getLocalDateString(),
+    estado: 'ACTIVA'
   });
   
   const [ciclosDisponibles, setCiclosDisponibles] = useState([]);
@@ -591,12 +592,13 @@ export default function MuestraForm() {
         peso: formData.peso,
         incremento_peso: formData.incremento_peso,
         biomasa_lbs: formData.biomasa_lbs,
-        balanceados: balanceadosArray, // Enviar como array de objetos
+        balanceados: balanceadosArray,
         balanceado_acumulado: formData.balanceado_acumulado,
         conversion_alimenticia: formData.conversion_alimenticia,
         poblacion_actual: formData.poblacion_actual,
         supervivencia: formData.supervivencia,
         observaciones: formData.observaciones,
+        estado: formData.estado,
         fecha_muestra: formData.fecha_muestra,
         id_usuario: idUsuario,
         id_compania: idCompania
@@ -975,6 +977,22 @@ export default function MuestraForm() {
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Ingresa cualquier observación relevante..."
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Estado
+              </label>
+              <select
+                name="estado"
+                value={formData.estado}
+                onChange={handleChange}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="ACTIVA">Activa</option>
+                <option value="INACTIVA">Inactiva</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">Estado de la muestra en el sistema</p>
             </div>
 
             {/* Botones de acción */}

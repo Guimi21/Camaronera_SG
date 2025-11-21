@@ -75,10 +75,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             indice_supervivencia,
             observaciones,
             fecha_muestra,
+            estado,
             id_compania,
             id_usuario_crea,
             id_usuario_actualiza
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ";
 
         // Verificar que el ciclo productivo existe (validación de seguridad)
@@ -115,9 +116,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->bindValue(9, $input['supervivencia'] ?? null);
         $stmt->bindValue(10, $input['observaciones'] ?? null);
         $stmt->bindValue(11, $input['fecha_muestra'] ?? date('Y-m-d'));
-        $stmt->bindValue(12, $input['id_compania']);
-        $stmt->bindValue(13, $input['id_usuario']);
-        $stmt->bindValue(14, $input['id_usuario']); // Mismo usuario para crea y actualiza en inserción
+        $estado = isset($input['estado']) ? trim($input['estado']) : 'ACTIVA';
+        $stmt->bindValue(12, $estado);
+        $stmt->bindValue(13, $input['id_compania']);
+        $stmt->bindValue(14, $input['id_usuario']);
+        $stmt->bindValue(15, $input['id_usuario']); // Mismo usuario para crea y actualiza en inserción
 
         if ($stmt->execute()) {
             $muestraId = $conn->lastInsertId();
@@ -554,6 +557,7 @@ try {
             s.poblacion_actual AS 'Población actual',
             s.indice_supervivencia AS 'Sobrev. Actual %',
             s.observaciones AS 'Observaciones',
+            s.estado AS 'Estado',
             s.fecha_muestra AS 'Fecha Muestra',
             s.fecha_creacion AS 'Fecha Creación',
             s.fecha_actualizacion AS 'Última Actualización'
@@ -566,7 +570,7 @@ try {
         WHERE
             s.id_ciclo = ? AND s.id_compania = ?
         GROUP BY
-            s.id_muestra, s.id_ciclo, p.id_piscina, cp.id_ciclo, s.fecha_creacion, s.fecha_actualizacion
+            s.id_muestra, s.id_ciclo, p.id_piscina, cp.id_ciclo, s.observaciones, s.estado, s.fecha_creacion, s.fecha_actualizacion
         ORDER BY 
             s.fecha_muestra DESC,
             s.fecha_creacion DESC
@@ -634,6 +638,7 @@ try {
         s.poblacion_actual AS 'Población actual',
         s.indice_supervivencia AS 'Sobrev. Actual %',
         s.observaciones AS 'Observaciones',
+        s.estado AS 'Estado',
         s.fecha_muestra AS 'Fecha Muestra',
         s.fecha_creacion AS 'Fecha Creación',
         s.fecha_actualizacion AS 'Última Actualización'
@@ -695,6 +700,7 @@ try {
         s.poblacion_actual,
         s.indice_supervivencia,
         s.observaciones,
+        s.estado,
         s.fecha_muestra,
         s.fecha_creacion,
         s.fecha_actualizacion

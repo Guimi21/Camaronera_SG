@@ -10,7 +10,8 @@ export default function PerfilForm() {
   const [formData, setFormData] = useState({
     nombre: '',
     descripcion: '',
-    menus: [] // Array de IDs de menús seleccionados
+    menus: [],
+    estado: 'ACTIVO'
   });
 
   const [menusDisponibles, setMenusDisponibles] = useState([]);
@@ -57,7 +58,8 @@ export default function PerfilForm() {
         setFormData({
           nombre: perfil.nombre || '',
           descripcion: perfil.descripcion || '',
-          menus: perfil.menus ? perfil.menus.map(m => m.id_menu) : []
+          menus: perfil.menus ? perfil.menus.map(m => m.id_menu) : [],
+          estado: perfil.estado || 'ACTIVO'
         });
       } else {
         throw new Error('Perfil no encontrado');
@@ -128,7 +130,8 @@ export default function PerfilForm() {
       const payload = {
         nombre: formData.nombre.trim(),
         descripcion: formData.descripcion.trim() || null,
-        menus: formData.menus
+        menus: formData.menus,
+        estado: formData.estado
       };
 
       if (isEditing) {
@@ -252,6 +255,20 @@ export default function PerfilForm() {
                   )}
                 </div>
                 <p className="leyenda text-sm text-gray-500 mt-1">Seleccione los menús que tendrá acceso este perfil (opcional).</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                <select 
+                  name="estado" 
+                  value={formData.estado} 
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg"
+                >
+                  <option value="ACTIVO">Activo</option>
+                  <option value="INACTIVO">Inactivo</option>
+                </select>
+                <p className="leyenda text-sm text-gray-500 mt-1">Estado del perfil en el sistema.</p>
               </div>
             </div>
 

@@ -99,7 +99,7 @@ if ($method === 'POST') {
         $nombre = isset($input['nombre']) ? trim($input['nombre']) : null;
         $ruta = isset($input['ruta']) ? trim($input['ruta']) : null;
         $icono = isset($input['icono']) ? trim($input['icono']) : null;
-        $estado = isset($input['estado']) ? trim($input['estado']) : 'A';
+        $estado = isset($input['estado']) ? trim($input['estado']) : 'ACTIVO';
 
         if (!$nombre) {
             http_response_code(400);
@@ -163,7 +163,7 @@ if ($method === 'PUT') {
         $nombre = isset($input['nombre']) ? trim($input['nombre']) : null;
         $ruta = isset($input['ruta']) ? trim($input['ruta']) : null;
         $icono = isset($input['icono']) ? trim($input['icono']) : null;
-        $estado = isset($input['estado']) ? trim($input['estado']) : 'A';
+        $estado = isset($input['estado']) ? trim($input['estado']) : 'ACTIVO';
 
         if (!$id_menu || !$nombre) {
             http_response_code(400);

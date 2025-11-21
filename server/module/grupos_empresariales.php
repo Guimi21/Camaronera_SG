@@ -12,6 +12,7 @@ if ($method === 'GET') {
         id_grupo_empresarial,
         nombre,
         descripcion,
+        estado,
         fecha_creacion,
         fecha_actualizacion
     FROM grupo_empresarial
@@ -67,18 +68,21 @@ if ($method === 'GET') {
         }
 
         // Insertar nuevo grupo empresarial
-        $query = "INSERT INTO grupo_empresarial (nombre, descripcion, fecha_creacion, fecha_actualizacion) 
-                  VALUES (:nombre, :descripcion, NOW(), NOW())";
+        $estado = isset($data->estado) && !empty(trim($data->estado)) ? trim($data->estado) : 'ACTIVO';
+        $query = "INSERT INTO grupo_empresarial (nombre, descripcion, estado, fecha_creacion, fecha_actualizacion) 
+                  VALUES (:nombre, :descripcion, :estado, NOW(), NOW())";
         
         $stmt = $conn->prepare($query);
         $stmt->bindParam(':nombre', $nombre);
         $stmt->bindParam(':descripcion', $descripcion);
+        $stmt->bindParam(':estado', $estado);
         $stmt->execute();
 
         echo json_encode([
             'success' => true,
             'message' => 'Grupo empresarial creado exitosamente',
-            'id' => $conn->lastInsertId()
+            'id' => $conn->lastInsertId(),
+            'estado' => $estado
         ]);
         http_response_code(201);
     } catch (PDOException $e) {

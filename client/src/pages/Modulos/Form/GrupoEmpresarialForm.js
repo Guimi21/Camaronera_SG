@@ -8,7 +8,8 @@ export default function GrupoEmpresarialForm() {
   
   const [formData, setFormData] = useState({
     nombre: '',
-    descripcion: ''
+    descripcion: '',
+    estado: 'ACTIVO'
   });
   
   const [loading, setLoading] = useState(false);
@@ -47,7 +48,8 @@ export default function GrupoEmpresarialForm() {
       // Datos a enviar
       const dataToSend = {
         nombre: formData.nombre.trim(),
-        descripcion: formData.descripcion.trim() || null
+        descripcion: formData.descripcion.trim() || null,
+        estado: formData.estado
       };
 
       const response = await fetch(`${API_BASE_URL}/module/grupos_empresariales.php`, {
@@ -169,6 +171,28 @@ export default function GrupoEmpresarialForm() {
                 />
                 <p className="text-sm text-gray-500 mt-1 leyenda">
                   Descripción adicional del grupo empresarial (opcional)
+                </p>
+              </div>
+            </div>
+
+            {/* Estado */}
+            <div className="grid grid-cols-1 gap-6">
+              <div>
+                <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-2">
+                  Estado
+                </label>
+                <select
+                  id="estado"
+                  name="estado"
+                  value={formData.estado}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="ACTIVO">Activo</option>
+                  <option value="INACTIVO">Inactivo</option>
+                </select>
+                <p className="text-sm text-gray-500 mt-1 leyenda">
+                  Estado del grupo empresarial en el sistema
                 </p>
               </div>
             </div>

@@ -27,6 +27,17 @@ const getLocalDateString = () => {
   return `${year}-${month}-${day}`;
 };
 
+const getEstadoBadge = (estado) => {
+  const isActiva = estado === 'ACTIVA';
+  return (
+    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+      isActiva ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+    }`}>
+      {isActiva ? 'ACTIVA' : 'INACTIVA'}
+    </span>
+  );
+};
+
 export default function Directivo() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
@@ -72,6 +83,7 @@ export default function Directivo() {
         poblacion_actual: item["Población actual"],
         supervivencia: item["Sobrev. Actual %"],
         observaciones: item.Observaciones,
+        estado: item.Estado,
         fecha_muestra: item["Fecha Muestra"],
         fecha_creacion: item["Fecha Creación"] || null,
         fecha_actualizacion: item["Última Actualización"] || null,
@@ -496,6 +508,7 @@ export default function Directivo() {
       baseData["Población Actual"] = item.poblacion_actual;
       baseData["Supervivencia (%)"] = item.supervivencia;
       baseData["Observaciones"] = item.observaciones;
+      baseData["Estado"] = item.estado;
       baseData["Fecha Muestra"] = formatDate(item.fecha_muestra, false);
       baseData["Fecha Creación"] = formatDate(item.fecha_creacion, true);
       baseData["Última Actualización"] = formatDate(item.fecha_actualizacion, true);
@@ -530,6 +543,7 @@ export default function Directivo() {
       emptyRow["Población Actual"] = "";
       emptyRow["Supervivencia (%)"] = "";
       emptyRow["Observaciones"] = "";
+      emptyRow["Estado"] = "";
       emptyRow["Fecha Muestra"] = "";
       emptyRow["Fecha Creación"] = "";
       emptyRow["Última Actualización"] = "";
@@ -668,6 +682,7 @@ export default function Directivo() {
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Población Actual</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Supervivencia (%)</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Observaciones</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Estado</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Fecha Muestra</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Fecha Creación</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Última Actualización</th>
@@ -700,6 +715,7 @@ export default function Directivo() {
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.poblacion_actual ? parseInt(item.poblacion_actual) : 0}</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.supervivencia}%</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.observaciones}</td>
+                            <td className="py-3 px-4 border-b whitespace-nowrap">{getEstadoBadge(item.estado)}</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{formatDate(item.fecha_muestra, false)}</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{formatDate(item.fecha_creacion, true)}</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{formatDate(item.fecha_actualizacion, true)}</td>
@@ -749,7 +765,7 @@ export default function Directivo() {
                     ) : (
                       !loadingTable && (
                         <tr>
-                          <td colSpan={12 + tiposBalanceado.length} className="py-4 px-4 text-center text-gray-500">
+                          <td colSpan={13 + tiposBalanceado.length} className="py-4 px-4 text-center text-gray-500">
                             No hay datos disponibles con los filtros seleccionados
                           </td>
                         </tr>

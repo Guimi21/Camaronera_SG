@@ -12,6 +12,17 @@ const getLocalDateString = () => {
   return `${year}-${month}-${day}`;
 };
 
+const getEstadoBadge = (estado) => {
+  const isActivo = estado === 'ACTIVO';
+  return (
+    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+      isActivo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+    }`}>
+      {isActivo ? 'ACTIVO' : 'INACTIVO'}
+    </span>
+  );
+};
+
 export default function Perfiles() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
@@ -110,6 +121,7 @@ export default function Perfiles() {
       'No.': index + 1,
       'Nombre': perfil.nombre,
       'Descripción': perfil.descripcion || 'N/A',
+      'Estado': perfil.estado || 'N/A',
       'Menús Asociados': perfil.menus && perfil.menus.length > 0 
         ? perfil.menus.map(m => m.nombre).join(', ')
         : 'Sin menús',
@@ -119,7 +131,7 @@ export default function Perfiles() {
 
     // Si no hay datos, crear un array con un objeto vacío para mostrar los encabezados
     const finalData = excelData.length > 0 ? excelData : [
-      { 'No.': '', 'Nombre': '', 'Descripción': '', 'Menús Asociados': '', 'Fecha Creación': '', 'Última Actualización': '' }
+      { 'No.': '', 'Nombre': '', 'Descripción': '', 'Estado': '', 'Menús Asociados': '', 'Fecha Creación': '', 'Última Actualización': '' }
     ];
 
     const worksheet = XLSX.utils.json_to_sheet(finalData);
@@ -185,6 +197,7 @@ export default function Perfiles() {
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">#</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Nombre</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Descripción</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Estado</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Menús Asociados</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Fecha Creación</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Última Actualización</th>
@@ -203,6 +216,9 @@ export default function Perfiles() {
                           </td>
                           <td className="py-3 px-4 border-b">
                             {perfil.descripcion || 'N/A'}
+                          </td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">
+                            {getEstadoBadge(perfil.estado)}
                           </td>
                           <td className="py-3 px-4 border-b">
                             {perfil.menus && perfil.menus.length > 0 ? (
@@ -239,7 +255,7 @@ export default function Perfiles() {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="7" className="py-4 px-4 text-center text-gray-500">
+                        <td colSpan="8" className="py-4 px-4 text-center text-gray-500">
                           No hay perfiles disponibles
                         </td>
                       </tr>

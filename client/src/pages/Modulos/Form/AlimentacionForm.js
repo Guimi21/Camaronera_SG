@@ -9,7 +9,8 @@ export default function AlimentacionForm() {
   const { idCompania, idUsuario } = useAuth();
   
   const [formData, setFormData] = useState({
-    nombre: ''
+    nombre: '',
+    estado: 'ACTIVO'
   });
   
   const [loading, setLoading] = useState(false);
@@ -51,6 +52,7 @@ export default function AlimentacionForm() {
     try {
       const dataToSend = {
         nombre: formData.nombre.trim(),
+        estado: formData.estado,
         id_compania: idCompania,
         id_usuario_crea: idUsuario,
         id_usuario_actualiza: idUsuario
@@ -136,6 +138,28 @@ export default function AlimentacionForm() {
             </p>
           </div>
 
+        </div>
+
+        {/* Estado */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-2">
+              Estado
+            </label>
+            <select
+              id="estado"
+              name="estado"
+              value={formData.estado}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="ACTIVO">Activo</option>
+              <option value="INACTIVO">Inactivo</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1 leyenda">
+              Estado del tipo de alimentación
+            </p>
+          </div>
         </div>
 
         {/* Botones */}

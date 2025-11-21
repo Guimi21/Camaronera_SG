@@ -14,7 +14,7 @@ export default function UsuarioEditForm() {
     nombre: '',
     perfil: '', // ID del perfil seleccionado (solo uno)
     companias: [],
-    estado: 'A'
+    estado: 'ACTIVO'
   });
 
   const [perfilesDisponibles, setPerfilesDisponibles] = useState([]);
@@ -136,7 +136,7 @@ export default function UsuarioEditForm() {
         nombre: usuario.nombre || '',
         perfil: String(primerPerfil),
         companias: companiasIds,
-        estado: usuario.estado || 'A'
+        estado: usuario.estado || 'ACTIVO'
       });
     }
   }, [usuario, perfilesDisponibles, companiasDisponibles]);
@@ -408,8 +408,8 @@ export default function UsuarioEditForm() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Estado *</label>
                 <select name="estado" value={formData.estado} onChange={handleChange}
                   className="w-full p-3 border border-gray-300 rounded-lg">
-                  <option value="A">Activo</option>
-                  <option value="I">Inactivo</option>
+                  <option value="ACTIVO">Activo</option>
+                  <option value="INACTIVO">Inactivo</option>
                 </select>
                 <p className="leyenda text-sm text-gray-500 mt-1">Estado actual del usuario en el sistema.</p>
               </div>

@@ -85,7 +85,7 @@ $query_menus = "
     FROM menu m 
     JOIN modulo modu ON m.id_modulo = modu.id_modulo
     JOIN menu_perfil mp ON m.id_menu = mp.id_menu 
-    WHERE m.estado = 'A'
+    WHERE m.estado = 'ACTIVO'
     AND mp.id_perfil IN (
         SELECT id_perfil FROM usuario_perfil WHERE id_usuario = :userId
     )

@@ -13,6 +13,17 @@ const getLocalDateString = () => {
   return `${year}-${month}-${day}`;
 };
 
+const getEstadoBadge = (estado) => {
+  const isActivo = estado === 'ACTIVO';
+  return (
+    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+      isActivo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+    }`}>
+      {isActivo ? 'ACTIVO' : 'INACTIVO'}
+    </span>
+  );
+};
+
 export default function MonitoreoBalanceados() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
@@ -131,13 +142,14 @@ export default function MonitoreoBalanceados() {
       'No.': index + 1,
       'Nombre': tipo.nombre,
       'Unidad': tipo.unidad,
+      'Estado': tipo.estado || 'N/A',
       'Fecha Creación': formatDate(tipo.fecha_creacion),
       'Última Actualización': formatDate(tipo.fecha_actualizacion)
     }));
 
     // Si no hay datos, crear un array con un objeto vacío para mostrar los encabezados
     const finalData = dataToExport.length > 0 ? dataToExport : [
-      { 'No.': '', 'Nombre': '', 'Unidad': '', 'Fecha Creación': '', 'Última Actualización': '' }
+      { 'No.': '', 'Nombre': '', 'Unidad': '', 'Estado': '', 'Fecha Creación': '', 'Última Actualización': '' }
     ];
 
     const worksheet = XLSX.utils.json_to_sheet(finalData);
@@ -236,6 +248,7 @@ export default function MonitoreoBalanceados() {
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No.</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unidad</th>
+                <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Creación</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Última Actualización</th>
               </tr>
@@ -243,7 +256,7 @@ export default function MonitoreoBalanceados() {
             <tbody className="bg-white divide-y divide-gray-200">
               {currentData.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="py-4 text-center text-gray-500">
+                  <td colSpan="6" className="py-4 text-center text-gray-500">
                     No se encontraron tipos de balanceado
                   </td>
                 </tr>
@@ -258,6 +271,9 @@ export default function MonitoreoBalanceados() {
                     </td>
                     <td className="py-2 px-4 border-b text-sm text-gray-900">
                       {tipo.unidad}
+                    </td>
+                    <td className="py-2 px-4 border-b text-sm text-gray-900">
+                      {getEstadoBadge(tipo.estado)}
                     </td>
                     <td className="py-2 px-4 border-b text-sm text-gray-900">
                       {formatDate(tipo.fecha_creacion)}

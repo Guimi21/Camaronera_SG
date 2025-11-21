@@ -131,7 +131,7 @@ export default function UsuariosAdmin() {
 
   // Formatear estado con badge de color
   const getEstadoBadge = (estado) => {
-    const isActivo = estado === 'A' || estado === 'a';
+    const isActivo = estado === 'ACTIVO';
     return (
       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
         isActivo
@@ -151,7 +151,7 @@ export default function UsuariosAdmin() {
       'Nombre': usuario.nombre,
       'Usuario': usuario.username,
       'Grupo Empresarial': usuario.grupo_empresarial || 'N/A',
-      'Estado': usuario.estado === 'A' || usuario.estado === 'a' ? 'ACTIVO' : 'INACTIVO',
+      'Estado': usuario.estado,
       'Fecha Creación': formatDate(usuario.fecha_creacion),
       'Última Actualización': formatDate(usuario.fecha_actualizacion)
     }));
@@ -228,8 +228,8 @@ export default function UsuariosAdmin() {
                     className="border rounded p-2 text-sm"
                   >
                     <option value="todos">Todos</option>
-                    <option value="A">Activos</option>
-                    <option value="I">Inactivos</option>
+                    <option value="ACTIVO">Activos</option>
+                    <option value="INACTIVO">Inactivos</option>
                   </select>
                 </div>
 

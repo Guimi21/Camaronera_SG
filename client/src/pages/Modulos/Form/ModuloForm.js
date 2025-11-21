@@ -9,7 +9,8 @@ export default function ModuloForm() {
 
   const [formData, setFormData] = useState({
     nombre: '',
-    descripcion: ''
+    descripcion: '',
+    estado: 'ACTIVO'
   });
 
   const [loading, setLoading] = useState(false);
@@ -53,7 +54,8 @@ export default function ModuloForm() {
         const modulo = result.data[0];
         setFormData({
           nombre: modulo.nombre || '',
-          descripcion: modulo.descripcion || ''
+          descripcion: modulo.descripcion || '',
+          estado: modulo.estado || 'ACTIVO'
         });
       } else {
         throw new Error('Módulo no encontrado');
@@ -89,7 +91,8 @@ export default function ModuloForm() {
       const method = isEditing ? 'PUT' : 'POST';
       const payload = {
         nombre: formData.nombre.trim(),
-        descripcion: formData.descripcion.trim() || null
+        descripcion: formData.descripcion.trim() || null,
+        estado: formData.estado
       };
 
       if (isEditing) {
@@ -189,6 +192,20 @@ export default function ModuloForm() {
                   rows="5"
                 />
                 <p className="leyenda text-sm text-gray-500 mt-1">Descripción detallada del módulo (opcional).</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                <select 
+                  name="estado" 
+                  value={formData.estado} 
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg"
+                >
+                  <option value="ACTIVO">Activo</option>
+                  <option value="INACTIVO">Inactivo</option>
+                </select>
+                <p className="leyenda text-sm text-gray-500 mt-1">Estado del módulo en el sistema.</p>
               </div>
             </div>
 

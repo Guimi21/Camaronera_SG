@@ -33,6 +33,7 @@ if ($method === 'GET') {
                 p.id_perfil,
                 p.nombre,
                 p.descripcion,
+                p.estado,
                 p.fecha_creacion,
                 p.fecha_actualizacion,
                 m.id_menu,
@@ -53,6 +54,7 @@ if ($method === 'GET') {
                 p.id_perfil,
                 p.nombre,
                 p.descripcion,
+                p.estado,
                 p.fecha_creacion,
                 p.fecha_actualizacion,
                 m.id_menu,
@@ -80,6 +82,7 @@ if ($method === 'GET') {
                     'id_perfil' => $row['id_perfil'],
                     'nombre' => $row['nombre'],
                     'descripcion' => $row['descripcion'],
+                    'estado' => $row['estado'],
                     'fecha_creacion' => $row['fecha_creacion'],
                     'fecha_actualizacion' => $row['fecha_actualizacion'],
                     'menus' => []
@@ -130,6 +133,7 @@ if ($method === 'POST') {
 
         $nombre = isset($input['nombre']) ? trim($input['nombre']) : null;
         $descripcion = isset($input['descripcion']) ? trim($input['descripcion']) : null;
+        $estado = isset($input['estado']) ? trim($input['estado']) : 'ACTIVO';
         $menus = isset($input['menus']) ? $input['menus'] : [];
 
         if (!$nombre) {
@@ -141,12 +145,13 @@ if ($method === 'POST') {
             exit();
         }
 
-        $insertQuery = "INSERT INTO perfil (nombre, descripcion, fecha_creacion, fecha_actualizacion)
-                        VALUES (:nombre, :descripcion, NOW(), NOW())";
+        $insertQuery = "INSERT INTO perfil (nombre, descripcion, estado, fecha_creacion, fecha_actualizacion)
+                        VALUES (:nombre, :descripcion, :estado, NOW(), NOW())";
 
         $insertStmt = $conn->prepare($insertQuery);
         $insertStmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
         $insertStmt->bindParam(':descripcion', $descripcion, PDO::PARAM_STR);
+        $insertStmt->bindParam(':estado', $estado, PDO::PARAM_STR);
         $insertStmt->execute();
 
         $newPerfilId = $conn->lastInsertId();
@@ -171,6 +176,7 @@ if ($method === 'POST') {
                 'id_perfil' => $newPerfilId,
                 'nombre' => $nombre,
                 'descripcion' => $descripcion,
+                'estado' => $estado,
                 'menus' => $menus
             ],
             'message' => 'Perfil creado exitosamente'
@@ -200,6 +206,7 @@ if ($method === 'PUT') {
         $id_perfil = isset($input['id_perfil']) ? (int)$input['id_perfil'] : null;
         $nombre = isset($input['nombre']) ? trim($input['nombre']) : null;
         $descripcion = isset($input['descripcion']) ? trim($input['descripcion']) : null;
+        $estado = isset($input['estado']) ? trim($input['estado']) : 'ACTIVO';
         $menus = isset($input['menus']) ? $input['menus'] : [];
 
         if (!$id_perfil || !$nombre) {
@@ -212,13 +219,14 @@ if ($method === 'PUT') {
         }
 
         $updateQuery = "UPDATE perfil 
-                        SET nombre = :nombre, descripcion = :descripcion, fecha_actualizacion = NOW()
+                        SET nombre = :nombre, descripcion = :descripcion, estado = :estado, fecha_actualizacion = NOW()
                         WHERE id_perfil = :id_perfil";
 
         $updateStmt = $conn->prepare($updateQuery);
         $updateStmt->bindParam(':id_perfil', $id_perfil, PDO::PARAM_INT);
         $updateStmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
         $updateStmt->bindParam(':descripcion', $descripcion, PDO::PARAM_STR);
+        $updateStmt->bindParam(':estado', $estado, PDO::PARAM_STR);
         $updateStmt->execute();
 
         // Actualizar menús asociados: primero eliminar los existentes

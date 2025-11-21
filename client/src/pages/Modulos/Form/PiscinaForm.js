@@ -11,7 +11,8 @@ export default function PiscinaForm() {
   const [formData, setFormData] = useState({
     codigo: '',
     hectareas: '',
-    ubicacion: ''
+    ubicacion: '',
+    estado: 'ACTIVA'
   });
   
   const [loading, setLoading] = useState(false);
@@ -83,6 +84,7 @@ export default function PiscinaForm() {
         codigo: formData.codigo.trim(),
         hectareas: parseFloat(formData.hectareas),
         ubicacion: formData.ubicacion.trim(),
+        estado: formData.estado,
         id_compania: idCompania,
         id_usuario_crea: idUsuario,
         id_usuario_actualiza: idUsuario
@@ -215,6 +217,26 @@ export default function PiscinaForm() {
           {formData.ubicacion === '' && <ValidationMessage fieldName="una Ubicación" />}
           <p className="text-xs text-gray-500 mt-1 leyenda">
             Describa la ubicación o referencias geográficas de la piscina (máximo 255 caracteres)
+          </p>
+        </div>
+
+        {/* Estado */}
+        <div>
+          <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-2">
+            Estado
+          </label>
+          <select
+            id="estado"
+            name="estado"
+            value={formData.estado}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="ACTIVA">Activa</option>
+            <option value="INACTIVA">Inactiva</option>
+          </select>
+          <p className="text-xs text-gray-500 mt-1 leyenda">
+            Estado de la piscina en el sistema
           </p>
         </div>
 

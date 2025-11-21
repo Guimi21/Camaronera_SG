@@ -25,6 +25,17 @@ const getLocalDateString = () => {
   return `${year}-${month}-${day}`;
 };
 
+const getEstadoBadge = (estado) => {
+  const isActiva = estado === 'ACTIVA';
+  return (
+    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+      isActiva ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+    }`}>
+      {isActiva ? 'ACTIVA' : 'INACTIVA'}
+    </span>
+  );
+};
+
 export default function MonitoreoPiscinas() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
@@ -180,6 +191,7 @@ export default function MonitoreoPiscinas() {
       'No.': index + 1,
       'Código': piscina.codigo,
       'Hectáreas': piscina.hectareas,
+      'Estado': piscina.estado || 'N/A',
       'Ubicación': piscina.ubicacion,
       'Fecha Creación': formatDate(piscina.fecha_creacion),
       'Última Actualización': formatDate(piscina.fecha_actualizacion)
@@ -187,7 +199,7 @@ export default function MonitoreoPiscinas() {
 
     // Si no hay datos, crear un array con un objeto vacío para mostrar los encabezados
     const finalData = dataToExport.length > 0 ? dataToExport : [
-      { 'No.': '', 'Código': '', 'Hectáreas': '', 'Ubicación': '', 'Fecha Creación': '', 'Última Actualización': '' }
+      { 'No.': '', 'Código': '', 'Hectáreas': '', 'Estado': '', 'Ubicación': '', 'Fecha Creación': '', 'Última Actualización': '' }
     ];
 
     const worksheet = XLSX.utils.json_to_sheet(finalData);
@@ -345,6 +357,7 @@ export default function MonitoreoPiscinas() {
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No.</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hectáreas</th>
+                <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ubicación</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Creación</th>
                 <th className="py-2 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Última Actualización</th>
@@ -353,7 +366,7 @@ export default function MonitoreoPiscinas() {
             <tbody className="bg-white divide-y divide-gray-200">
               {currentData.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="py-4 text-center text-gray-500">
+                  <td colSpan="7" className="py-4 text-center text-gray-500">
                     No se encontraron piscinas
                   </td>
                 </tr>
@@ -368,6 +381,9 @@ export default function MonitoreoPiscinas() {
                     </td>
                     <td className="py-2 px-4 border-b text-sm text-gray-900">
                       {piscina.hectareas}
+                    </td>
+                    <td className="py-2 px-4 border-b text-sm text-gray-900">
+                      {getEstadoBadge(piscina.estado)}
                     </td>
                     <td className="py-2 px-4 border-b text-sm text-gray-900">
                       {piscina.ubicacion}

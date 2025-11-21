@@ -12,7 +12,7 @@ export default function MenuForm() {
     nombre: '',
     ruta: '',
     icono: '',
-    estado: 'A'
+    estado: 'ACTIVO'
   });
 
   const [modulos, setModulos] = useState([]);
@@ -271,8 +271,8 @@ export default function MenuForm() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Estado *</label>
                 <select name="estado" value={formData.estado} onChange={handleChange}
                   className="w-full p-3 border border-gray-300 rounded-lg">
-                  <option value="A">Activo</option>
-                  <option value="I">Inactivo</option>
+                  <option value="ACTIVO">Activo</option>
+                  <option value="INACTIVO">Inactivo</option>
                 </select>
                 <p className="leyenda text-sm text-gray-500 mt-1">Estado del menú en el sistema.</p>
               </div>

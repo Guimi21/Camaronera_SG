@@ -36,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                     ta.id_tipo_alimentacion,
                     ta.nombre,
                     ta.id_compania,
+                    ta.estado,
                     ta.fecha_creacion,
                     ta.fecha_actualizacion
                 FROM tipo_alimentacion ta
@@ -60,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                 'id_tipo_alimentacion' => $row['id_tipo_alimentacion'],
                 'nombre' => $row['nombre'],
                 'id_compania' => $row['id_compania'],
+                'estado' => $row['estado'],
                 'fecha_creacion' => $row['fecha_creacion'],
                 'fecha_actualizacion' => $row['fecha_actualizacion']
             ];
@@ -146,12 +148,14 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         // Insertar el nuevo tipo de alimentación
-        $insertSql = "INSERT INTO tipo_alimentacion (nombre, id_compania, id_usuario_crea, id_usuario_actualiza) 
-                      VALUES (:nombre, :id_compania, :id_usuario_crea, :id_usuario_actualiza)";
+        $estado = isset($input['estado']) ? trim($input['estado']) : 'ACTIVO';
+        $insertSql = "INSERT INTO tipo_alimentacion (nombre, id_compania, estado, id_usuario_crea, id_usuario_actualiza) 
+                      VALUES (:nombre, :id_compania, :estado, :id_usuario_crea, :id_usuario_actualiza)";
         
         $insertStmt = $conn->prepare($insertSql);
         $insertStmt->bindParam(':nombre', $nombre);
         $insertStmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
+        $insertStmt->bindParam(':estado', $estado, PDO::PARAM_STR);
         $insertStmt->bindParam(':id_usuario_crea', $id_usuario_crea, PDO::PARAM_INT);
         $insertStmt->bindParam(':id_usuario_actualiza', $id_usuario_actualiza, PDO::PARAM_INT);
         
@@ -165,6 +169,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     'id_tipo_alimentacion' => $id_tipo_alimentacion,
                     'nombre' => $nombre,
                     'id_compania' => $id_compania,
+                    'estado' => $estado,
                     'id_usuario_crea' => $id_usuario_crea,
                     'id_usuario_actualiza' => $id_usuario_actualiza
                 ]
@@ -202,6 +207,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
 
         $id_tipo_alimentacion = intval($input['id_tipo_alimentacion']);
         $nombre = isset($input['nombre']) ? trim($input['nombre']) : null;
+        $estado = isset($input['estado']) ? trim($input['estado']) : null;
 
         // Construir consulta de actualización dinámica
         $updates = [];
@@ -210,6 +216,11 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
         if ($nombre !== null && $nombre !== '') {
             $updates[] = "nombre = :nombre";
             $params[':nombre'] = $nombre;
+        }
+
+        if ($estado !== null && $estado !== '') {
+            $updates[] = "estado = :estado";
+            $params[':estado'] = $estado;
         }
 
         if (empty($updates)) {

@@ -118,7 +118,7 @@ export default function Menus() {
 
   // Formatear estado con badge de color
   const getEstadoBadge = (estado) => {
-    const isActivo = estado === 'A' || estado === 'a';
+    const isActivo = estado === 'ACTIVO';
     return (
       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
         isActivo 
@@ -139,7 +139,7 @@ export default function Menus() {
       'Módulo': menu.nombre_modulo || 'N/A',
       'Ruta': menu.ruta || 'N/A',
       'Icono': menu.icono || 'N/A',
-      'Estado': menu.estado === 'A' || menu.estado === 'a' ? 'ACTIVO' : 'INACTIVO',
+      'Estado': menu.estado,
       'Fecha Creación': formatDate(menu.fecha_creacion),
       'Última Actualización': formatDate(menu.fecha_actualizacion)
     }));
@@ -216,8 +216,8 @@ export default function Menus() {
                     className="border rounded p-2 text-sm"
                   >
                     <option value="todos">Todos</option>
-                    <option value="A">Activos</option>
-                    <option value="I">Inactivos</option>
+                    <option value="ACTIVO">Activos</option>
+                    <option value="INACTIVO">Inactivos</option>
                   </select>
                 </div>
 

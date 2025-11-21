@@ -33,6 +33,7 @@ if ($method === 'GET') {
                 id_modulo,
                 nombre,
                 descripcion,
+                estado,
                 fecha_creacion,
                 fecha_actualizacion
             FROM modulo
@@ -46,6 +47,7 @@ if ($method === 'GET') {
                 id_modulo,
                 nombre,
                 descripcion,
+                estado,
                 fecha_creacion,
                 fecha_actualizacion
             FROM modulo
@@ -87,6 +89,7 @@ if ($method === 'POST') {
 
         $nombre = isset($input['nombre']) ? trim($input['nombre']) : null;
         $descripcion = isset($input['descripcion']) ? trim($input['descripcion']) : null;
+        $estado = isset($input['estado']) ? trim($input['estado']) : 'ACTIVO';
 
         if (!$nombre) {
             http_response_code(400);
@@ -97,12 +100,13 @@ if ($method === 'POST') {
             exit();
         }
 
-        $insertQuery = "INSERT INTO modulo (nombre, descripcion, fecha_creacion, fecha_actualizacion)
-                        VALUES (:nombre, :descripcion, NOW(), NOW())";
+        $insertQuery = "INSERT INTO modulo (nombre, descripcion, estado, fecha_creacion, fecha_actualizacion)
+                        VALUES (:nombre, :descripcion, :estado, NOW(), NOW())";
 
         $insertStmt = $conn->prepare($insertQuery);
         $insertStmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
         $insertStmt->bindParam(':descripcion', $descripcion, PDO::PARAM_STR);
+        $insertStmt->bindParam(':estado', $estado, PDO::PARAM_STR);
         $insertStmt->execute();
 
         $newModuloId = $conn->lastInsertId();
@@ -113,7 +117,8 @@ if ($method === 'POST') {
             'data' => [
                 'id_modulo' => $newModuloId,
                 'nombre' => $nombre,
-                'descripcion' => $descripcion
+                'descripcion' => $descripcion,
+                'estado' => $estado
             ],
             'message' => 'Módulo creado exitosamente'
         ]);
@@ -142,6 +147,7 @@ if ($method === 'PUT') {
         $id_modulo = isset($input['id_modulo']) ? (int)$input['id_modulo'] : null;
         $nombre = isset($input['nombre']) ? trim($input['nombre']) : null;
         $descripcion = isset($input['descripcion']) ? trim($input['descripcion']) : null;
+        $estado = isset($input['estado']) ? trim($input['estado']) : 'ACTIVO';
 
         if (!$id_modulo || !$nombre) {
             http_response_code(400);
@@ -153,13 +159,14 @@ if ($method === 'PUT') {
         }
 
         $updateQuery = "UPDATE modulo 
-                        SET nombre = :nombre, descripcion = :descripcion, fecha_actualizacion = NOW()
+                        SET nombre = :nombre, descripcion = :descripcion, estado = :estado, fecha_actualizacion = NOW()
                         WHERE id_modulo = :id_modulo";
 
         $updateStmt = $conn->prepare($updateQuery);
         $updateStmt->bindParam(':id_modulo', $id_modulo, PDO::PARAM_INT);
         $updateStmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
         $updateStmt->bindParam(':descripcion', $descripcion, PDO::PARAM_STR);
+        $updateStmt->bindParam(':estado', $estado, PDO::PARAM_STR);
         $updateStmt->execute();
 
         http_response_code(200);

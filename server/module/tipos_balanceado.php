@@ -37,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                     tb.nombre,
                     tb.unidad,
                     tb.id_compania,
+                    tb.estado,
                     tb.fecha_creacion,
                     tb.fecha_actualizacion
                 FROM tipo_balanceado tb
@@ -62,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                 'nombre' => $row['nombre'],
                 'unidad' => $row['unidad'],
                 'id_compania' => $row['id_compania'],
+                'estado' => $row['estado'],
                 'fecha_creacion' => $row['fecha_creacion'],
                 'fecha_actualizacion' => $row['fecha_actualizacion']
             ];
@@ -149,13 +151,15 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         // Insertar el nuevo tipo de balanceado
-        $insertSql = "INSERT INTO tipo_balanceado (nombre, unidad, id_compania, id_usuario_crea, id_usuario_actualiza) 
-                      VALUES (:nombre, :unidad, :id_compania, :id_usuario_crea, :id_usuario_actualiza)";
+        $estado = isset($input['estado']) ? trim($input['estado']) : 'ACTIVO';
+        $insertSql = "INSERT INTO tipo_balanceado (nombre, unidad, id_compania, estado, id_usuario_crea, id_usuario_actualiza) 
+                      VALUES (:nombre, :unidad, :id_compania, :estado, :id_usuario_crea, :id_usuario_actualiza)";
         
         $insertStmt = $conn->prepare($insertSql);
         $insertStmt->bindParam(':nombre', $nombre);
         $insertStmt->bindParam(':unidad', $unidad);
         $insertStmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
+        $insertStmt->bindParam(':estado', $estado, PDO::PARAM_STR);
         $insertStmt->bindParam(':id_usuario_crea', $id_usuario_crea, PDO::PARAM_INT);
         $insertStmt->bindParam(':id_usuario_actualiza', $id_usuario_actualiza, PDO::PARAM_INT);
         
@@ -170,6 +174,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     'nombre' => $nombre,
                     'unidad' => $unidad,
                     'id_compania' => $id_compania,
+                    'estado' => $estado,
                     'id_usuario_crea' => $id_usuario_crea,
                     'id_usuario_actualiza' => $id_usuario_actualiza
                 ]
@@ -208,6 +213,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
         $id_tipo_balanceado = intval($input['id_tipo_balanceado']);
         $nombre = isset($input['nombre']) ? trim($input['nombre']) : null;
         $unidad = isset($input['unidad']) ? trim($input['unidad']) : null;
+        $estado = isset($input['estado']) ? trim($input['estado']) : null;
 
         // Construir consulta de actualización dinámica
         $updates = [];
@@ -221,6 +227,11 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
         if ($unidad !== null && $unidad !== '') {
             $updates[] = "unidad = :unidad";
             $params[':unidad'] = $unidad;
+        }
+
+        if ($estado !== null && $estado !== '') {
+            $updates[] = "estado = :estado";
+            $params[':estado'] = $estado;
         }
 
         if (empty($updates)) {

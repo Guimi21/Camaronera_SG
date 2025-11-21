@@ -37,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                     p.codigo,
                     p.hectareas,
                     p.ubicacion,
+                    p.estado,
                     p.id_compania,
                     p.fecha_creacion,
                     p.fecha_actualizacion
@@ -63,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                 'codigo' => $row['codigo'],
                 'hectareas' => floatval($row['hectareas']),
                 'ubicacion' => $row['ubicacion'],
+                'estado' => $row['estado'],
                 'id_compania' => $row['id_compania'],
                 'fecha_creacion' => $row['fecha_creacion'],
                 'fecha_actualizacion' => $row['fecha_actualizacion']
@@ -137,7 +139,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         // Insertar nueva piscina
-        $insert_sql = "INSERT INTO piscina (codigo, hectareas, ubicacion, id_compania, id_usuario_crea, id_usuario_actualiza) VALUES (:codigo, :hectareas, :ubicacion, :id_compania, :id_usuario_crea, :id_usuario_actualiza)";
+        $estado = isset($input['estado']) ? trim($input['estado']) : 'ACTIVA';
+        $insert_sql = "INSERT INTO piscina (codigo, hectareas, ubicacion, estado, id_compania, id_usuario_crea, id_usuario_actualiza) VALUES (:codigo, :hectareas, :ubicacion, :estado, :id_compania, :id_usuario_crea, :id_usuario_actualiza)";
         $insert_stmt = $conn->prepare($insert_sql);
         
         if (!$insert_stmt) {
@@ -147,6 +150,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $insert_stmt->bindParam(':codigo', $input['codigo'], PDO::PARAM_STR);
         $insert_stmt->bindParam(':hectareas', $input['hectareas'], PDO::PARAM_STR);
         $insert_stmt->bindParam(':ubicacion', $input['ubicacion'], PDO::PARAM_STR);
+        $insert_stmt->bindParam(':estado', $estado, PDO::PARAM_STR);
         $insert_stmt->bindParam(':id_compania', $input['id_compania'], PDO::PARAM_INT);
         $insert_stmt->bindParam(':id_usuario_crea', $input['id_usuario_crea'], PDO::PARAM_INT);
         $insert_stmt->bindParam(':id_usuario_actualiza', $input['id_usuario_actualiza'], PDO::PARAM_INT);
@@ -225,7 +229,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
         }
 
         // Actualizar piscina
-        $update_sql = "UPDATE piscina SET codigo = :codigo, hectareas = :hectareas, ubicacion = :ubicacion WHERE id_piscina = :id_piscina AND id_compania = :id_compania";
+        $estado = isset($input['estado']) ? trim($input['estado']) : 'ACTIVA';
+        $update_sql = "UPDATE piscina SET codigo = :codigo, hectareas = :hectareas, ubicacion = :ubicacion, estado = :estado WHERE id_piscina = :id_piscina AND id_compania = :id_compania";
         $update_stmt = $conn->prepare($update_sql);
         
         if (!$update_stmt) {
@@ -235,6 +240,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
         $update_stmt->bindParam(':codigo', $input['codigo'], PDO::PARAM_STR);
         $update_stmt->bindParam(':hectareas', $input['hectareas'], PDO::PARAM_STR);
         $update_stmt->bindParam(':ubicacion', $input['ubicacion'], PDO::PARAM_STR);
+        $update_stmt->bindParam(':estado', $estado, PDO::PARAM_STR);
         $update_stmt->bindParam(':id_piscina', $input['id_piscina'], PDO::PARAM_INT);
         $update_stmt->bindParam(':id_compania', $input['id_compania'], PDO::PARAM_INT);
 

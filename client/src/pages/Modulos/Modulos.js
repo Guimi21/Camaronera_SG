@@ -12,6 +12,17 @@ const getLocalDateString = () => {
   return `${year}-${month}-${day}`;
 };
 
+const getEstadoBadge = (estado) => {
+  const isActivo = estado === 'ACTIVO';
+  return (
+    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+      isActivo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+    }`}>
+      {isActivo ? 'ACTIVO' : 'INACTIVO'}
+    </span>
+  );
+};
+
 export default function Modulos() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
@@ -110,13 +121,14 @@ export default function Modulos() {
       'No.': index + 1,
       'Nombre': modulo.nombre,
       'Descripción': modulo.descripcion || 'N/A',
+      'Estado': modulo.estado || 'N/A',
       'Fecha Creación': formatDate(modulo.fecha_creacion),
       'Última Actualización': formatDate(modulo.fecha_actualizacion)
     }));
 
     // Si no hay datos, crear un array con un objeto vacío para mostrar los encabezados
     const finalData = excelData.length > 0 ? excelData : [
-      { 'No.': '', 'Nombre': '', 'Descripción': '', 'Fecha Creación': '', 'Última Actualización': '' }
+      { 'No.': '', 'Nombre': '', 'Descripción': '', 'Estado': '', 'Fecha Creación': '', 'Última Actualización': '' }
     ];
 
     const worksheet = XLSX.utils.json_to_sheet(finalData);
@@ -182,6 +194,7 @@ export default function Modulos() {
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">#</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Nombre</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Descripción</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Estado</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Fecha Creación</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Última Actualización</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Acciones</th>
@@ -199,6 +212,9 @@ export default function Modulos() {
                           </td>
                           <td className="py-3 px-4 border-b">
                             {modulo.descripcion || 'N/A'}
+                          </td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">
+                            {getEstadoBadge(modulo.estado)}
                           </td>
                           <td className="py-3 px-4 border-b whitespace-nowrap">
                             {formatDate(modulo.fecha_creacion)}
@@ -222,7 +238,7 @@ export default function Modulos() {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="6" className="py-4 px-4 text-center text-gray-500">
+                        <td colSpan="7" className="py-4 px-4 text-center text-gray-500">
                           No hay módulos disponibles
                         </td>
                       </tr>
