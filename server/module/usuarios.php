@@ -190,8 +190,21 @@ if ($method === 'POST') {
 
         $nombre = trim($input['nombre']);
         $username = trim($input['username']);
-        // Por el momento almacenamos el password tal cual en password_hash (según instrucción)
-        $password_hash = trim($input['password']);
+        
+        // Validar que el username no exista en la base de datos
+        $queryUsernameExists = "SELECT id_usuario FROM usuario WHERE username = :username";
+        $stmtUsernameExists = $conn->prepare($queryUsernameExists);
+        $stmtUsernameExists->bindParam(':username', $username, PDO::PARAM_STR);
+        $stmtUsernameExists->execute();
+        
+        if ($stmtUsernameExists->rowCount() > 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'El Usuario (username) ya existe en el sistema']);
+            exit();
+        }
+        
+        // Hashear la contraseña usando password_hash() de PHP
+        $password_hash = password_hash(trim($input['password']), PASSWORD_BCRYPT);
         $estado = trim($input['estado']);
         $perfiles = $input['perfiles']; // Array de IDs de perfiles
         // $companias ya fue procesada antes, no reasignar
@@ -270,8 +283,14 @@ if ($method === 'POST') {
         }
 
     } catch (PDOException $e) {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Error en la base de datos: ' . $e->getMessage()]);
+        // Verificar si es un error de clave duplicada (username)
+        if ($e->getCode() == '23000') {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'El Usuario (username) ya existe en el sistema']);
+        } else {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Error en la base de datos: ' . $e->getMessage()]);
+        }
         exit();
     } catch (Exception $e) {
         http_response_code(500);

@@ -33,8 +33,15 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 // Depuración: imprimir lo que se trae de la base de datos
 error_log("Datos del usuario desde la base de datos: " . print_r($user, true));  
 
-// Si no se encuentra el usuario o las credenciales son incorrectas
-if (!$user || $user['password_hash'] !== $password) {  
+// Si no se encuentra el usuario
+if (!$user) {
+    http_response_code(401);  // Código de estado 401 Unauthorized
+    echo json_encode(['error' => 'Credenciales incorrectas']);
+    exit;
+}
+
+// Verificar la contraseña usando password_verify()
+if (!password_verify($password, $user['password_hash'])) {
     http_response_code(401);  // Código de estado 401 Unauthorized
     echo json_encode(['error' => 'Credenciales incorrectas']);
     exit;

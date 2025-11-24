@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -23,6 +24,7 @@ export default function UsuarioForm() {
   const [gruposEmpresarialesDisponibles, setGruposEmpresarialesDisponibles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   // Hacer scroll al inicio cuando hay un error
   useEffect(() => {
@@ -174,10 +176,9 @@ export default function UsuarioForm() {
       const payload = {
         nombre: formData.nombre.trim(),
         username: formData.username.trim(),
-        // Por el momento guardamos la contraseña tal cual en password_hash
         password: formData.password,
         estado: formData.estado,
-        perfiles: [parseInt(formData.perfil)], // Enviar como array con un solo elemento
+        perfiles: [parseInt(formData.perfil)],
         companias: formData.companias,
         idGrupoEmpresarial: formData.idGrupoEmpresarial || null,
         id_usuario: idUsuario
@@ -190,21 +191,24 @@ export default function UsuarioForm() {
         body: JSON.stringify(payload)
       });
 
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
+      let result;
+      try {
+        const responseText = await response.text();
+        result = JSON.parse(responseText);
+      } catch (jsonErr) {
+        throw new Error(`Error del servidor (${response.status}): No se pudo parsear la respuesta`);
       }
 
-      const result = await response.json();
-
-      if (result.success) {
-        // Redirigir a la lista de usuarios (según el perfil del usuario autenticado)
+      if (result && result.success) {
         if (perfilActivo === 'Superadministrador') {
           navigate('/layout/dashboard/usuarios-admin');
         } else {
           navigate('/layout/dashboard/usuarios');
         }
+      } else if (result && result.message) {
+        throw new Error(result.message);
       } else {
-        throw new Error(result.message || 'Error al crear el usuario');
+        throw new Error('Error al crear el usuario');
       }
 
     } catch (err) {
@@ -271,10 +275,25 @@ export default function UsuarioForm() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Contraseña *</label>
-                <input type="password" name="password" value={formData.password} onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg" placeholder="Contraseña" required />
+                <div className="relative w-full">
+                  <input 
+                    type={showPassword ? 'text' : 'password'} 
+                    name="password" 
+                    value={formData.password} 
+                    onChange={handleChange}
+                    className="w-full pr-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" 
+                    placeholder="Contraseña" 
+                    required 
+                  />
+                  <span
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-3 flex items-center cursor-pointer text-gray-500 hover:text-gray-700"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </span>
+                </div>
                 {formData.password === '' && <ValidationMessage fieldName="una Contraseña" />}
-                <p className="leyenda text-sm text-gray-500 mt-1">Por ahora la contraseña se almacenará tal cual en la base de datos.</p>
+                <p className="leyenda text-sm text-gray-500 mt-1">La contraseña será hasheada con bcrypt en el servidor.</p>
               </div>
 
               <div>
