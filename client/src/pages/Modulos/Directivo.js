@@ -42,7 +42,6 @@ export default function Directivo() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
   const { idCompania, compania } = useAuth(); // Obtener ID de compañía y nombre del usuario autenticado
-  const [data, setData] = useState([]);
   const [filteredGeneralData, setFilteredGeneralData] = useState([]);
   const [filteredTableData, setFilteredTableData] = useState([]);
   const [availablePiscinas, setAvailablePiscinas] = useState([]); // Piscinas disponibles para el usuario
@@ -135,7 +134,6 @@ export default function Directivo() {
       
       if (result.success) {
         const normalizedData = normalizeData(result.data, tipos);
-        setData(normalizedData);
         setFilteredGeneralData(normalizedData);
         
         // Actualizar piscinas disponibles (únicas) para el usuario de esta compañía
@@ -289,14 +287,6 @@ export default function Directivo() {
     }
   }, [idCompania]); // Agregar idCompania como dependencia
 
-  // Cálculos de datos generales
-  const totalPiscinas = filteredGeneralData.length;
-  const consumoTotalBalanceado = filteredGeneralData.reduce((total, item) => total + (item.cantidad_balanceado_kg || 0), 0);
-  const tcaPromedio = totalPiscinas > 0 ? filteredGeneralData.reduce((total, item) => total + (item.conversion_alimenticia || 0), 0) / totalPiscinas : 0;
-  const porcentajeSupervivencia = totalPiscinas > 0 ? (filteredGeneralData.reduce((total, item) => total + (item.supervivencia || 0), 0) / totalPiscinas).toFixed(2) : 0;
-  const biomasaTotal = filteredGeneralData.reduce((total, item) => total + (item.biomasa_lbs || 0), 0);
-  const densidadPromedio = totalPiscinas > 0 ? (filteredGeneralData.reduce((total, item) => total + (item.densidad_ha || 0), 0) / totalPiscinas).toFixed(0) : 0;
-
   // Función para determinar si una muestra es la más reciente de su piscina
   const isLatestMuestraForPiscina = (item) => {
     // Agrupar items por piscina y comparar fechas
@@ -345,58 +335,6 @@ export default function Directivo() {
   const handleOpenMuestraView = (muestraId, isLatest) => {
     const mode = isLatest ? 'edit' : 'view';
     navigate(`/layout/dashboard/muestra-edit?id=${muestraId}&mode=${mode}`);
-  };
-
-  // Configuración de gráficos
-  const supervivenciaData = {
-    labels: ['Supervivencia (%)', 'Pérdidas (%)'],
-    datasets: [
-      {
-        data: [Number.parseFloat(porcentajeSupervivencia), 100 - Number.parseFloat(porcentajeSupervivencia)],
-        backgroundColor: ['rgba(54, 162, 235, 0.8)', 'rgba(255, 99, 132, 0.8)'],
-        borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)'],
-        borderWidth: 1,
-      }
-    ]
-  };
-
-  const biomasaPorPiscinaData = {
-    labels: filteredGeneralData.map(item => `Piscina ${item.piscina}`),
-    datasets: [
-      {
-        label: 'Biomasa por Piscina (lbs)',
-        data: filteredGeneralData.map(item => item.biomasa_lbs || 0),
-        backgroundColor: 'rgba(255, 99, 132, 0.6)',
-        borderColor: 'rgba(255, 99, 132, 1)',
-        borderWidth: 1,
-      }
-    ]
-  };
-
-  const densidadData = {
-    labels: filteredGeneralData.map(item => `Piscina ${item.piscina}`),
-    datasets: [
-      {
-        label: 'Densidad por Hectárea',
-        data: filteredGeneralData.map(item => item.densidad_ha || 0),
-        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1,
-      }
-    ]
-  };
-
-  const tcaData = {
-    labels: filteredGeneralData.map(item => `Piscina ${item.piscina}`),
-    datasets: [
-      {
-        label: 'Tasa de Conversión Alimenticia (TCA)',
-        data: filteredGeneralData.map(item => item.conversion_alimenticia || 0),
-        fill: false,
-        borderColor: 'rgba(255, 159, 64, 1)',
-        tension: 0.1,
-      }
-    ]
   };
 
   // Manejo de cambios en los filtros
@@ -696,10 +634,10 @@ export default function Directivo() {
                   </thead>
                   <tbody>
                     {!loadingTable && currentData.length > 0 ? (
-                      currentData.map((item, index) => {
+                      currentData.map((item) => {
                         const isLatest = isLatestMuestraForPiscina(item);
                         return (
-                          <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                          <tr key={item.id_muestra} className={item.id_muestra % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.piscina}</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.has}</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{formatDate(item.fecha_siembra, false)}</td>

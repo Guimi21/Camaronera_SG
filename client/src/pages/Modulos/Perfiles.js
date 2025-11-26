@@ -84,7 +84,7 @@ export default function Perfiles() {
       const searchTerm = filters.busqueda.toLowerCase();
       filtered = filtered.filter(p =>
         p.nombre.toLowerCase().includes(searchTerm) ||
-        (p.descripcion && p.descripcion.toLowerCase().includes(searchTerm))
+        p.descripcion?.toLowerCase().includes(searchTerm)
       );
     }
 

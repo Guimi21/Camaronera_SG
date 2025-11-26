@@ -4,6 +4,20 @@ import PropTypes from 'prop-types';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
 
+// Componente para mostrar mensaje de validación
+const ValidationMessage = ({ fieldName }) => (
+  <div className="validation-message">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span>Ingresa {fieldName}</span>
+  </div>
+);
+
+ValidationMessage.propTypes = {
+  fieldName: PropTypes.string.isRequired
+};
+
 export default function AlimentacionForm() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
@@ -86,20 +100,6 @@ export default function AlimentacionForm() {
 
   const handleCancel = () => {
     navigate('/layout/dashboard/monitoreo-alimentaciones');
-  };
-
-  // Componente para mostrar mensaje de validación
-  const ValidationMessage = ({ fieldName }) => (
-    <div className="validation-message">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <span>Ingresa {fieldName}</span>
-    </div>
-  );
-
-  ValidationMessage.propTypes = {
-    fieldName: PropTypes.string.isRequired
   };
 
   return (

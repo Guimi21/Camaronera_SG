@@ -3,11 +3,25 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/cors.php';  // Configuración CORS centralizada
 
+define('QUERY_TIPOS_BALANCEADO', "SELECT id_tipo_balanceado, nombre FROM tipo_balanceado WHERE id_compania = ? ORDER BY id_tipo_balanceado");
+define('RESPONSE_SUCCESS', 'success');
+define('RESPONSE_MESSAGE', 'message');
+define('RESPONSE_DATA', 'data');
+
+// Función auxiliar para construir columnas dinámicas de balanceado
+function buildBalanceadoColumns($tiposBalanceado, $idCompania) {
+    $balanceadoColumns = "";
+    foreach ($tiposBalanceado as $tipo) {
+        $balanceadoColumns .= "COALESCE(SUM(CASE WHEN tb.id_tipo_balanceado = " . intval($tipo['id_tipo_balanceado']) . " AND cb.id_compania = " . intval($idCompania) . " THEN cb.cantidad ELSE 0 END), 0) AS '" . $tipo['nombre'] . "',\n        ";
+    }
+    return $balanceadoColumns;
+}
+
 // Verificar que la conexión a la base de datos esté establecida
 if (!isset($conn)) {
     $response = [
-        'success' => false,
-        'message' => 'Error de conexión a la base de datos'
+        RESPONSE_SUCCESS => false,
+        RESPONSE_MESSAGE => 'Error de conexión a la base de datos'
     ];
     http_response_code(500);
     echo json_encode($response);
@@ -22,8 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         if (!$input) {
             $response = [
-                'success' => false,
-                'message' => 'Datos no válidos'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Datos no válidos'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -33,8 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Validar campos requeridos
         if (!isset($input['id_ciclo']) || empty($input['id_ciclo'])) {
             $response = [
-                'success' => false,
-                'message' => 'ID de ciclo requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'ID de ciclo requerido'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -43,8 +57,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if (!isset($input['id_usuario']) || empty($input['id_usuario'])) {
             $response = [
-                'success' => false,
-                'message' => 'ID de usuario requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'ID de usuario requerido'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -53,8 +67,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if (!isset($input['id_compania']) || empty($input['id_compania'])) {
             $response = [
-                'success' => false,
-                'message' => 'ID de compañía requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'ID de compañía requerido'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -92,8 +106,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if (!$cicloExists) {
             $response = [
-                'success' => false,
-                'message' => 'Ciclo productivo no encontrado o no pertenece a su compañía'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Ciclo productivo no encontrado o no pertenece a su compañía'
             ];
             http_response_code(404);
             echo json_encode($response);
@@ -161,9 +175,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
 
             $response = [
-                'success' => true,
-                'message' => 'Registro de muestra creado exitosamente',
-                'data' => ['id_muestra' => $muestraId]
+                RESPONSE_SUCCESS => true,
+                RESPONSE_MESSAGE => 'Registro de muestra creado exitosamente',
+                RESPONSE_DATA => ['id_muestra' => $muestraId]
             ];
             http_response_code(201);
             echo json_encode($response);
@@ -174,8 +188,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } catch (Exception $e) {
         error_log("Error al crear muestra: " . $e->getMessage());
         $response = [
-            'success' => false,
-            'message' => 'Error al crear el registro de muestra'
+            RESPONSE_SUCCESS => false,
+            RESPONSE_MESSAGE => 'Error al crear el registro de muestra'
         ];
         http_response_code(500);
         echo json_encode($response);
@@ -191,8 +205,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
         
         if (!$input) {
             $response = [
-                'success' => false,
-                'message' => 'Datos no válidos'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Datos no válidos'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -202,8 +216,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
         // Validar campos requeridos
         if (!isset($input['id_muestra']) || empty($input['id_muestra'])) {
             $response = [
-                'success' => false,
-                'message' => 'ID de muestra requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'ID de muestra requerido'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -212,8 +226,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
 
         if (!isset($input['id_compania']) || empty($input['id_compania'])) {
             $response = [
-                'success' => false,
-                'message' => 'ID de compañía requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'ID de compañía requerido'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -230,8 +244,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
 
         if (!$muestraExists) {
             $response = [
-                'success' => false,
-                'message' => 'Muestra no encontrada o no pertenece a su compañía'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Muestra no encontrada o no pertenece a su compañía'
             ];
             http_response_code(404);
             echo json_encode($response);
@@ -309,8 +323,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
             }
 
             $response = [
-                'success' => true,
-                'message' => 'Registro de muestra actualizado exitosamente'
+                RESPONSE_SUCCESS => true,
+                RESPONSE_MESSAGE => 'Registro de muestra actualizado exitosamente'
             ];
             http_response_code(200);
             echo json_encode($response);
@@ -321,8 +335,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
     } catch (Exception $e) {
         error_log("Error al actualizar muestra: " . $e->getMessage());
         $response = [
-            'success' => false,
-            'message' => 'Error al actualizar el registro de muestra'
+            RESPONSE_SUCCESS => false,
+            RESPONSE_MESSAGE => 'Error al actualizar el registro de muestra'
         ];
         http_response_code(500);
         echo json_encode($response);
@@ -338,18 +352,14 @@ try {
         $id_compania = $_GET['id_compania'] ?? null;
         
         // Obtener tipos de balanceado de la compañía
-        $tiposBalanceadoQuery = "SELECT id_tipo_balanceado, nombre FROM tipo_balanceado WHERE id_compania = ? ORDER BY id_tipo_balanceado";
+        $tiposBalanceadoQuery = QUERY_TIPOS_BALANCEADO;
         $tiposBalanceadoStmt = $conn->prepare($tiposBalanceadoQuery);
         $tiposBalanceadoStmt->bindValue(1, $id_compania);
         $tiposBalanceadoStmt->execute();
         $tiposBalanceado = $tiposBalanceadoStmt->fetchAll(PDO::FETCH_ASSOC);
         
         // Construir las columnas dinámicas para los tipos de balanceado
-        $balanceadoColumns = "";
-        foreach ($tiposBalanceado as $tipo) {
-            $nombreColumna = str_replace([' ', '.', ',', '(', ')'], '', $tipo['nombre']);
-            $balanceadoColumns .= "COALESCE(SUM(CASE WHEN tb.id_tipo_balanceado = " . intval($tipo['id_tipo_balanceado']) . " AND cb.id_compania = " . intval($id_compania) . " THEN cb.cantidad ELSE 0 END), 0) AS '" . $tipo['nombre'] . "',\n        ";
-        }
+        $balanceadoColumns = buildBalanceadoColumns($tiposBalanceado, $id_compania);
 
         // Consulta para obtener la muestra específica
         $query = "
@@ -524,18 +534,14 @@ try {
         error_log("Buscando penúltima muestra para ciclo ID: " . $id_ciclo);
         
         // Obtener tipos de balanceado de la compañía
-        $tiposBalanceadoQuery = "SELECT id_tipo_balanceado, nombre FROM tipo_balanceado WHERE id_compania = ? ORDER BY id_tipo_balanceado";
+        $tiposBalanceadoQuery = QUERY_TIPOS_BALANCEADO;
         $tiposBalanceadoStmt = $conn->prepare($tiposBalanceadoQuery);
         $tiposBalanceadoStmt->bindValue(1, $id_compania);
         $tiposBalanceadoStmt->execute();
         $tiposBalanceado = $tiposBalanceadoStmt->fetchAll(PDO::FETCH_ASSOC);
         
         // Construir las columnas dinámicas para los tipos de balanceado
-        $balanceadoColumns = "";
-        foreach ($tiposBalanceado as $tipo) {
-            $nombreColumna = str_replace([' ', '.', ',', '(', ')'], '', $tipo['nombre']);
-            $balanceadoColumns .= "COALESCE(SUM(CASE WHEN tb.id_tipo_balanceado = " . intval($tipo['id_tipo_balanceado']) . " AND cb.id_compania = " . intval($id_compania) . " THEN cb.cantidad ELSE 0 END), 0) AS '" . $tipo['nombre'] . "',\n        ";
-        }
+        $balanceadoColumns = buildBalanceadoColumns($tiposBalanceado, $id_compania);
         
         // Consulta para obtener la penúltima muestra del ciclo
         $query = "
@@ -606,18 +612,14 @@ try {
     ];
 
     // Obtener los tipos de balanceado de la compañía para crear columnas dinámicas
-    $tiposBalanceadoQuery = "SELECT id_tipo_balanceado, nombre FROM tipo_balanceado WHERE id_compania = ? ORDER BY id_tipo_balanceado";
+    $tiposBalanceadoQuery = QUERY_TIPOS_BALANCEADO;
     $tiposBalanceadoStmt = $conn->prepare($tiposBalanceadoQuery);
     $tiposBalanceadoStmt->bindValue(1, $filters['id_compania']);
     $tiposBalanceadoStmt->execute();
     $tiposBalanceado = $tiposBalanceadoStmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Construir las columnas dinámicas para los tipos de balanceado
-    $balanceadoColumns = "";
-    foreach ($tiposBalanceado as $tipo) {
-        $nombreColumna = str_replace([' ', '.', ',', '(', ')'], '', $tipo['nombre']); // Sanitizar nombre para usar como alias
-        $balanceadoColumns .= "COALESCE(SUM(CASE WHEN tb.id_tipo_balanceado = " . intval($tipo['id_tipo_balanceado']) . " AND cb.id_compania = " . intval($filters['id_compania']) . " THEN cb.cantidad ELSE 0 END), 0) AS '" . $tipo['nombre'] . "',\n        ";
-    }
+    $balanceadoColumns = buildBalanceadoColumns($tiposBalanceado, $filters['id_compania']);
 
     // Crear la consulta base con columnas dinámicas
     $query = "

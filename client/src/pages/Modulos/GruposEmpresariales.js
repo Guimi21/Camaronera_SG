@@ -84,7 +84,7 @@ export default function GruposEmpresariales() {
       const searchTerm = filters.busqueda.toLowerCase();
       filtered = filtered.filter(g =>
         g.nombre.toLowerCase().includes(searchTerm) ||
-        (g.descripcion && g.descripcion.toLowerCase().includes(searchTerm))
+        g.descripcion?.toLowerCase().includes(searchTerm)
       );
     }
 

@@ -338,7 +338,7 @@ export default function MuestraEditView() {
     
     if (formData.supervivencia && formData.id_ciclo && ciclosDisponibles.length > 0) {
       const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == formData.id_ciclo);
-      if (cicloSeleccionado && cicloSeleccionado.cantidad_siembra) {
+      if (cicloSeleccionado?.cantidad_siembra) {
         const poblacionActual = calcularPoblacionActual(formData.supervivencia, cicloSeleccionado.cantidad_siembra);
         if (poblacionActual !== formData.poblacion_actual) {
           setFormData(prev => ({
@@ -478,21 +478,111 @@ export default function MuestraEditView() {
     return conversionAlimenticia.toFixed(3);
   };
 
+  // Validar valor numérico según campo
+  const validarValorNumerico = (name, value) => {
+    if (value === '') return true;
+    const numVal = Number.parseFloat(value);
+    
+    if (Number.isNaN(numVal) || numVal < 0) return false;
+    if (name === 'supervivencia' && numVal > 100) return false;
+    
+    return true;
+  };
+
+  // Procesar cambio de ciclo productivo
+  const procesarCambioCiclo = (value, newFormData) => {
+    const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == value);
+    
+    if (cicloSeleccionado) {
+      fetchUltimoMuestraData(value, formData.id_muestra);
+      
+      if (newFormData.fecha_muestra) {
+        newFormData.dias_cultivo = calcularDiasCultivo(cicloSeleccionado.fecha_siembra, newFormData.fecha_muestra);
+      }
+      
+      newFormData.balanceado_acumulado = '';
+      newFormData.incremento_peso = '';
+    }
+  };
+
+  // Procesar cambio de fecha muestra
+  const procesarCambioFecha = (value, newFormData) => {
+    if (newFormData.id_ciclo) {
+      const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == newFormData.id_ciclo);
+      if (cicloSeleccionado) {
+        newFormData.dias_cultivo = calcularDiasCultivo(cicloSeleccionado.fecha_siembra, value);
+      }
+    }
+  };
+
+  // Procesar cambio de peso y actualizar campos dependientes
+  const procesarCambioPeso = (value, newFormData) => {
+    const pesoAnterior = ultimoMuestra ? ultimoMuestra.peso : null;
+    const incrementoPeso = calcularIncrementoPeso(value, pesoAnterior);
+    newFormData.incremento_peso = incrementoPeso;
+
+    if (newFormData.poblacion_actual) {
+      const biomasa = calcularBiomasa(value, newFormData.poblacion_actual);
+      newFormData.biomasa_lbs = biomasa;
+
+      if (newFormData.balanceado_acumulado) {
+        newFormData.conversion_alimenticia = calcularConversionAlimenticia(newFormData.balanceado_acumulado, biomasa);
+      }
+    }
+  };
+
+  // Procesar cambio de balanceado
+  const procesarCambioBalanceado = (newFormData) => {
+    const balanceadoAnterior = ultimoMuestra ? ultimoMuestra.balanceado_acumulado : 0;
+    const balanceadoAcumulado = calcularBalanceadoAcumulado(newFormData.balanceados, balanceadoAnterior);
+    newFormData.balanceado_acumulado = balanceadoAcumulado;
+
+    if (newFormData.biomasa_lbs) {
+      newFormData.conversion_alimenticia = calcularConversionAlimenticia(balanceadoAcumulado, newFormData.biomasa_lbs);
+    }
+  };
+
+  // Procesar cambio de supervivencia
+  const procesarCambioSupervivencia = (value, newFormData) => {
+    if (newFormData.id_ciclo) {
+      const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == newFormData.id_ciclo);
+      if (cicloSeleccionado?.cantidad_siembra) {
+        const poblacionActual = calcularPoblacionActual(value, cicloSeleccionado.cantidad_siembra);
+        newFormData.poblacion_actual = poblacionActual;
+
+        if (newFormData.peso) {
+          const biomasa = calcularBiomasa(newFormData.peso, poblacionActual);
+          newFormData.biomasa_lbs = biomasa;
+
+          if (newFormData.balanceado_acumulado) {
+            newFormData.conversion_alimenticia = calcularConversionAlimenticia(newFormData.balanceado_acumulado, biomasa);
+          }
+        }
+      }
+    }
+  };
+
+  const getUltimoPesoMessage = () => {
+    if (ultimoMuestra) {
+      return `Peso anterior: ${ultimoMuestra.peso}g`;
+    }
+    if (formData.id_ciclo) {
+      return 'Buscando último muestra...';
+    }
+    return 'Selecciona un ciclo primero';
+  };
+
   const handleChange = (e) => {
     if (isReadOnly) return;
     
     const { name, value } = e.target;
     
-    if (name === 'peso' || name === 'supervivencia' || name.startsWith('balanceado_')) {
-      if (value !== '' && Number.parseFloat(value) < 0) {
-        return;
-      }
-      if (name === 'supervivencia' && value !== '' && Number.parseFloat(value) > 100) {
-        return;
-      }
+    if (!validarValorNumerico(name, value)) {
+      return;
     }
     
     const isBalanceadoField = name.startsWith('balanceado_');
+    
     let newFormData;
     
     if (isBalanceadoField) {
@@ -511,73 +601,17 @@ export default function MuestraEditView() {
       };
     }
     
+    // Procesar cambios en campos específicos
     if (name === 'id_ciclo') {
-      const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == value);
-      if (cicloSeleccionado) {
-        fetchUltimoMuestraData(value, formData.id_muestra);
-        if (newFormData.fecha_muestra) {
-          const diasCultivo = calcularDiasCultivo(cicloSeleccionado.fecha_siembra, newFormData.fecha_muestra);
-          newFormData.dias_cultivo = diasCultivo;
-        }
-        newFormData.balanceado_acumulado = '';
-        newFormData.incremento_peso = '';
-      }
-    }
-    
-    if (name === 'fecha_muestra' && newFormData.id_ciclo) {
-      const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == newFormData.id_ciclo);
-      if (cicloSeleccionado) {
-        const diasCultivo = calcularDiasCultivo(cicloSeleccionado.fecha_siembra, value);
-        newFormData.dias_cultivo = diasCultivo;
-      }
-    }
-    
-    if (name === 'peso') {
-      const pesoAnterior = ultimoMuestra ? ultimoMuestra.peso : null;
-      const incrementoPeso = calcularIncrementoPeso(value, pesoAnterior);
-      newFormData.incremento_peso = incrementoPeso;
-
-      if (newFormData.poblacion_actual) {
-        const biomasa = calcularBiomasa(value, newFormData.poblacion_actual);
-        newFormData.biomasa_lbs = biomasa;
-
-        if (newFormData.balanceado_acumulado) {
-          const conversionAlimenticia = calcularConversionAlimenticia(newFormData.balanceado_acumulado, biomasa);
-          newFormData.conversion_alimenticia = conversionAlimenticia;
-        }
-      }
-    }
-    
-    if (isBalanceadoField) {
-      const balanceadoAnterior = ultimoMuestra ? ultimoMuestra.balanceado_acumulado : 0;
-      const balanceadoAcumulado = calcularBalanceadoAcumulado(
-        newFormData.balanceados,
-        balanceadoAnterior
-      );
-      newFormData.balanceado_acumulado = balanceadoAcumulado;
-
-      if (newFormData.biomasa_lbs) {
-        const conversionAlimenticia = calcularConversionAlimenticia(balanceadoAcumulado, newFormData.biomasa_lbs);
-        newFormData.conversion_alimenticia = conversionAlimenticia;
-      }
-    }
-
-    if (name === 'supervivencia' && newFormData.id_ciclo) {
-      const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == newFormData.id_ciclo);
-      if (cicloSeleccionado && cicloSeleccionado.cantidad_siembra) {
-        const poblacionActual = calcularPoblacionActual(value, cicloSeleccionado.cantidad_siembra);
-        newFormData.poblacion_actual = poblacionActual;
-
-        if (newFormData.peso) {
-          const biomasa = calcularBiomasa(newFormData.peso, poblacionActual);
-          newFormData.biomasa_lbs = biomasa;
-
-          if (newFormData.balanceado_acumulado) {
-            const conversionAlimenticia = calcularConversionAlimenticia(newFormData.balanceado_acumulado, biomasa);
-            newFormData.conversion_alimenticia = conversionAlimenticia;
-          }
-        }
-      }
+      procesarCambioCiclo(value, newFormData);
+    } else if (name === 'fecha_muestra') {
+      procesarCambioFecha(value, newFormData);
+    } else if (name === 'peso') {
+      procesarCambioPeso(value, newFormData);
+    } else if (isBalanceadoField) {
+      procesarCambioBalanceado(newFormData);
+    } else if (name === 'supervivencia') {
+      procesarCambioSupervivencia(value, newFormData);
     }
     
     setFormData(newFormData);
@@ -805,12 +839,7 @@ export default function MuestraEditView() {
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
               />
               <p className="text-sm text-gray-500 mt-1">
-                {ultimoMuestra 
-                  ? `Peso anterior: ${ultimoMuestra.peso}g` 
-                  : formData.id_ciclo 
-                    ? "Buscando último muestra..."
-                    : "Selecciona un ciclo primero"
-                }
+                {getUltimoPesoMessage()}
               </p>
             </div>
 

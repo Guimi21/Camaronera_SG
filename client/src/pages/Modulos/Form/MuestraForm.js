@@ -13,6 +13,20 @@ const getLocalDateString = () => {
   return `${year}-${month}-${day}`;
 };
 
+// Componente para mostrar mensaje de validación
+const ValidationMessage = ({ fieldName }) => (
+  <div className="validation-message">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span>Ingresa {fieldName}</span>
+  </div>
+);
+
+ValidationMessage.propTypes = {
+  fieldName: PropTypes.string.isRequired
+};
+
 export default function MuestraForm() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
@@ -292,7 +306,7 @@ export default function MuestraForm() {
   useEffect(() => {
     if (formData.supervivencia && formData.id_ciclo && ciclosDisponibles.length > 0) {
       const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == formData.id_ciclo);
-      if (cicloSeleccionado && cicloSeleccionado.cantidad_siembra) {
+      if (cicloSeleccionado?.cantidad_siembra) {
         const poblacionActual = calcularPoblacionActual(formData.supervivencia, cicloSeleccionado.cantidad_siembra);
         if (poblacionActual !== formData.poblacion_actual) {
           setFormData(prev => ({
@@ -442,30 +456,102 @@ export default function MuestraForm() {
     return conversionAlimenticia.toFixed(3); // Redondeamos a 3 decimales para mayor precisión
   };
 
+  // Validar valor numérico según campo
+  const validarValorNumerico = (name, value) => {
+    if (value === '') return true;
+    const numVal = Number.parseFloat(value);
+    
+    if (Number.isNaN(numVal) || numVal < 0) return false;
+    if (name === 'supervivencia' && numVal > 100) return false;
+    
+    return true;
+  };
+
+  // Procesar cambio de ciclo productivo
+  const procesarCambioCiclo = (value, newFormData) => {
+    const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == value);
+    
+    if (cicloSeleccionado) {
+      fetchUltimoMuestra(value);
+      
+      if (newFormData.fecha_muestra) {
+        newFormData.dias_cultivo = calcularDiasCultivo(cicloSeleccionado.fecha_siembra, newFormData.fecha_muestra);
+      }
+      
+      newFormData.balanceado_acumulado = '';
+      newFormData.incremento_peso = '';
+    }
+  };
+
+  // Procesar cambio de fecha muestra
+  const procesarCambioFecha = (value, newFormData) => {
+    if (newFormData.id_ciclo) {
+      const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == newFormData.id_ciclo);
+      if (cicloSeleccionado) {
+        newFormData.dias_cultivo = calcularDiasCultivo(cicloSeleccionado.fecha_siembra, value);
+      }
+    }
+  };
+
+  // Procesar cambio de peso y actualizar campos dependientes
+  const procesarCambioPeso = (value, newFormData) => {
+    const pesoAnterior = ultimoMuestra ? ultimoMuestra.peso : null;
+    const incrementoPeso = calcularIncrementoPeso(value, pesoAnterior);
+    newFormData.incremento_peso = incrementoPeso;
+
+    if (newFormData.poblacion_actual) {
+      const biomasa = calcularBiomasa(value, newFormData.poblacion_actual);
+      newFormData.biomasa_lbs = biomasa;
+
+      if (newFormData.balanceado_acumulado) {
+        newFormData.conversion_alimenticia = calcularConversionAlimenticia(newFormData.balanceado_acumulado, biomasa);
+      }
+    }
+  };
+
+  // Procesar cambio de balanceado
+  const procesarCambioBalanceado = (newFormData) => {
+    const balanceadoAnterior = ultimoMuestra ? ultimoMuestra.balanceado_acumulado : 0;
+    const balanceadoAcumulado = calcularBalanceadoAcumulado(newFormData.balanceados, balanceadoAnterior);
+    newFormData.balanceado_acumulado = balanceadoAcumulado;
+
+    if (newFormData.biomasa_lbs) {
+      newFormData.conversion_alimenticia = calcularConversionAlimenticia(balanceadoAcumulado, newFormData.biomasa_lbs);
+    }
+  };
+
+  // Procesar cambio de supervivencia
+  const procesarCambioSupervivencia = (value, newFormData) => {
+    if (newFormData.id_ciclo) {
+      const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == newFormData.id_ciclo);
+      if (cicloSeleccionado?.cantidad_siembra) {
+        const poblacionActual = calcularPoblacionActual(value, cicloSeleccionado.cantidad_siembra);
+        newFormData.poblacion_actual = poblacionActual;
+
+        if (newFormData.peso) {
+          const biomasa = calcularBiomasa(newFormData.peso, poblacionActual);
+          newFormData.biomasa_lbs = biomasa;
+
+          if (newFormData.balanceado_acumulado) {
+            newFormData.conversion_alimenticia = calcularConversionAlimenticia(newFormData.balanceado_acumulado, biomasa);
+          }
+        }
+      }
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     
-    // Validaciones para campos numéricos
-    if (name === 'peso' || name === 'supervivencia' || name.startsWith('balanceado_')) {
-      // No permitir valores negativos
-      if (value !== '' && Number.parseFloat(value) < 0) {
-        return;
-      }
-      
-      // Validación específica para supervivencia (no mayor a 100)
-      if (name === 'supervivencia' && value !== '' && Number.parseFloat(value) > 100) {
-        return;
-      }
+    if (!validarValorNumerico(name, value)) {
+      return;
     }
     
-    // Verificar si el cambio es en un campo de balanceado
     const isBalanceadoField = name.startsWith('balanceado_');
     
-    // Actualizar el estado del formulario
     let newFormData;
     
     if (isBalanceadoField) {
-      // Extraer el ID del tipo de balanceado del nombre del campo
       const idTipoBalanceado = name.replace('balanceado_', '');
       newFormData = {
         ...formData,
@@ -481,93 +567,17 @@ export default function MuestraForm() {
       };
     }
     
-    // Manejar cambio de ciclo productivo
+    // Procesar cambios en campos específicos
     if (name === 'id_ciclo') {
-      const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == value);
-      
-      if (cicloSeleccionado) {
-        // Obtener el último muestra del ciclo seleccionado
-        fetchUltimoMuestra(value);
-        
-        // Calcular días de cultivo si también hay fecha de muestra
-        if (newFormData.fecha_muestra) {
-          const diasCultivo = calcularDiasCultivo(cicloSeleccionado.fecha_siembra, newFormData.fecha_muestra);
-          newFormData.dias_cultivo = diasCultivo;
-        }
-        
-        // Resetear valores calculados cuando se cambia de ciclo
-        // Se recalcularán automáticamente en los useEffect cuando se obtenga el último muestra
-        newFormData.balanceado_acumulado = '';
-        newFormData.incremento_peso = '';
-        
-        // Si ya hay un peso ingresado, necesitamos recalcular el incremento después de obtener el nuevo muestra
-        // Esto se hará automáticamente en el useEffect cuando cambie ultimoMuestra
-      }
-    }
-    
-    // Si se cambia la fecha de muestra y hay un ciclo seleccionado, recalcular días de cultivo
-    if (name === 'fecha_muestra' && newFormData.id_ciclo) {
-      const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == newFormData.id_ciclo);
-      if (cicloSeleccionado) {
-        const diasCultivo = calcularDiasCultivo(cicloSeleccionado.fecha_siembra, value);
-        newFormData.dias_cultivo = diasCultivo;
-      }
-    }
-    
-    // Si se cambia el peso, calcular incremento de peso y biomasa
-    if (name === 'peso') {
-      const pesoAnterior = ultimoMuestra ? ultimoMuestra.peso : null;
-      const incrementoPeso = calcularIncrementoPeso(value, pesoAnterior);
-      newFormData.incremento_peso = incrementoPeso;
-
-      // Si también hay población actual, calcular biomasa
-      if (newFormData.poblacion_actual) {
-        const biomasa = calcularBiomasa(value, newFormData.poblacion_actual);
-        newFormData.biomasa_lbs = biomasa;
-
-        // Si también hay balanceado acumulado, calcular conversión alimenticia
-        if (newFormData.balanceado_acumulado) {
-          const conversionAlimenticia = calcularConversionAlimenticia(newFormData.balanceado_acumulado, biomasa);
-          newFormData.conversion_alimenticia = conversionAlimenticia;
-        }
-      }
-    }
-    
-    // Si se cambia algún valor de balanceado, recalcular el acumulado
-    if (isBalanceadoField) {
-      const balanceadoAnterior = ultimoMuestra ? ultimoMuestra.balanceado_acumulado : 0;
-      const balanceadoAcumulado = calcularBalanceadoAcumulado(
-        newFormData.balanceados,
-        balanceadoAnterior
-      );
-      newFormData.balanceado_acumulado = balanceadoAcumulado;
-
-      // Si también hay biomasa, calcular conversión alimenticia
-      if (newFormData.biomasa_lbs) {
-        const conversionAlimenticia = calcularConversionAlimenticia(balanceadoAcumulado, newFormData.biomasa_lbs);
-        newFormData.conversion_alimenticia = conversionAlimenticia;
-      }
-    }
-
-    // Si se cambia la supervivencia, calcular población actual y biomasa
-    if (name === 'supervivencia' && newFormData.id_ciclo) {
-      const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == newFormData.id_ciclo);
-      if (cicloSeleccionado && cicloSeleccionado.cantidad_siembra) {
-        const poblacionActual = calcularPoblacionActual(value, cicloSeleccionado.cantidad_siembra);
-        newFormData.poblacion_actual = poblacionActual;
-
-        // Si también hay peso, calcular biomasa
-        if (newFormData.peso) {
-          const biomasa = calcularBiomasa(newFormData.peso, poblacionActual);
-          newFormData.biomasa_lbs = biomasa;
-
-          // Si también hay balanceado acumulado, calcular conversión alimenticia
-          if (newFormData.balanceado_acumulado) {
-            const conversionAlimenticia = calcularConversionAlimenticia(newFormData.balanceado_acumulado, biomasa);
-            newFormData.conversion_alimenticia = conversionAlimenticia;
-          }
-        }
-      }
+      procesarCambioCiclo(value, newFormData);
+    } else if (name === 'fecha_muestra') {
+      procesarCambioFecha(value, newFormData);
+    } else if (name === 'peso') {
+      procesarCambioPeso(value, newFormData);
+    } else if (isBalanceadoField) {
+      procesarCambioBalanceado(newFormData);
+    } else if (name === 'supervivencia') {
+      procesarCambioSupervivencia(value, newFormData);
     }
     
     setFormData(newFormData);
@@ -635,18 +645,72 @@ export default function MuestraForm() {
     navigate('/layout/dashboard/reporte');
   };
 
-  // Componente para mostrar mensaje de validación
-  const ValidationMessage = ({ fieldName }) => (
-    <div className="validation-message">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <span>Ingresa {fieldName}</span>
-    </div>
-  );
+  const getUltimoPesoMessage = () => {
+    if (ultimoMuestra) {
+      return `Peso promedio anterior: ${ultimoMuestra.peso}g`;
+    }
+    if (formData.id_ciclo) {
+      return 'Buscando último muestra...';
+    }
+    return 'Selecciona un ciclo primero';
+  };
 
-  ValidationMessage.propTypes = {
-    fieldName: PropTypes.string.isRequired
+  const renderBalanceadoContent = () => {
+    if (loadingTipos) {
+      return (
+        <div className="col-span-full text-center py-4 text-gray-500">
+          Cargando tipos de balanceado...
+        </div>
+      );
+    }
+
+    if (tiposBalanceado.length === 0) {
+      return (
+        <div className="col-span-full bg-orange-50 border border-orange-300 rounded-lg p-4">
+          <div className="header-user flex items-start gap-3">
+            <svg className="info w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            <div>
+              <p className="font-semibold text-orange-900">No hay tipos de balanceado configurados para esta compañía.</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {tiposBalanceado.map((tipo) => (
+          <div key={tipo.id_tipo_balanceado}>
+            <label htmlFor={`balanceado_${tipo.id_tipo_balanceado}`} className="block text-sm font-medium text-gray-700 mb-2">
+              {tipo.nombre}
+            </label>
+            <input
+              id={`balanceado_${tipo.id_tipo_balanceado}`}
+              type="number"
+              step="0.01"
+              min="0"
+              name={`balanceado_${tipo.id_tipo_balanceado}`}
+              value={formData.balanceados[tipo.id_tipo_balanceado] || ''}
+              ref={(el) => {
+                if (el) {
+                  balanceadoInputRefs.current[tipo.id_tipo_balanceado] = el;
+                }
+              }}
+              onFocus={(e) => e.target.addEventListener('wheel', handleWheel, { passive: false })}
+              onBlur={(e) => e.target.removeEventListener('wheel', handleWheel)}
+              onChange={handleChange}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder={`Ej: 500`}
+            />
+            <p className="text-sm text-gray-500 mt-1 leyenda">
+              Cantidad consumida en este muestreo ({tipo.unidad})
+            </p>
+          </div>
+        ))}
+      </>
+    );
   };
 
   return (
@@ -790,12 +854,7 @@ export default function MuestraForm() {
                 />
                 {formData.peso === '' && <ValidationMessage fieldName="un Peso Promedio (g)" />}
                 <p className="text-sm text-gray-500 mt-1 leyenda">
-                  {ultimoMuestra 
-                    ? `Peso promedio anterior: ${ultimoMuestra.peso}g` 
-                    : formData.id_ciclo 
-                      ? "Buscando último muestra..."
-                      : "Selecciona un ciclo primero"
-                  }
+                  {getUltimoPesoMessage()}
                 </p>
               </div>
 
@@ -842,7 +901,7 @@ export default function MuestraForm() {
                   {formData.id_ciclo && ciclosDisponibles.length > 0
                     ? (() => {
                         const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == formData.id_ciclo);
-                        if (cicloSeleccionado && cicloSeleccionado.cantidad_siembra) {
+                        if (cicloSeleccionado?.cantidad_siembra) {
                           return `Cantidad siembra: ${Number.parseInt(cicloSeleccionado.cantidad_siembra).toLocaleString()} individuos`;
                         } else if (cicloSeleccionado) {
                           return "Ciclo seleccionado, pero no hay datos de cantidad de siembra";
@@ -895,51 +954,7 @@ export default function MuestraForm() {
             {/* Información de alimentación */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Campos dinámicos de balanceado */}
-              {loadingTipos ? (
-                <div className="col-span-full text-center py-4 text-gray-500">
-                  Cargando tipos de balanceado...
-                </div>
-              ) : tiposBalanceado.length === 0 ? (
-                <div className="col-span-full bg-orange-50 border border-orange-300 rounded-lg p-4">
-                  <div className="header-user flex items-start gap-3">
-                    <svg className="info w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                    <div>
-                      <p className="font-semibold text-orange-900">No hay tipos de balanceado configurados para esta compañía.</p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                tiposBalanceado.map((tipo) => (
-                  <div key={tipo.id_tipo_balanceado}>
-                    <label htmlFor={`balanceado_${tipo.id_tipo_balanceado}`} className="block text-sm font-medium text-gray-700 mb-2">
-                      {tipo.nombre}
-                    </label>
-                    <input
-                      id={`balanceado_${tipo.id_tipo_balanceado}`}
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      name={`balanceado_${tipo.id_tipo_balanceado}`}
-                      value={formData.balanceados[tipo.id_tipo_balanceado] || ''}
-                      ref={(el) => {
-                        if (el) {
-                          balanceadoInputRefs.current[tipo.id_tipo_balanceado] = el;
-                        }
-                      }}
-                      onFocus={(e) => e.target.addEventListener('wheel', handleWheel, { passive: false })}
-                      onBlur={(e) => e.target.removeEventListener('wheel', handleWheel)}
-                      onChange={handleChange}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder={`Ej: 500`}
-                    />
-                    <p className="text-sm text-gray-500 mt-1 leyenda">
-                      Cantidad consumida en este muestreo ({tipo.unidad})
-                    </p>
-                  </div>
-                ))
-              )}
+              {renderBalanceadoContent()}
 
               <div>
                 <label htmlFor="balanceado_acumulado_nuevo" className="block text-sm font-medium text-gray-700 mb-2">
@@ -955,7 +970,7 @@ export default function MuestraForm() {
                   placeholder="Se calcula automáticamente"
                 />
                 <p className="text-sm text-gray-500 mt-1 leyenda">
-                  {ultimoMuestra && ultimoMuestra.balanceado_acumulado 
+                  {ultimoMuestra?.balanceado_acumulado
                     ? `Acumulado anterior: ${ultimoMuestra.balanceado_acumulado} + consumo actual`
                     : "Suma del consumo actual (primer muestra del ciclo)"
                   }

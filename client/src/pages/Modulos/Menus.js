@@ -75,8 +75,8 @@ export default function Menus() {
       const searchTerm = filters.busqueda.toLowerCase();
       filtered = filtered.filter(menu =>
         menu.nombre.toLowerCase().includes(searchTerm) ||
-        (menu.ruta && menu.ruta.toLowerCase().includes(searchTerm)) ||
-        (menu.nombre_modulo && menu.nombre_modulo.toLowerCase().includes(searchTerm))
+        menu.ruta?.toLowerCase().includes(searchTerm) ||
+        menu.nombre_modulo?.toLowerCase().includes(searchTerm)
       );
     }
 

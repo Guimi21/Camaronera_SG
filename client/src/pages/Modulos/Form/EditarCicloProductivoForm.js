@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import config from '../../../config';
@@ -11,6 +11,20 @@ const getLocalDateString = () => {
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+};
+
+// Componente para mostrar mensaje de validación
+const ValidationMessage = ({ fieldName }) => (
+  <div className="validation-message">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span>Ingresa {fieldName}</span>
+  </div>
+);
+
+ValidationMessage.propTypes = {
+  fieldName: PropTypes.string.isRequired
 };
 
 export default function EditarCicloProductivoForm() {
@@ -323,7 +337,7 @@ export default function EditarCicloProductivoForm() {
     if (!cantidadSiembra || !idPiscina) return '';
     
     const piscinaSeleccionada = piscinas.find(p => p.id_piscina == idPiscina);
-    if (!piscinaSeleccionada || !piscinaSeleccionada.hectareas) return '';
+    if (!piscinaSeleccionada?.hectareas) return '';
     
     const cantidadNum = Number.parseFloat(cantidadSiembra);
     const hectareasNum = Number.parseFloat(piscinaSeleccionada.hectareas);
@@ -341,7 +355,7 @@ export default function EditarCicloProductivoForm() {
     if (!cantidadCosecha || !idPiscina) return '';
     
     const piscinaSeleccionada = piscinas.find(p => p.id_piscina == idPiscina);
-    if (!piscinaSeleccionada || !piscinaSeleccionada.hectareas) return '';
+    if (!piscinaSeleccionada?.hectareas) return '';
     
     const cantidadNum = Number.parseFloat(cantidadCosecha);
     const hectareasNum = Number.parseFloat(piscinaSeleccionada.hectareas);
@@ -354,39 +368,38 @@ export default function EditarCicloProductivoForm() {
     return libras.toFixed(2);
   };
 
+  // Validar valor numérico
+  const validarValorNumerico = (value) => {
+    if (value === '') return true;
+    const numericValue = Number.parseFloat(value);
+    return !Number.isNaN(numericValue) && numericValue > 0;
+  };
+
+  // Actualizar densidad si es necesario
+  const actualizarDensidadSiNecesario = (name, value, currentFormData) => {
+    if (name === 'cantidad_siembra' || name === 'id_piscina') {
+      const cantidadSiembra = name === 'cantidad_siembra' ? value : currentFormData.cantidad_siembra;
+      const idPiscina = name === 'id_piscina' ? value : currentFormData.id_piscina;
+      return calcularDensidad(cantidadSiembra, idPiscina);
+    }
+    return currentFormData.densidad;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     
-    // Validación para cantidad_siembra
-    if (name === 'cantidad_siembra') {
-      const numericValue = Number.parseFloat(value);
-      if (value !== '' && (Number.isNaN(numericValue) || numericValue <= 0)) {
-        return;
-      }
+    // Validar campos numéricos
+    if ((name === 'cantidad_siembra' || name === 'biomasa_cosecha') && !validarValorNumerico(value)) {
+      return;
     }
     
-    // Validación para biomasa_cosecha
-    if (name === 'biomasa_cosecha') {
-      const numericValue = Number.parseFloat(value);
-      if (value !== '' && (Number.isNaN(numericValue) || numericValue <= 0)) {
-        return;
-      }
-    }
-    
-    // Crear nuevo formData con el cambio
     const newFormData = {
       ...formData,
-      [name]: value
+      [name]: value,
+      densidad: formData.densidad
     };
     
-    // Calcular densidad automáticamente si cambia la cantidad de siembra o la piscina
-    if (name === 'cantidad_siembra' || name === 'id_piscina') {
-      const cantidadSiembra = name === 'cantidad_siembra' ? value : formData.cantidad_siembra;
-      const idPiscina = name === 'id_piscina' ? value : formData.id_piscina;
-      
-      newFormData.densidad = calcularDensidad(cantidadSiembra, idPiscina);
-    }
-    
+    newFormData.densidad = actualizarDensidadSiNecesario(name, value, newFormData);
     setFormData(newFormData);
   };
 
@@ -413,65 +426,114 @@ export default function EditarCicloProductivoForm() {
     setError('');
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!formData.id_piscina) {
-      setError('Debe seleccionar una piscina.');
-      return;
-    }
-    
-    if (!formData.fecha_siembra) {
-      setError('La fecha de siembra es requerida.');
-      return;
-    }
-    
+  // Validar campos requeridos básicos
+  const validarCamposBasicos = () => {
+    if (!formData.id_piscina) return 'Debe seleccionar una piscina.';
+    if (!formData.fecha_siembra) return 'La fecha de siembra es requerida.';
     if (!formData.cantidad_siembra || Number.parseFloat(formData.cantidad_siembra) <= 0) {
-      setError('La cantidad de siembra debe ser un número positivo.');
-      return;
+      return 'La cantidad de siembra debe ser un número positivo.';
     }
-    
     if (!formData.densidad) {
-      setError('La densidad no pudo calcularse. Verifica la cantidad de siembra y la piscina seleccionada.');
-      return;
+      return 'La densidad no pudo calcularse. Verifica la cantidad de siembra y la piscina seleccionada.';
     }
+    if (!formData.tipo_siembra.trim()) return 'El tipo de siembra es requerido.';
+    if (!formData.id_tipo_alimentacion) return 'El tipo de alimentación es requerido.';
+    return null;
+  };
+
+  // Validar campos para ciclos finalizados
+  const validarCicloFinalizado = () => {
+    if (formData.estado !== 'FINALIZADO') return null;
     
-    if (!formData.tipo_siembra.trim()) {
-      setError('El tipo de siembra es requerido.');
-      return;
+    if (!formData.fecha_cosecha) {
+      return 'La fecha de cosecha es requerida cuando el estado es "Finalizado".';
     }
-    
-    if (!formData.id_tipo_alimentacion) {
-      setError('El tipo de alimentación es requerido.');
-      return;
+    if (!formData.biomasa_cosecha || Number.parseFloat(formData.biomasa_cosecha) <= 0) {
+      return 'La cosecha en libras debe ser un número positivo cuando el estado es "Finalizado".';
     }
-    
-    if (formData.estado === 'FINALIZADO' && !formData.fecha_cosecha) {
-      setError('La fecha de cosecha es requerida cuando el estado es "Finalizado".');
-      return;
-    }
-    
-    if (formData.estado === 'FINALIZADO' && (!formData.biomasa_cosecha || Number.parseFloat(formData.biomasa_cosecha) <= 0)) {
-      setError('La cosecha en libras debe ser un número positivo cuando el estado es "Finalizado".');
-      return;
-    }
-    
-    if (formData.estado === 'FINALIZADO' && (!pdfFile && !formData.ruta_pdf)) {
+    if (!pdfFile && !formData.ruta_pdf) {
       const pdfInput = document.getElementById('ruta_pdf');
       if (pdfInput) {
         pdfInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
         pdfInput.focus();
       }
+      return null; // Sin error aquí, el focus maneja la UX
+    }
+    return null;
+  };
+
+  // Validar archivo PDF
+  const validarArchivoPdf = () => {
+    if (pdfFile && pdfFile.type !== 'application/pdf' && !pdfFile.name.endsWith('.pdf')) {
+      return 'Solo se permiten archivos en formato PDF.';
+    }
+    return null;
+  };
+
+  // Cargar PDF si existe
+  const cargarPdf = async () => {
+    if (!pdfFile) return formData.ruta_pdf;
+
+    const formDataPdf = new FormData();
+    formDataPdf.append('pdf', pdfFile);
+    formDataPdf.append('id_ciclo', id);
+    formDataPdf.append('id_compania', idCompania);
+    
+    const uploadResponse = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php?action=upload_pdf`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formDataPdf
+    });
+    
+    const uploadResult = await uploadResponse.json();
+    
+    if (uploadResponse.ok && uploadResult.success) {
+      return uploadResult.ruta_pdf;
+    }
+    throw new Error(uploadResult.message || 'Error al cargar el archivo PDF.');
+  };
+
+  // Construir datos para enviar
+  const construirDataEnvio = (rutaPdf) => ({
+    id_ciclo: Number.parseInt(id),
+    id_piscina: Number.parseInt(formData.id_piscina),
+    fecha_siembra: formData.fecha_siembra,
+    fecha_cosecha: formData.fecha_cosecha || null,
+    cantidad_siembra: Number.parseInt(formData.cantidad_siembra),
+    densidad: Number.parseFloat(formData.densidad),
+    biomasa_cosecha: (formData.estado === 'FINALIZADO' && formData.biomasa_cosecha) ? Number.parseInt(formData.biomasa_cosecha) : null,
+    libras_por_hectarea: (formData.estado === 'FINALIZADO' && formData.libras_por_hectarea) ? Number.parseFloat(formData.libras_por_hectarea) : null,
+    tipo_siembra: formData.tipo_siembra.trim(),
+    id_tipo_alimentacion: Number.parseInt(formData.id_tipo_alimentacion),
+    promedio_incremento_peso: (formData.promedio_incremento_peso !== '' && formData.promedio_incremento_peso !== null) ? Number.parseFloat(formData.promedio_incremento_peso) : null,
+    ruta_pdf: rutaPdf || null,
+    estado: formData.estado,
+    id_compania: idCompania,
+    id_usuario_actualiza: idUsuario
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validaciones en orden
+    const errorBasico = validarCamposBasicos();
+    if (errorBasico) {
+      setError(errorBasico);
       return;
     }
-    
-    if (pdfFile) {
-      if (pdfFile.type !== 'application/pdf' && !pdfFile.name.endsWith('.pdf')) {
-        setError('Solo se permiten archivos en formato PDF.');
-        return;
-      }
+
+    const errorFinalizado = validarCicloFinalizado();
+    if (errorFinalizado) {
+      setError(errorFinalizado);
+      return;
     }
-    
+
+    const errorPdf = validarArchivoPdf();
+    if (errorPdf) {
+      setError(errorPdf);
+      return;
+    }
+
     if (!idCompania || !idUsuario) {
       setError('No se pudo obtener la información del usuario o compañía.');
       return;
@@ -481,49 +543,8 @@ export default function EditarCicloProductivoForm() {
     setError('');
 
     try {
-      // Si hay un archivo PDF nuevo, subirlo primero
-      let rutaPdf = formData.ruta_pdf;
-      
-      if (pdfFile) {
-        const formDataPdf = new FormData();
-        formDataPdf.append('pdf', pdfFile);
-        formDataPdf.append('id_ciclo', id);
-        formDataPdf.append('id_compania', idCompania);
-        
-        const uploadResponse = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php?action=upload_pdf`, {
-          method: 'POST',
-          credentials: 'include',
-          body: formDataPdf
-        });
-        
-        const uploadResult = await uploadResponse.json();
-        
-        if (uploadResponse.ok && uploadResult.success) {
-          rutaPdf = uploadResult.ruta_pdf;
-        } else {
-          setError(uploadResult.message || 'Error al cargar el archivo PDF.');
-          setLoading(false);
-          return;
-        }
-      }
-      
-      const dataToSend = {
-        id_ciclo: Number.parseInt(id),
-        id_piscina: Number.parseInt(formData.id_piscina),
-        fecha_siembra: formData.fecha_siembra,
-        fecha_cosecha: formData.fecha_cosecha || null,
-        cantidad_siembra: Number.parseInt(formData.cantidad_siembra),
-        densidad: Number.parseFloat(formData.densidad),
-        biomasa_cosecha: (formData.estado === 'FINALIZADO' && formData.biomasa_cosecha) ? Number.parseInt(formData.biomasa_cosecha) : null,
-        libras_por_hectarea: (formData.estado === 'FINALIZADO' && formData.libras_por_hectarea) ? Number.parseFloat(formData.libras_por_hectarea) : null,
-        tipo_siembra: formData.tipo_siembra.trim(),
-        id_tipo_alimentacion: Number.parseInt(formData.id_tipo_alimentacion),
-        promedio_incremento_peso: (formData.promedio_incremento_peso !== '' && formData.promedio_incremento_peso !== null) ? Number.parseFloat(formData.promedio_incremento_peso) : null,
-        ruta_pdf: rutaPdf || null,
-        estado: formData.estado,
-        id_compania: idCompania,
-        id_usuario_actualiza: idUsuario
-      };
+      const rutaPdf = await cargarPdf();
+      const dataToSend = construirDataEnvio(rutaPdf);
 
       const response = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php`, {
         method: 'PUT',
@@ -544,27 +565,13 @@ export default function EditarCicloProductivoForm() {
       }
     } catch (error) {
       console.error('Error updating ciclo:', error);
-      setError('Error de conexión. Por favor intente nuevamente.');
+      setError(error.message || 'Error de conexión. Por favor intente nuevamente.');
       setLoading(false);
     }
   };
 
   const handleCancel = () => {
     navigate('/layout/dashboard/monitoreo-ciclos');
-  };
-
-  // Componente para mostrar mensaje de validación
-  const ValidationMessage = ({ fieldName }) => (
-    <div className="validation-message">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <span>Ingresa {fieldName}</span>
-    </div>
-  );
-
-  ValidationMessage.propTypes = {
-    fieldName: PropTypes.string.isRequired
   };
 
   if (loadingCiclo || loadingPiscinas) {

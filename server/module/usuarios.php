@@ -6,6 +6,12 @@ require_once __DIR__ . '/../helpers/cors.php';
 
 header('Content-Type: application/json');
 
+// Definir constantes
+define('PARAM_ID_USUARIO', ':id_usuario');
+define('ERROR_DB_PREFIX', 'Error en la base de datos: ');
+define('ERROR_SERVER_PREFIX', 'Error del servidor: ');
+define('INPUT_STREAM', 'php://input');
+
 // Verificar que la conexión a la base de datos esté establecida
 if (!isset($conn)) {
     $response = [
@@ -61,14 +67,14 @@ if ($method === 'GET') {
             WHERE u.id_grupo_empresarial = (
                 SELECT id_grupo_empresarial 
                 FROM usuario 
-                WHERE id_usuario = :id_usuario
+                WHERE id_usuario = " . PARAM_ID_USUARIO . "
             )
             GROUP BY u.id_usuario, u.nombre, u.username, u.estado, u.id_grupo_empresarial, u.fecha_creacion, u.fecha_actualizacion
             ORDER BY u.fecha_creacion DESC
         ";
 
         $stmt = $conn->prepare($query);
-        $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+        $stmt->bindParam(PARAM_ID_USUARIO, $id_usuario, PDO::PARAM_INT);
         $stmt->execute();
 
         $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -84,13 +90,13 @@ if ($method === 'GET') {
         http_response_code(500);
         echo json_encode([
             'success' => false,
-            'message' => 'Error en la base de datos: ' . $e->getMessage()
+            'message' => ERROR_DB_PREFIX . $e->getMessage()
         ]);
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode([
             'success' => false,
-            'message' => 'Error del servidor: ' . $e->getMessage()
+            'message' => ERROR_SERVER_PREFIX . $e->getMessage()
         ]);
     }
     exit();
@@ -100,7 +106,7 @@ if ($method === 'GET') {
 if ($method === 'POST') {
     try {
         // Leer el cuerpo de la solicitud JSON
-        $input = json_decode(file_get_contents('php://input'), true);
+        $input = json_decode(file_get_contents(INPUT_STREAM), true);
 
         // Validar campos requeridos
         if (!isset($input['nombre']) || empty(trim($input['nombre']))) {
@@ -173,9 +179,9 @@ if ($method === 'POST') {
             }
         } else {
             // Si no se proporciona, obtener el del usuario autenticado
-            $queryGrupo = "SELECT id_grupo_empresarial FROM usuario WHERE id_usuario = :id_usuario";
+            $queryGrupo = "SELECT id_grupo_empresarial FROM usuario WHERE id_usuario = " . PARAM_ID_USUARIO . "";
             $stmtGrupo = $conn->prepare($queryGrupo);
-            $stmtGrupo->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+            $stmtGrupo->bindParam(PARAM_ID_USUARIO, $id_usuario, PDO::PARAM_INT);
             $stmtGrupo->execute();
             $usuario = $stmtGrupo->fetch(PDO::FETCH_ASSOC);
 
@@ -224,22 +230,22 @@ if ($method === 'POST') {
             $new_id = $conn->lastInsertId();
             
             // Insertar relaciones usuario-perfil
-            $insertPerfilQuery = "INSERT INTO usuario_perfil (id_usuario, id_perfil) VALUES (:id_usuario, :id_perfil)";
+            $insertPerfilQuery = "INSERT INTO usuario_perfil (id_usuario, id_perfil) VALUES (" . PARAM_ID_USUARIO . ", :id_perfil)";
             $insertPerfilStmt = $conn->prepare($insertPerfilQuery);
             
             foreach ($perfiles as $id_perfil) {
-                $insertPerfilStmt->bindParam(':id_usuario', $new_id, PDO::PARAM_INT);
+                $insertPerfilStmt->bindParam(PARAM_ID_USUARIO, $new_id, PDO::PARAM_INT);
                 $insertPerfilStmt->bindParam(':id_perfil', $id_perfil, PDO::PARAM_INT);
                 $insertPerfilStmt->execute();
             }
             
             // Insertar relaciones usuario-compañía (solo si existen compañías)
             if (!empty($companias)) {
-                $insertCompaniaQuery = "INSERT INTO usuario_compania (id_usuario, id_compania) VALUES (:id_usuario, :id_compania)";
+                $insertCompaniaQuery = "INSERT INTO usuario_compania (id_usuario, id_compania) VALUES (" . PARAM_ID_USUARIO . ", :id_compania)";
                 $insertCompaniaStmt = $conn->prepare($insertCompaniaQuery);
                 
                 foreach ($companias as $id_compania) {
-                    $insertCompaniaStmt->bindParam(':id_usuario', $new_id, PDO::PARAM_INT);
+                    $insertCompaniaStmt->bindParam(PARAM_ID_USUARIO, $new_id, PDO::PARAM_INT);
                     $insertCompaniaStmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
                     $insertCompaniaStmt->execute();
                 }
@@ -248,18 +254,18 @@ if ($method === 'POST') {
             // Obtener nombres de perfiles asignados
             $queryPerfiles = "SELECT p.nombre FROM perfil p 
                              JOIN usuario_perfil up ON p.id_perfil = up.id_perfil 
-                             WHERE up.id_usuario = :id_usuario";
+                             WHERE up.id_usuario = " . PARAM_ID_USUARIO . "";
             $stmtPerfiles = $conn->prepare($queryPerfiles);
-            $stmtPerfiles->bindParam(':id_usuario', $new_id, PDO::PARAM_INT);
+            $stmtPerfiles->bindParam(PARAM_ID_USUARIO, $new_id, PDO::PARAM_INT);
             $stmtPerfiles->execute();
             $perfilesNombres = $stmtPerfiles->fetchAll(PDO::FETCH_COLUMN);
             
             // Obtener nombres de compañías asignadas
             $queryCompanias = "SELECT c.nombre FROM compania c 
                               JOIN usuario_compania uc ON c.id_compania = uc.id_compania 
-                              WHERE uc.id_usuario = :id_usuario";
+                              WHERE uc.id_usuario = " . PARAM_ID_USUARIO . "";
             $stmtCompanias = $conn->prepare($queryCompanias);
-            $stmtCompanias->bindParam(':id_usuario', $new_id, PDO::PARAM_INT);
+            $stmtCompanias->bindParam(PARAM_ID_USUARIO, $new_id, PDO::PARAM_INT);
             $stmtCompanias->execute();
             $companiasNombres = $stmtCompanias->fetchAll(PDO::FETCH_COLUMN);
             
@@ -289,12 +295,12 @@ if ($method === 'POST') {
             echo json_encode(['success' => false, 'message' => 'El Usuario (username) ya existe en el sistema']);
         } else {
             http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Error en la base de datos: ' . $e->getMessage()]);
+            echo json_encode(['success' => false, 'message' => ERROR_DB_PREFIX . $e->getMessage()]);
         }
         exit();
     } catch (Exception $e) {
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Error del servidor: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => ERROR_SERVER_PREFIX . $e->getMessage()]);
         exit();
     }
 }
@@ -303,7 +309,7 @@ if ($method === 'POST') {
 if ($method === 'PUT') {
     try {
         // Leer el cuerpo de la solicitud JSON
-        $input = json_decode(file_get_contents('php://input'), true);
+        $input = json_decode(file_get_contents(INPUT_STREAM), true);
 
         // Validar campos requeridos
         if (!isset($input['nombre']) || empty(trim($input['nombre']))) {
@@ -363,33 +369,33 @@ if ($method === 'PUT') {
         }
 
         // Eliminar perfiles antiguos
-        $deletePerfilQuery = "DELETE FROM usuario_perfil WHERE id_usuario = :id_usuario";
+        $deletePerfilQuery = "DELETE FROM usuario_perfil WHERE id_usuario = " . PARAM_ID_USUARIO . "";
         $deletePerfilStmt = $conn->prepare($deletePerfilQuery);
-        $deletePerfilStmt->bindParam(':id_usuario', $id_usuario_edit, PDO::PARAM_INT);
+        $deletePerfilStmt->bindParam(PARAM_ID_USUARIO, $id_usuario_edit, PDO::PARAM_INT);
         $deletePerfilStmt->execute();
 
         // Insertar nuevos perfiles
-        $insertPerfilQuery = "INSERT INTO usuario_perfil (id_usuario, id_perfil) VALUES (:id_usuario, :id_perfil)";
+        $insertPerfilQuery = "INSERT INTO usuario_perfil (id_usuario, id_perfil) VALUES (" . PARAM_ID_USUARIO . ", :id_perfil)";
         $insertPerfilStmt = $conn->prepare($insertPerfilQuery);
 
         foreach ($perfiles as $id_perfil) {
-            $insertPerfilStmt->bindParam(':id_usuario', $id_usuario_edit, PDO::PARAM_INT);
+            $insertPerfilStmt->bindParam(PARAM_ID_USUARIO, $id_usuario_edit, PDO::PARAM_INT);
             $insertPerfilStmt->bindParam(':id_perfil', $id_perfil, PDO::PARAM_INT);
             $insertPerfilStmt->execute();
         }
 
         // Eliminar compañías antiguas
-        $deleteCompaniaQuery = "DELETE FROM usuario_compania WHERE id_usuario = :id_usuario";
+        $deleteCompaniaQuery = "DELETE FROM usuario_compania WHERE id_usuario = " . PARAM_ID_USUARIO . "";
         $deleteCompaniaStmt = $conn->prepare($deleteCompaniaQuery);
-        $deleteCompaniaStmt->bindParam(':id_usuario', $id_usuario_edit, PDO::PARAM_INT);
+        $deleteCompaniaStmt->bindParam(PARAM_ID_USUARIO, $id_usuario_edit, PDO::PARAM_INT);
         $deleteCompaniaStmt->execute();
 
         // Insertar nuevas compañías
-        $insertCompaniaQuery = "INSERT INTO usuario_compania (id_usuario, id_compania) VALUES (:id_usuario, :id_compania)";
+        $insertCompaniaQuery = "INSERT INTO usuario_compania (id_usuario, id_compania) VALUES (" . PARAM_ID_USUARIO . ", :id_compania)";
         $insertCompaniaStmt = $conn->prepare($insertCompaniaQuery);
 
         foreach ($companias as $id_compania) {
-            $insertCompaniaStmt->bindParam(':id_usuario', $id_usuario_edit, PDO::PARAM_INT);
+            $insertCompaniaStmt->bindParam(PARAM_ID_USUARIO, $id_usuario_edit, PDO::PARAM_INT);
             $insertCompaniaStmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
             $insertCompaniaStmt->execute();
         }
@@ -397,17 +403,17 @@ if ($method === 'PUT') {
         // Obtener datos actualizados del usuario
         $queryPerfiles = "SELECT p.nombre FROM perfil p 
                          JOIN usuario_perfil up ON p.id_perfil = up.id_perfil 
-                         WHERE up.id_usuario = :id_usuario";
+                         WHERE up.id_usuario = " . PARAM_ID_USUARIO . "";
         $stmtPerfiles = $conn->prepare($queryPerfiles);
-        $stmtPerfiles->bindParam(':id_usuario', $id_usuario_edit, PDO::PARAM_INT);
+        $stmtPerfiles->bindParam(PARAM_ID_USUARIO, $id_usuario_edit, PDO::PARAM_INT);
         $stmtPerfiles->execute();
         $perfilesNombres = $stmtPerfiles->fetchAll(PDO::FETCH_COLUMN);
 
         $queryCompanias = "SELECT c.nombre FROM compania c 
                           JOIN usuario_compania uc ON c.id_compania = uc.id_compania 
-                          WHERE uc.id_usuario = :id_usuario";
+                          WHERE uc.id_usuario = " . PARAM_ID_USUARIO . "";
         $stmtCompanias = $conn->prepare($queryCompanias);
-        $stmtCompanias->bindParam(':id_usuario', $id_usuario_edit, PDO::PARAM_INT);
+        $stmtCompanias->bindParam(PARAM_ID_USUARIO, $id_usuario_edit, PDO::PARAM_INT);
         $stmtCompanias->execute();
         $companiasNombres = $stmtCompanias->fetchAll(PDO::FETCH_COLUMN);
 
@@ -427,11 +433,11 @@ if ($method === 'PUT') {
 
     } catch (PDOException $e) {
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Error en la base de datos: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => ERROR_DB_PREFIX . $e->getMessage()]);
         exit();
     } catch (Exception $e) {
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Error del servidor: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => ERROR_SERVER_PREFIX . $e->getMessage()]);
         exit();
     }
 }

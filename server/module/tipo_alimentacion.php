@@ -3,6 +3,13 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/cors.php';  // Configuración CORS centralizada
 
+// Constantes para parámetros SQL y mensajes de error
+define('PARAM_ID_COMPANIA', ':id_compania');
+define('PARAM_NOMBRE', ':nombre');
+define('PARAM_ID_TIPO_ALIMENTACION', ':id_tipo_alimentacion');
+define('ERROR_PREFIX', 'Error: ');
+define('INPUT_STREAM', 'php://input');
+
 // Verificar que la conexión a la base de datos esté establecida
 if (!isset($conn)) {
     $response = [
@@ -40,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                     ta.fecha_creacion,
                     ta.fecha_actualizacion
                 FROM tipo_alimentacion ta
-                WHERE ta.id_compania = :id_compania
+                WHERE ta.id_compania = " . PARAM_ID_COMPANIA . "
                 ORDER BY ta.id_tipo_alimentacion DESC";
 
         $stmt = $conn->prepare($sql);
@@ -48,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
             throw new Exception("Error preparando consulta: " . implode(", ", $conn->errorInfo()));
         }
 
-        $stmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
+        $stmt->bindParam(PARAM_ID_COMPANIA, $id_compania, PDO::PARAM_INT);
         
         if (!$stmt->execute()) {
             throw new Exception("Error ejecutando consulta: " . implode(", ", $stmt->errorInfo()));
@@ -79,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     } catch (Exception $e) {
         $response = [
             'success' => false,
-            'message' => 'Error: ' . $e->getMessage()
+            'message' => ERROR_PREFIX . $e->getMessage()
         ];
         http_response_code(500);
         echo json_encode($response);
@@ -90,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
         // Obtener datos del cuerpo de la solicitud
-        $input = json_decode(file_get_contents('php://input'), true);
+        $input = json_decode(file_get_contents(INPUT_STREAM), true);
         
         if (!$input) {
             $response = [
@@ -130,10 +137,10 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Verificar si el tipo de alimentación ya existe en esta compañía
         $checkSql = "SELECT COUNT(*) as count FROM tipo_alimentacion 
-                     WHERE nombre = :nombre AND id_compania = :id_compania";
+                     WHERE nombre = " . PARAM_NOMBRE . " AND id_compania = " . PARAM_ID_COMPANIA . "";
         $checkStmt = $conn->prepare($checkSql);
-        $checkStmt->bindParam(':nombre', $nombre);
-        $checkStmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
+        $checkStmt->bindParam(PARAM_NOMBRE, $nombre);
+        $checkStmt->bindParam(PARAM_ID_COMPANIA, $id_compania, PDO::PARAM_INT);
         $checkStmt->execute();
         $checkResult = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -150,11 +157,11 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Insertar el nuevo tipo de alimentación
         $estado = isset($input['estado']) ? trim($input['estado']) : 'ACTIVO';
         $insertSql = "INSERT INTO tipo_alimentacion (nombre, id_compania, estado, id_usuario_crea, id_usuario_actualiza) 
-                      VALUES (:nombre, :id_compania, :estado, :id_usuario_crea, :id_usuario_actualiza)";
+                      VALUES (" . PARAM_NOMBRE . ", " . PARAM_ID_COMPANIA . ", :estado, :id_usuario_crea, :id_usuario_actualiza)";
         
         $insertStmt = $conn->prepare($insertSql);
-        $insertStmt->bindParam(':nombre', $nombre);
-        $insertStmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
+        $insertStmt->bindParam(PARAM_NOMBRE, $nombre);
+        $insertStmt->bindParam(PARAM_ID_COMPANIA, $id_compania, PDO::PARAM_INT);
         $insertStmt->bindParam(':estado', $estado, PDO::PARAM_STR);
         $insertStmt->bindParam(':id_usuario_crea', $id_usuario_crea, PDO::PARAM_INT);
         $insertStmt->bindParam(':id_usuario_actualiza', $id_usuario_actualiza, PDO::PARAM_INT);
@@ -183,7 +190,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } catch (Exception $e) {
         $response = [
             'success' => false,
-            'message' => 'Error: ' . $e->getMessage()
+            'message' => ERROR_PREFIX . $e->getMessage()
         ];
         http_response_code(500);
         echo json_encode($response);
@@ -193,7 +200,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
 // Manejar solicitudes PUT para actualizar tipo de alimentación
 elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
     try {
-        $input = json_decode(file_get_contents('php://input'), true);
+        $input = json_decode(file_get_contents(INPUT_STREAM), true);
         
         if (!$input || !isset($input['id_tipo_alimentacion'])) {
             $response = [
@@ -211,11 +218,11 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
 
         // Construir consulta de actualización dinámica
         $updates = [];
-        $params = [':id_tipo_alimentacion' => $id_tipo_alimentacion];
+        $params = [PARAM_ID_TIPO_ALIMENTACION => $id_tipo_alimentacion];
 
         if ($nombre !== null && $nombre !== '') {
-            $updates[] = "nombre = :nombre";
-            $params[':nombre'] = $nombre;
+            $updates[] = "nombre = " . PARAM_NOMBRE . "";
+            $params[PARAM_NOMBRE] = $nombre;
         }
 
         if ($estado !== null && $estado !== '') {
@@ -234,7 +241,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
         }
 
         $updateSql = "UPDATE tipo_alimentacion SET " . implode(', ', $updates) . " 
-                      WHERE id_tipo_alimentacion = :id_tipo_alimentacion";
+                      WHERE id_tipo_alimentacion = " . PARAM_ID_TIPO_ALIMENTACION . "";
         
         $updateStmt = $conn->prepare($updateSql);
         
@@ -255,7 +262,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
     } catch (Exception $e) {
         $response = [
             'success' => false,
-            'message' => 'Error: ' . $e->getMessage()
+            'message' => ERROR_PREFIX . $e->getMessage()
         ];
         http_response_code(500);
         echo json_encode($response);
@@ -265,7 +272,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
 // Manejar solicitudes DELETE para eliminar tipo de alimentación
 elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
     try {
-        $input = json_decode(file_get_contents('php://input'), true);
+        $input = json_decode(file_get_contents(INPUT_STREAM), true);
         
         if (!$input || !isset($input['id_tipo_alimentacion'])) {
             $response = [
@@ -279,9 +286,9 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
 
         $id_tipo_alimentacion = intval($input['id_tipo_alimentacion']);
 
-        $deleteSql = "DELETE FROM tipo_alimentacion WHERE id_tipo_alimentacion = :id_tipo_alimentacion";
+        $deleteSql = "DELETE FROM tipo_alimentacion WHERE id_tipo_alimentacion = " . PARAM_ID_TIPO_ALIMENTACION . "";
         $deleteStmt = $conn->prepare($deleteSql);
-        $deleteStmt->bindParam(':id_tipo_alimentacion', $id_tipo_alimentacion, PDO::PARAM_INT);
+        $deleteStmt->bindParam(PARAM_ID_TIPO_ALIMENTACION, $id_tipo_alimentacion, PDO::PARAM_INT);
         
         if ($deleteStmt->execute()) {
             $response = [
@@ -296,7 +303,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
     } catch (Exception $e) {
         $response = [
             'success' => false,
-            'message' => 'Error: ' . $e->getMessage()
+            'message' => ERROR_PREFIX . $e->getMessage()
         ];
         http_response_code(500);
         echo json_encode($response);

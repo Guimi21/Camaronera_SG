@@ -1,4 +1,10 @@
 <?php
+define('RESPONSE_SUCCESS', 'success');
+define('RESPONSE_MESSAGE', 'message');
+define('RESPONSE_DATA', 'data');
+define('ERROR_DB', 'Error en la base de datos: ');
+define('ERROR_SERVER', 'Error del servidor: ');
+
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/cors.php';
@@ -7,8 +13,8 @@ header('Content-Type: application/json');
 
 if (!isset($conn)) {
     $response = [
-        'success' => false,
-        'message' => 'Error de conexión a la base de datos'
+        RESPONSE_SUCCESS => false,
+        RESPONSE_MESSAGE => 'Error de conexión a la base de datos'
     ];
     http_response_code(500);
     echo json_encode($response);
@@ -69,22 +75,22 @@ if ($method === 'GET') {
 
         http_response_code(200);
         echo json_encode([
-            'success' => true,
-            'data' => $menus,
-            'message' => 'Menús obtenidos correctamente'
+            RESPONSE_SUCCESS => true,
+            RESPONSE_DATA => $menus,
+            RESPONSE_MESSAGE => 'Menús obtenidos correctamente'
         ]);
 
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode([
-            'success' => false,
-            'message' => 'Error en la base de datos: ' . $e->getMessage()
+            RESPONSE_SUCCESS => false,
+            RESPONSE_MESSAGE => ERROR_DB . $e->getMessage()
         ]);
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode([
-            'success' => false,
-            'message' => 'Error del servidor: ' . $e->getMessage()
+            RESPONSE_SUCCESS => false,
+            RESPONSE_MESSAGE => ERROR_SERVER . $e->getMessage()
         ]);
     }
     exit();
@@ -104,8 +110,8 @@ if ($method === 'POST') {
         if (!$nombre) {
             http_response_code(400);
             echo json_encode([
-                'success' => false,
-                'message' => 'El nombre del menú es requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'El nombre del menú es requerido'
             ]);
             exit();
         }
@@ -125,8 +131,8 @@ if ($method === 'POST') {
 
         http_response_code(201);
         echo json_encode([
-            'success' => true,
-            'data' => [
+            RESPONSE_SUCCESS => true,
+            RESPONSE_DATA => [
                 'id_menu' => $newMenuId,
                 'id_modulo' => $id_modulo,
                 'nombre' => $nombre,
@@ -134,20 +140,20 @@ if ($method === 'POST') {
                 'icono' => $icono,
                 'estado' => $estado
             ],
-            'message' => 'Menú creado exitosamente'
+            RESPONSE_MESSAGE => 'Menú creado exitosamente'
         ]);
 
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode([
-            'success' => false,
-            'message' => 'Error en la base de datos: ' . $e->getMessage()
+            RESPONSE_SUCCESS => false,
+            RESPONSE_MESSAGE => ERROR_DB . $e->getMessage()
         ]);
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode([
-            'success' => false,
-            'message' => 'Error del servidor: ' . $e->getMessage()
+            RESPONSE_SUCCESS => false,
+            RESPONSE_MESSAGE => ERROR_SERVER . $e->getMessage()
         ]);
     }
     exit();
@@ -168,8 +174,8 @@ if ($method === 'PUT') {
         if (!$id_menu || !$nombre) {
             http_response_code(400);
             echo json_encode([
-                'success' => false,
-                'message' => 'ID de menú y nombre son requeridos'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'ID de menú y nombre son requeridos'
             ]);
             exit();
         }
@@ -189,21 +195,21 @@ if ($method === 'PUT') {
 
         http_response_code(200);
         echo json_encode([
-            'success' => true,
-            'message' => 'Menú actualizado exitosamente'
+            RESPONSE_SUCCESS => true,
+            RESPONSE_MESSAGE => 'Menú actualizado exitosamente'
         ]);
 
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode([
-            'success' => false,
-            'message' => 'Error en la base de datos: ' . $e->getMessage()
+            RESPONSE_SUCCESS => false,
+            RESPONSE_MESSAGE => 'Error en la base de datos: ' . $e->getMessage()
         ]);
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode([
-            'success' => false,
-            'message' => 'Error del servidor: ' . $e->getMessage()
+            RESPONSE_SUCCESS => false,
+            RESPONSE_MESSAGE => 'Error del servidor: ' . $e->getMessage()
         ]);
     }
     exit();
@@ -211,7 +217,7 @@ if ($method === 'PUT') {
 
 http_response_code(405);
 echo json_encode([
-    'success' => false,
-    'message' => 'Método no permitido'
+    RESPONSE_SUCCESS => false,
+    RESPONSE_MESSAGE => 'Método no permitido'
 ]);
 ?>

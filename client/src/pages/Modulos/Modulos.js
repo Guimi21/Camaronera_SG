@@ -84,7 +84,7 @@ export default function Modulos() {
       const searchTerm = filters.busqueda.toLowerCase();
       filtered = filtered.filter(m =>
         m.nombre.toLowerCase().includes(searchTerm) ||
-        (m.descripcion && m.descripcion.toLowerCase().includes(searchTerm))
+        m.descripcion?.toLowerCase().includes(searchTerm)
       );
     }
 

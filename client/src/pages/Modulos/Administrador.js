@@ -89,8 +89,8 @@ export default function Administrador() {
       filtered = filtered.filter(c => 
         c.nombre.toLowerCase().includes(searchTerm) ||
         c.grupo_empresarial.toLowerCase().includes(searchTerm) ||
-        (c.direccion && c.direccion.toLowerCase().includes(searchTerm)) ||
-        (c.telefono && c.telefono.toLowerCase().includes(searchTerm))
+        c.direccion?.toLowerCase().includes(searchTerm) ||
+        c.telefono?.toLowerCase().includes(searchTerm)
       );
     }
 

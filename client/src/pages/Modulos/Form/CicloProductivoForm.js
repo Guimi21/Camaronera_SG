@@ -13,6 +13,20 @@ const getLocalDateString = () => {
   return `${year}-${month}-${day}`;
 };
 
+// Componente para mostrar mensaje de validación
+const ValidationMessage = ({ fieldName }) => (
+  <div className="validation-message">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span>Ingresa {fieldName}</span>
+  </div>
+);
+
+ValidationMessage.propTypes = {
+  fieldName: PropTypes.string.isRequired
+};
+
 export default function CicloProductivoForm() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
@@ -188,7 +202,7 @@ export default function CicloProductivoForm() {
     if (!cantidadSiembra || !idPiscina) return '';
     
     const piscinaSeleccionada = piscinas.find(p => p.id_piscina == idPiscina);
-    if (!piscinaSeleccionada || !piscinaSeleccionada.hectareas) return '';
+    if (!piscinaSeleccionada?.hectareas) return '';
     
     const cantidadNum = Number.parseFloat(cantidadSiembra);
     const hectareasNum = Number.parseFloat(piscinaSeleccionada.hectareas);
@@ -311,21 +325,7 @@ export default function CicloProductivoForm() {
   };
 
   const handleCancel = () => {
-    navigate('/layout/dashboard/monitoreo-ciclos');
-  };
-
-  // Componente para mostrar mensaje de validación
-  const ValidationMessage = ({ fieldName }) => (
-    <div className="validation-message">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <span>Ingresa {fieldName}</span>
-    </div>
-  );
-
-  ValidationMessage.propTypes = {
-    fieldName: PropTypes.string.isRequired
+    navigate('/directivo/ciclos-productivos');
   };
 
   return (

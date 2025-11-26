@@ -5,6 +5,26 @@ require_once __DIR__ . '/../helpers/cors.php';
 
 header('Content-Type: application/json');
 
+define('PARAM_ID_PERFIL', ':id_perfil');
+define('PARAM_ID_MENU', ':id_menu');
+
+// Función auxiliar para manejar errores de base de datos
+function handleErrorResponse(Exception $e) {
+    if ($e instanceof PDOException) {
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error en la base de datos: ' . $e->getMessage()
+        ]);
+    } else {
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error del servidor: ' . $e->getMessage()
+        ]);
+    }
+}
+
 if (!isset($conn)) {
     $response = [
         'success' => false,
@@ -43,11 +63,11 @@ if ($method === 'GET') {
             FROM perfil p
             LEFT JOIN menu_perfil mp ON p.id_perfil = mp.id_perfil
             LEFT JOIN menu m ON mp.id_menu = m.id_menu
-            WHERE p.id_perfil = :id_perfil
+            WHERE p.id_perfil = " . PARAM_ID_PERFIL . "
             ORDER BY m.nombre";
 
             $stmt = $conn->prepare($query);
-            $stmt->bindParam(':id_perfil', $id_perfil, PDO::PARAM_INT);
+            $stmt->bindParam(PARAM_ID_PERFIL, $id_perfil, PDO::PARAM_INT);
         } else {
             // Obtener todos los perfiles con sus menús
             $query = "SELECT 
@@ -111,17 +131,9 @@ if ($method === 'GET') {
         ]);
 
     } catch (PDOException $e) {
-        http_response_code(500);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Error en la base de datos: ' . $e->getMessage()
-        ]);
+        handleErrorResponse($e);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Error del servidor: ' . $e->getMessage()
-        ]);
+        handleErrorResponse($e);
     }
     exit();
 }
@@ -159,12 +171,12 @@ if ($method === 'POST') {
         // Insertar menús asociados
         if (!empty($menus)) {
             $menuQuery = "INSERT INTO menu_perfil (id_menu, id_perfil, fecha_creacion, fecha_actualizacion)
-                          VALUES (:id_menu, :id_perfil, NOW(), NOW())";
+                          VALUES (" . PARAM_ID_MENU . ", " . PARAM_ID_PERFIL . ", NOW(), NOW())";
             $menuStmt = $conn->prepare($menuQuery);
             
             foreach ($menus as $id_menu) {
-                $menuStmt->bindParam(':id_menu', (int)$id_menu, PDO::PARAM_INT);
-                $menuStmt->bindParam(':id_perfil', $newPerfilId, PDO::PARAM_INT);
+                $menuStmt->bindParam(PARAM_ID_MENU, (int)$id_menu, PDO::PARAM_INT);
+                $menuStmt->bindParam(PARAM_ID_PERFIL, $newPerfilId, PDO::PARAM_INT);
                 $menuStmt->execute();
             }
         }
@@ -183,17 +195,9 @@ if ($method === 'POST') {
         ]);
 
     } catch (PDOException $e) {
-        http_response_code(500);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Error en la base de datos: ' . $e->getMessage()
-        ]);
+        handleErrorResponse($e);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Error del servidor: ' . $e->getMessage()
-        ]);
+        handleErrorResponse($e);
     }
     exit();
 }
@@ -220,30 +224,30 @@ if ($method === 'PUT') {
 
         $updateQuery = "UPDATE perfil 
                         SET nombre = :nombre, descripcion = :descripcion, estado = :estado, fecha_actualizacion = NOW()
-                        WHERE id_perfil = :id_perfil";
+                        WHERE id_perfil = " . PARAM_ID_PERFIL . "";
 
         $updateStmt = $conn->prepare($updateQuery);
-        $updateStmt->bindParam(':id_perfil', $id_perfil, PDO::PARAM_INT);
+        $updateStmt->bindParam(PARAM_ID_PERFIL, $id_perfil, PDO::PARAM_INT);
         $updateStmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
         $updateStmt->bindParam(':descripcion', $descripcion, PDO::PARAM_STR);
         $updateStmt->bindParam(':estado', $estado, PDO::PARAM_STR);
         $updateStmt->execute();
 
         // Actualizar menús asociados: primero eliminar los existentes
-        $deleteMenuQuery = "DELETE FROM menu_perfil WHERE id_perfil = :id_perfil";
+        $deleteMenuQuery = "DELETE FROM menu_perfil WHERE id_perfil = " . PARAM_ID_PERFIL . "";
         $deleteMenuStmt = $conn->prepare($deleteMenuQuery);
-        $deleteMenuStmt->bindParam(':id_perfil', $id_perfil, PDO::PARAM_INT);
+        $deleteMenuStmt->bindParam(PARAM_ID_PERFIL, $id_perfil, PDO::PARAM_INT);
         $deleteMenuStmt->execute();
 
         // Insertar nuevos menús asociados
         if (!empty($menus)) {
             $menuQuery = "INSERT INTO menu_perfil (id_menu, id_perfil, fecha_creacion, fecha_actualizacion)
-                          VALUES (:id_menu, :id_perfil, NOW(), NOW())";
+                          VALUES (" . PARAM_ID_MENU . ", " . PARAM_ID_PERFIL . ", NOW(), NOW())";
             $menuStmt = $conn->prepare($menuQuery);
             
             foreach ($menus as $id_menu) {
-                $menuStmt->bindParam(':id_menu', (int)$id_menu, PDO::PARAM_INT);
-                $menuStmt->bindParam(':id_perfil', $id_perfil, PDO::PARAM_INT);
+                $menuStmt->bindParam(PARAM_ID_MENU, (int)$id_menu, PDO::PARAM_INT);
+                $menuStmt->bindParam(PARAM_ID_PERFIL, $id_perfil, PDO::PARAM_INT);
                 $menuStmt->execute();
             }
         }
@@ -255,17 +259,9 @@ if ($method === 'PUT') {
         ]);
 
     } catch (PDOException $e) {
-        http_response_code(500);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Error en la base de datos: ' . $e->getMessage()
-        ]);
+        handleErrorResponse($e);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Error del servidor: ' . $e->getMessage()
-        ]);
+        handleErrorResponse($e);
     }
     exit();
 }

@@ -3,6 +3,20 @@ import { useNavigate, useParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import config from '../../../config';
 
+// Componente para mostrar mensaje de validación
+const ValidationMessage = ({ fieldName }) => (
+  <div className="validation-message">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span>Ingresa {fieldName}</span>
+  </div>
+);
+
+ValidationMessage.propTypes = {
+  fieldName: PropTypes.string.isRequired
+};
+
 export default function MenuForm() {
   const navigate = useNavigate();
   const { idMenu } = useParams();
@@ -169,21 +183,14 @@ export default function MenuForm() {
   };
 
   const handleCancel = () => {
-    navigate('/layout/dashboard/menus');
+    navigate('/directivo/menus');
   };
 
-  // Componente para mostrar mensaje de validación
-  const ValidationMessage = ({ fieldName }) => (
-    <div className="validation-message">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <span>Ingresa {fieldName}</span>
-    </div>
-  );
-
-  ValidationMessage.propTypes = {
-    fieldName: PropTypes.string.isRequired
+  const getButtonText = () => {
+    if (loading) {
+      return isEditing ? 'Actualizando...' : 'Guardando...';
+    }
+    return isEditing ? 'Actualizar Menú' : 'Guardar Menú';
   };
 
   return (
@@ -293,7 +300,7 @@ export default function MenuForm() {
                 disabled={loading}
                 className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                {loading ? (isEditing ? 'Actualizando...' : 'Guardando...') : (isEditing ? 'Actualizar Menú' : 'Guardar Menú')}
+                {getButtonText()}
               </button>
 
               <button 

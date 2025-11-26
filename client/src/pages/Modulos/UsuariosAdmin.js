@@ -89,7 +89,7 @@ export default function UsuariosAdmin() {
       filtered = filtered.filter(u =>
         u.nombre.toLowerCase().includes(searchTerm) ||
         u.username.toLowerCase().includes(searchTerm) ||
-        (u.grupo_empresarial && u.grupo_empresarial.toLowerCase().includes(searchTerm))
+        u.grupo_empresarial?.toLowerCase().includes(searchTerm)
       );
     }
 
@@ -100,7 +100,7 @@ export default function UsuariosAdmin() {
 
     // Filtrar por grupo empresarial
     if (filters.grupoEmpresarial !== "todos") {
-      filtered = filtered.filter(u => u.grupo_empresarial && u.grupo_empresarial.includes(filters.grupoEmpresarial));
+      filtered = filtered.filter(u => u.grupo_empresarial?.includes(filters.grupoEmpresarial));
     }
 
     setFilteredUsuarios(filtered);

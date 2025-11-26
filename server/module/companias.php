@@ -1,4 +1,16 @@
 <?php
+define('RESPONSE_SUCCESS', 'success');
+define('RESPONSE_MESSAGE', 'message');
+define('RESPONSE_DATA', 'data');
+define('ERROR_SERVER', 'Error en el servidor: ');
+define('VALIDATION_ID_USUARIO_REQUIRED', 'ID de usuario requerido');
+define('VALIDATION_ID_COMPANIA_REQUIRED', 'ID de compañía requerido');
+define('PARAM_GRUPO_EMPRESARIAL', ':id_grupo_empresarial');
+define('PARAM_ID_USUARIO', ':id_usuario');
+define('PARAM_NOMBRE', ':nombre');
+define('QUERY_USUARIO_GRUPO', "SELECT id_grupo_empresarial FROM usuario WHERE id_usuario = " . PARAM_ID_USUARIO . "");
+define('SUBQUERY_USUARIO_GRUPO', "SELECT id_grupo_empresarial FROM usuario WHERE id_usuario = " . PARAM_ID_USUARIO . "");
+
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/cors.php';
@@ -8,8 +20,8 @@ header('Content-Type: application/json');
 // Verificar que la conexión a la base de datos esté establecida
 if (!isset($conn)) {
     $response = [
-        'success' => false,
-        'message' => 'Error de conexión a la base de datos'
+        RESPONSE_SUCCESS => false,
+        RESPONSE_MESSAGE => 'Error de conexión a la base de datos'
     ];
     http_response_code(500);
     echo json_encode($response);
@@ -24,8 +36,8 @@ try {
         // Obtener el id_usuario desde los parámetros de la URL
         if (!isset($_GET['id_usuario']) || empty($_GET['id_usuario'])) {
             $response = [
-                'success' => false,
-                'message' => 'ID de usuario requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => VALIDATION_ID_USUARIO_REQUIRED
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -47,22 +59,20 @@ try {
                 FROM compania c
                 LEFT JOIN grupo_empresarial ge ON c.id_grupo_empresarial = ge.id_grupo_empresarial
                 WHERE c.id_grupo_empresarial = (
-                    SELECT id_grupo_empresarial 
-                    FROM usuario 
-                    WHERE id_usuario = :id_usuario
+                    " . SUBQUERY_USUARIO_GRUPO . "
                 )
                 ORDER BY c.id_compania ASC";
         
         $stmt = $conn->prepare($query);
-        $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+        $stmt->bindParam(PARAM_ID_USUARIO, $id_usuario, PDO::PARAM_INT);
         $stmt->execute();
         
         $companias = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         $response = [
-            'success' => true,
-            'message' => 'Compañías obtenidas exitosamente',
-            'data' => $companias
+            RESPONSE_SUCCESS => true,
+            RESPONSE_MESSAGE => 'Compañías obtenidas exitosamente',
+            RESPONSE_DATA => $companias
         ];
         http_response_code(200);
         echo json_encode($response);
@@ -74,8 +84,8 @@ try {
         // Validar campos requeridos
         if (!isset($input['nombre']) || empty($input['nombre'])) {
             $response = [
-                'success' => false,
-                'message' => 'Nombre de compañía requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Nombre de compañía requerido'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -84,8 +94,8 @@ try {
         
         if (!isset($input['estado']) || empty($input['estado'])) {
             $response = [
-                'success' => false,
-                'message' => 'Estado requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Estado requerido'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -94,8 +104,8 @@ try {
         
         if (!isset($input['id_usuario']) || empty($input['id_usuario'])) {
             $response = [
-                'success' => false,
-                'message' => 'ID de usuario requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => VALIDATION_ID_USUARIO_REQUIRED
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -105,16 +115,16 @@ try {
         // Obtener el id_grupo_empresarial del usuario
         $id_usuario = intval($input['id_usuario']);
         
-        $queryGrupo = "SELECT id_grupo_empresarial FROM usuario WHERE id_usuario = :id_usuario";
+        $queryGrupo = QUERY_USUARIO_GRUPO;
         $stmtGrupo = $conn->prepare($queryGrupo);
-        $stmtGrupo->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+        $stmtGrupo->bindParam(PARAM_ID_USUARIO, $id_usuario, PDO::PARAM_INT);
         $stmtGrupo->execute();
         $usuario = $stmtGrupo->fetch(PDO::FETCH_ASSOC);
         
         if (!$usuario || !$usuario['id_grupo_empresarial']) {
             $response = [
-                'success' => false,
-                'message' => 'No se pudo obtener el grupo empresarial del usuario'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'No se pudo obtener el grupo empresarial del usuario'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -128,16 +138,16 @@ try {
         $estado = $input['estado'];
         
         // Verificar que no exista una compañía con el mismo nombre en el mismo grupo empresarial
-        $checkQuery = "SELECT id_compania FROM compania WHERE nombre = :nombre AND id_grupo_empresarial = :id_grupo_empresarial";
+        $checkQuery = "SELECT id_compania FROM compania WHERE nombre = " . PARAM_NOMBRE . " AND id_grupo_empresarial = " . PARAM_GRUPO_EMPRESARIAL . "";
         $checkStmt = $conn->prepare($checkQuery);
-        $checkStmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
-        $checkStmt->bindParam(':id_grupo_empresarial', $id_grupo_empresarial, PDO::PARAM_INT);
+        $checkStmt->bindParam(PARAM_NOMBRE, $nombre, PDO::PARAM_STR);
+        $checkStmt->bindParam(PARAM_GRUPO_EMPRESARIAL, $id_grupo_empresarial, PDO::PARAM_INT);
         $checkStmt->execute();
         
         if ($checkStmt->fetch()) {
             $response = [
-                'success' => false,
-                'message' => 'Ya existe una compañía con este nombre para este grupo empresarial'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Ya existe una compañía con este nombre para este grupo empresarial'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -146,22 +156,22 @@ try {
         
         // Insertar nueva compañía
         $insertQuery = "INSERT INTO compania (nombre, direccion, telefono, estado, id_grupo_empresarial, fecha_creacion, fecha_actualizacion) 
-                        VALUES (:nombre, :direccion, :telefono, :estado, :id_grupo_empresarial, NOW(), NOW())";
+                        VALUES (" . PARAM_NOMBRE . ", :direccion, :telefono, :estado, " . PARAM_GRUPO_EMPRESARIAL . ", NOW(), NOW())";
         
         $insertStmt = $conn->prepare($insertQuery);
-        $insertStmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
+        $insertStmt->bindParam(PARAM_NOMBRE, $nombre, PDO::PARAM_STR);
         $insertStmt->bindParam(':direccion', $direccion, PDO::PARAM_STR);
         $insertStmt->bindParam(':telefono', $telefono, PDO::PARAM_STR);
         $insertStmt->bindParam(':estado', $estado, PDO::PARAM_STR);
-        $insertStmt->bindParam(':id_grupo_empresarial', $id_grupo_empresarial, PDO::PARAM_INT);
+        $insertStmt->bindParam(PARAM_GRUPO_EMPRESARIAL, $id_grupo_empresarial, PDO::PARAM_INT);
         
         if ($insertStmt->execute()) {
             $id_compania = $conn->lastInsertId();
             
             $response = [
-                'success' => true,
-                'message' => 'Compañía creada exitosamente',
-                'data' => [
+                RESPONSE_SUCCESS => true,
+                RESPONSE_MESSAGE => 'Compañía creada exitosamente',
+                RESPONSE_DATA => [
                     'id_compania' => $id_compania,
                     'nombre' => $nombre,
                     'direccion' => $direccion,
@@ -183,8 +193,8 @@ try {
         // Validar campos requeridos
         if (!isset($input['id_compania']) || empty($input['id_compania'])) {
             $response = [
-                'success' => false,
-                'message' => 'ID de compañía requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => VALIDATION_ID_COMPANIA_REQUIRED
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -193,8 +203,8 @@ try {
         
         if (!isset($input['nombre']) || empty($input['nombre'])) {
             $response = [
-                'success' => false,
-                'message' => 'Nombre de compañía requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Nombre de compañía requerido'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -203,8 +213,8 @@ try {
         
         if (!isset($input['estado']) || empty($input['estado'])) {
             $response = [
-                'success' => false,
-                'message' => 'Estado requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Estado requerido'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -213,8 +223,8 @@ try {
         
         if (!isset($input['id_usuario']) || empty($input['id_usuario'])) {
             $response = [
-                'success' => false,
-                'message' => 'ID de usuario requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => VALIDATION_ID_USUARIO_REQUIRED
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -233,20 +243,18 @@ try {
                         FROM compania c
                         WHERE c.id_compania = :id_compania 
                         AND c.id_grupo_empresarial = (
-                            SELECT id_grupo_empresarial 
-                            FROM usuario 
-                            WHERE id_usuario = :id_usuario
+                            " . SUBQUERY_USUARIO_GRUPO . "
                         )";
         
         $stmtVerify = $conn->prepare($queryVerify);
         $stmtVerify->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
-        $stmtVerify->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+        $stmtVerify->bindParam(PARAM_ID_USUARIO, $id_usuario, PDO::PARAM_INT);
         $stmtVerify->execute();
         
         if (!$stmtVerify->fetch()) {
             $response = [
-                'success' => false,
-                'message' => 'No tiene permiso para editar esta compañía'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'No tiene permiso para editar esta compañía'
             ];
             http_response_code(403);
             echo json_encode($response);
@@ -255,7 +263,7 @@ try {
         
         // Actualizar la compañía
         $updateQuery = "UPDATE compania 
-                        SET nombre = :nombre, 
+                        SET nombre = " . PARAM_NOMBRE . ", 
                             direccion = :direccion, 
                             telefono = :telefono, 
                             estado = :estado, 
@@ -263,7 +271,7 @@ try {
                         WHERE id_compania = :id_compania";
         
         $updateStmt = $conn->prepare($updateQuery);
-        $updateStmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
+        $updateStmt->bindParam(PARAM_NOMBRE, $nombre, PDO::PARAM_STR);
         $updateStmt->bindParam(':direccion', $direccion, PDO::PARAM_STR);
         $updateStmt->bindParam(':telefono', $telefono, PDO::PARAM_STR);
         $updateStmt->bindParam(':estado', $estado, PDO::PARAM_STR);
@@ -271,9 +279,9 @@ try {
         
         if ($updateStmt->execute()) {
             $response = [
-                'success' => true,
-                'message' => 'Compañía actualizada exitosamente',
-                'data' => [
+                RESPONSE_SUCCESS => true,
+                RESPONSE_MESSAGE => 'Compañía actualizada exitosamente',
+                RESPONSE_DATA => [
                     'id_compania' => $id_compania,
                     'nombre' => $nombre,
                     'direccion' => $direccion,
@@ -289,8 +297,8 @@ try {
         
     } else {
         $response = [
-            'success' => false,
-            'message' => 'Método no permitido'
+            RESPONSE_SUCCESS => false,
+            RESPONSE_MESSAGE => 'Método no permitido'
         ];
         http_response_code(405);
         echo json_encode($response);
@@ -298,8 +306,8 @@ try {
     
 } catch (PDOException $e) {
     $response = [
-        'success' => false,
-        'message' => 'Error en el servidor: ' . $e->getMessage()
+        RESPONSE_SUCCESS => false,
+        RESPONSE_MESSAGE => ERROR_SERVER . $e->getMessage()
     ];
     http_response_code(500);
     echo json_encode($response);

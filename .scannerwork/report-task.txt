@@ -2,5 +2,5 @@ projectKey=Camaronera_SG
 serverUrl=http://localhost:9000
 serverVersion=25.10.0.114319
 dashboardUrl=http://localhost:9000/dashboard?id=Camaronera_SG
-ceTaskId=f89da703-6ecd-4822-a897-845add0a67eb
-ceTaskUrl=http://localhost:9000/api/ce/task?id=f89da703-6ecd-4822-a897-845add0a67eb
+ceTaskId=e86f2218-e8a7-42a9-9fbf-a2ed4e8ef7ae
+ceTaskUrl=http://localhost:9000/api/ce/task?id=e86f2218-e8a7-42a9-9fbf-a2ed4e8ef7ae

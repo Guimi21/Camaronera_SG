@@ -1,4 +1,10 @@
 <?php
+define('RESPONSE_SUCCESS', 'success');
+define('RESPONSE_MESSAGE', 'message');
+define('RESPONSE_DATA', 'data');
+define('ERROR_DB', 'Error en la base de datos: ');
+define('ERROR_SERVER', 'Error del servidor: ');
+
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/cors.php';
@@ -7,8 +13,8 @@ header('Content-Type: application/json');
 
 if (!isset($conn)) {
     $response = [
-        'success' => false,
-        'message' => 'Error de conexión a la base de datos'
+        RESPONSE_SUCCESS => false,
+        RESPONSE_MESSAGE => 'Error de conexión a la base de datos'
     ];
     http_response_code(500);
     echo json_encode($response);
@@ -61,22 +67,22 @@ if ($method === 'GET') {
 
         http_response_code(200);
         echo json_encode([
-            'success' => true,
-            'data' => $modulos,
-            'message' => 'Módulos obtenidos correctamente'
+            RESPONSE_SUCCESS => true,
+            RESPONSE_DATA => $modulos,
+            RESPONSE_MESSAGE => 'Módulos obtenidos correctamente'
         ]);
 
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode([
-            'success' => false,
-            'message' => 'Error en la base de datos: ' . $e->getMessage()
+            RESPONSE_SUCCESS => false,
+            RESPONSE_MESSAGE => ERROR_DB . $e->getMessage()
         ]);
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode([
-            'success' => false,
-            'message' => 'Error del servidor: ' . $e->getMessage()
+            RESPONSE_SUCCESS => false,
+            RESPONSE_MESSAGE => ERROR_SERVER . $e->getMessage()
         ]);
     }
     exit();
@@ -94,8 +100,8 @@ if ($method === 'POST') {
         if (!$nombre) {
             http_response_code(400);
             echo json_encode([
-                'success' => false,
-                'message' => 'El nombre del módulo es requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'El nombre del módulo es requerido'
             ]);
             exit();
         }
@@ -113,27 +119,27 @@ if ($method === 'POST') {
 
         http_response_code(201);
         echo json_encode([
-            'success' => true,
-            'data' => [
+            RESPONSE_SUCCESS => true,
+            RESPONSE_DATA => [
                 'id_modulo' => $newModuloId,
                 'nombre' => $nombre,
                 'descripcion' => $descripcion,
                 'estado' => $estado
             ],
-            'message' => 'Módulo creado exitosamente'
+            RESPONSE_MESSAGE => 'Módulo creado exitosamente'
         ]);
 
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode([
-            'success' => false,
-            'message' => 'Error en la base de datos: ' . $e->getMessage()
+            RESPONSE_SUCCESS => false,
+            RESPONSE_MESSAGE => ERROR_DB . $e->getMessage()
         ]);
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode([
-            'success' => false,
-            'message' => 'Error del servidor: ' . $e->getMessage()
+            RESPONSE_SUCCESS => false,
+            RESPONSE_MESSAGE => ERROR_SERVER . $e->getMessage()
         ]);
     }
     exit();
@@ -152,8 +158,8 @@ if ($method === 'PUT') {
         if (!$id_modulo || !$nombre) {
             http_response_code(400);
             echo json_encode([
-                'success' => false,
-                'message' => 'ID de módulo y nombre son requeridos'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'ID de módulo y nombre son requeridos'
             ]);
             exit();
         }
@@ -171,21 +177,21 @@ if ($method === 'PUT') {
 
         http_response_code(200);
         echo json_encode([
-            'success' => true,
-            'message' => 'Módulo actualizado exitosamente'
+            RESPONSE_SUCCESS => true,
+            RESPONSE_MESSAGE => 'Módulo actualizado exitosamente'
         ]);
 
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode([
-            'success' => false,
-            'message' => 'Error en la base de datos: ' . $e->getMessage()
+            RESPONSE_SUCCESS => false,
+            RESPONSE_MESSAGE => ERROR_DB . $e->getMessage()
         ]);
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode([
-            'success' => false,
-            'message' => 'Error del servidor: ' . $e->getMessage()
+            RESPONSE_SUCCESS => false,
+            RESPONSE_MESSAGE => ERROR_SERVER . $e->getMessage()
         ]);
     }
     exit();
@@ -193,7 +199,7 @@ if ($method === 'PUT') {
 
 http_response_code(405);
 echo json_encode([
-    'success' => false,
-    'message' => 'Método no permitido'
+    RESPONSE_SUCCESS => false,
+    RESPONSE_MESSAGE => 'Método no permitido'
 ]);
 ?>

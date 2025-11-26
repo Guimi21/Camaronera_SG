@@ -91,8 +91,8 @@ export default function Usuarios() {
       filtered = filtered.filter(u => 
         u.nombre.toLowerCase().includes(searchTerm) ||
         u.username.toLowerCase().includes(searchTerm) ||
-        (u.perfiles && u.perfiles.toLowerCase().includes(searchTerm)) ||
-        (u.companias && u.companias.toLowerCase().includes(searchTerm))
+        u.perfiles?.toLowerCase().includes(searchTerm) ||
+        u.companias?.toLowerCase().includes(searchTerm)
       );
     }
 
@@ -103,12 +103,12 @@ export default function Usuarios() {
 
     // Filtrar por perfil
     if (filters.perfil !== "todos") {
-      filtered = filtered.filter(u => u.perfiles && u.perfiles.includes(filters.perfil));
+      filtered = filtered.filter(u => u.perfiles?.includes(filters.perfil));
     }
 
     // Filtrar por compañía
     if (filters.compania !== "todos") {
-      filtered = filtered.filter(u => u.companias && u.companias.includes(filters.compania));
+      filtered = filtered.filter(u => u.companias?.includes(filters.compania));
     }
 
     setFilteredUsuarios(filtered);

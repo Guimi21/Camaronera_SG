@@ -3,6 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
+import { handleNavigationByProfile } from '../../../utils/navigationUtils';
+
+// Componente para mostrar mensaje de validación
+const ValidationMessage = ({ fieldName }) => (
+  <div className="validation-message">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span>Ingresa {fieldName}</span>
+  </div>
+);
+
+ValidationMessage.propTypes = {
+  fieldName: PropTypes.string.isRequired
+};
 
 export default function UsuarioForm() {
   const navigate = useNavigate();
@@ -130,42 +145,86 @@ export default function UsuarioForm() {
     setError('');
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    // Validaciones básicas
+  // Validar formulario según el perfil del usuario
+  const validarFormulario = () => {
     if (!formData.nombre.trim()) {
       setError('El nombre es obligatorio');
-      return;
+      return false;
     }
+    
     if (!formData.username.trim()) {
       setError('El usuario (username) es obligatorio');
-      return;
+      return false;
     }
+    
     if (!formData.password) {
       setError('La contraseña es obligatoria');
-      return;
+      return false;
     }
 
     if (!formData.perfil) {
       setError('Debe seleccionar un perfil');
-      return;
+      return false;
     }
 
-    // Si es Superadministrador, se requiere seleccionar un grupo empresarial
     if (perfilActivo === 'Superadministrador' && !formData.idGrupoEmpresarial) {
       setError('Debe seleccionar un grupo empresarial');
-      return;
+      return false;
     }
 
-    // Si no es Superadministrador, se requiere al menos una compañía
     if (perfilActivo !== 'Superadministrador' && formData.companias.length === 0) {
       setError('Debe seleccionar al menos una compañía');
-      return;
+      return false;
     }
 
     if (!idUsuario) {
       setError('No se pudo obtener la información del usuario autenticado');
+      return false;
+    }
+
+    return true;
+  };
+
+  // Construir payload para enviar
+  const construirPayload = () => ({
+    nombre: formData.nombre.trim(),
+    username: formData.username.trim(),
+    password: formData.password,
+    estado: formData.estado,
+    perfiles: [Number.parseInt(formData.perfil)],
+    companias: formData.companias,
+    idGrupoEmpresarial: formData.idGrupoEmpresarial || null,
+    id_usuario: idUsuario
+  });
+
+  // Procesar respuesta del servidor
+  const procesarRespuesta = async (response) => {
+    let result;
+    try {
+      const responseText = await response.text();
+      result = JSON.parse(responseText);
+    } catch (jsonErr) {
+      throw new Error(`Error del servidor (${response.status}): No se pudo parsear la respuesta`);
+    }
+
+    if (result?.success) {
+      return true;
+    } else if (result?.message) {
+      throw new Error(result.message);
+    } else {
+      throw new Error('Error al crear el usuario');
+    }
+  };
+
+  // Redirigir según perfil
+  const handleCancel = () => {
+    handleNavigationByProfile(navigate, perfilActivo);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validarFormulario()) {
       return;
     }
 
@@ -173,16 +232,7 @@ export default function UsuarioForm() {
     setError('');
 
     try {
-      const payload = {
-        nombre: formData.nombre.trim(),
-        username: formData.username.trim(),
-        password: formData.password,
-        estado: formData.estado,
-        perfiles: [Number.parseInt(formData.perfil)],
-        companias: formData.companias,
-        idGrupoEmpresarial: formData.idGrupoEmpresarial || null,
-        id_usuario: idUsuario
-      };
+      const payload = construirPayload();
 
       const response = await fetch(`${API_BASE_URL}/module/usuarios.php`, {
         method: 'POST',
@@ -191,54 +241,14 @@ export default function UsuarioForm() {
         body: JSON.stringify(payload)
       });
 
-      let result;
-      try {
-        const responseText = await response.text();
-        result = JSON.parse(responseText);
-      } catch (jsonErr) {
-        throw new Error(`Error del servidor (${response.status}): No se pudo parsear la respuesta`);
-      }
-
-      if (result && result.success) {
-        if (perfilActivo === 'Superadministrador') {
-          navigate('/layout/dashboard/usuarios-admin');
-        } else {
-          navigate('/layout/dashboard/usuarios');
-        }
-      } else if (result && result.message) {
-        throw new Error(result.message);
-      } else {
-        throw new Error('Error al crear el usuario');
-      }
-
+      await procesarRespuesta(response);
+      handleNavigationByProfile(navigate, perfilActivo);
     } catch (err) {
       console.error('Error creating usuario:', err);
       setError(err.message || 'No se pudo crear el usuario. Intente nuevamente.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleCancel = () => {
-    if (perfilActivo === 'Superadministrador') {
-      navigate('/layout/dashboard/usuarios-admin');
-    } else {
-      navigate('/layout/dashboard/usuarios');
-    }
-  };
-
-  // Componente para mostrar mensaje de validación
-  const ValidationMessage = ({ fieldName }) => (
-    <div className="validation-message">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <span>Ingresa {fieldName}</span>
-    </div>
-  );
-
-  ValidationMessage.propTypes = {
-    fieldName: PropTypes.string.isRequired
   };
 
   return (

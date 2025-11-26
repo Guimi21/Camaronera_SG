@@ -49,6 +49,40 @@ export default function Header() {
     cambiarCompania(nuevaCompaniaId);
   };
 
+  // Función para renderizar el selector de compañía
+  const renderCompaniaSelector = () => {
+    if (!companias || companias.length === 0) {
+      return null;
+    }
+
+    if (companias.length > 1) {
+      return (
+        <div className="flex items-center gap-2 mt-1">
+          <FaBuilding className="text-gray-400 text-xs" />
+          <select
+            value={idCompania || ''}
+            onChange={handleCompaniaChange}
+            className="compania-selector text-sm bg-gray-700 text-white border border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            title="Seleccionar compañía"
+          >
+            {companias.map((comp) => (
+              <option key={comp.id_compania} value={comp.id_compania}>
+                {comp.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-2 mt-1">
+        <FaBuilding className="text-gray-400 text-xs" />
+        <p className="logoTitulo text-sm">{compania || "N/A"}</p>
+      </div>
+    );
+  };
+
   // Si no hay usuario, no se renderiza el header
   if (!user) return null;
 
@@ -62,30 +96,7 @@ export default function Header() {
             <h1 className="logoTitulo">{grupoEmpresarial || "Sistema Camaronera"}</h1>
             <div className="logoText">
               {/* Selector de compañía - solo se muestra si hay compañías */}
-              {companias && companias.length > 0 ? (
-                companias.length > 1 ? (
-                  <div className="flex items-center gap-2 mt-1">
-                    <FaBuilding className="text-gray-400 text-xs" />
-                    <select
-                      value={idCompania || ''}
-                      onChange={handleCompaniaChange}
-                      className="compania-selector text-sm bg-gray-700 text-white border border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      title="Seleccionar compañía"
-                    >
-                      {companias.map((comp) => (
-                        <option key={comp.id_compania} value={comp.id_compania}>
-                          {comp.nombre}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 mt-1">
-                    <FaBuilding className="text-gray-400 text-xs" />
-                    <p className="logoTitulo text-sm">{compania || "N/A"}</p>
-                  </div>
-                )
-              ) : null}
+              {renderCompaniaSelector()}
             </div>
           </div>
         </div>

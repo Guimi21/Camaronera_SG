@@ -1,4 +1,14 @@
 <?php
+define('RESPONSE_SUCCESS', 'success');
+define('RESPONSE_MESSAGE', 'message');
+define('RESPONSE_DATA', 'data');
+define('ERROR_DB', 'Error en la base de datos: ');
+define('ERROR_SERVER', 'Error del servidor: ');
+define('ERROR_INTERNAL', 'Error interno del servidor');
+define('ERROR_GET_DATA', 'Error al obtener los datos');
+define('VALIDATION_ID_USUARIO_REQUIRED', 'ID de usuario requerido');
+define('VALIDATION_ID_COMPANIA_REQUIRED', 'ID de compañía requerido');
+
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/cors.php';  // Configuración CORS centralizada
@@ -6,8 +16,8 @@ require_once __DIR__ . '/../helpers/cors.php';  // Configuración CORS centraliz
 // Verificar que la conexión a la base de datos esté establecida
 if (!isset($conn)) {
     $response = [
-        'success' => false,
-        'message' => 'Error de conexión a la base de datos'
+        RESPONSE_SUCCESS => false,
+        RESPONSE_MESSAGE => 'Error de conexión a la base de datos'
     ];
     http_response_code(500);
     echo json_encode($response);
@@ -29,8 +39,8 @@ try {
         // Validar que exista el archivo PDF
         if (!isset($_FILES['pdf']) || $_FILES['pdf']['error'] !== UPLOAD_ERR_OK) {
             $response = [
-                'success' => false,
-                'message' => 'No se recibió ningún archivo PDF o hubo un error en la carga'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'No se recibió ningún archivo PDF o hubo un error en la carga'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -63,8 +73,8 @@ try {
         
         if (!$isValidPdf) {
             $response = [
-                'success' => false,
-                'message' => 'El archivo debe ser un PDF válido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'El archivo debe ser un PDF válido'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -89,8 +99,8 @@ try {
         // Mover el archivo a la carpeta de informes
         if (!move_uploaded_file($pdfFile['tmp_name'], $rutaArchivo)) {
             $response = [
-                'success' => false,
-                'message' => 'Error al guardar el archivo PDF'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Error al guardar el archivo PDF'
             ];
             http_response_code(500);
             echo json_encode($response);
@@ -98,8 +108,8 @@ try {
         }
         
         $response = [
-            'success' => true,
-            'message' => 'PDF cargado exitosamente',
+            RESPONSE_SUCCESS => true,
+            RESPONSE_MESSAGE => 'PDF cargado exitosamente',
             'ruta_pdf' => $rutaRelativa
         ];
         
@@ -116,8 +126,8 @@ try {
         // Validar campos requeridos
         if (!isset($input['id_piscina']) || empty($input['id_piscina'])) {
             $response = [
-                'success' => false,
-                'message' => 'ID de piscina requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'ID de piscina requerido'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -126,8 +136,8 @@ try {
         
         if (!isset($input['fecha_siembra']) || empty($input['fecha_siembra'])) {
             $response = [
-                'success' => false,
-                'message' => 'Fecha de siembra requerida'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Fecha de siembra requerida'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -136,8 +146,8 @@ try {
         
         if (!isset($input['cantidad_siembra']) || empty($input['cantidad_siembra'])) {
             $response = [
-                'success' => false,
-                'message' => 'Cantidad de siembra requerida'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Cantidad de siembra requerida'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -146,8 +156,8 @@ try {
         
         if (!isset($input['densidad']) || empty($input['densidad'])) {
             $response = [
-                'success' => false,
-                'message' => 'Densidad requerida'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Densidad requerida'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -156,8 +166,8 @@ try {
         
         if (!isset($input['tipo_siembra']) || empty($input['tipo_siembra'])) {
             $response = [
-                'success' => false,
-                'message' => 'Tipo de siembra requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Tipo de siembra requerido'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -166,8 +176,8 @@ try {
         
         if (!isset($input['id_tipo_alimentacion']) || empty($input['id_tipo_alimentacion'])) {
             $response = [
-                'success' => false,
-                'message' => 'Tipo de alimentación requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Tipo de alimentación requerido'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -176,8 +186,8 @@ try {
         
         if (!isset($input['estado']) || empty($input['estado'])) {
             $response = [
-                'success' => false,
-                'message' => 'Estado requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Estado requerido'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -186,8 +196,8 @@ try {
         
         if (!isset($input['id_compania']) || empty($input['id_compania'])) {
             $response = [
-                'success' => false,
-                'message' => 'ID de compañía requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => VALIDATION_ID_COMPANIA_REQUIRED
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -196,8 +206,8 @@ try {
         
         if (!isset($input['id_usuario_crea']) || empty($input['id_usuario_crea'])) {
             $response = [
-                'success' => false,
-                'message' => 'ID de usuario requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => VALIDATION_ID_USUARIO_REQUIRED
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -250,8 +260,8 @@ try {
         $id_ciclo = $conn->lastInsertId();
         
         $response = [
-            'success' => true,
-            'message' => 'Ciclo productivo creado exitosamente',
+            RESPONSE_SUCCESS => true,
+            RESPONSE_MESSAGE => 'Ciclo productivo creado exitosamente',
             'id_ciclo' => $id_ciclo
         ];
         
@@ -268,8 +278,8 @@ try {
         // Validar que se envíe el ID del ciclo a actualizar
         if (!isset($input['id_ciclo']) || empty($input['id_ciclo'])) {
             $response = [
-                'success' => false,
-                'message' => 'ID de ciclo requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'ID de ciclo requerido'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -279,8 +289,8 @@ try {
         // Validar campos requeridos
         if (!isset($input['id_piscina']) || empty($input['id_piscina'])) {
             $response = [
-                'success' => false,
-                'message' => 'ID de piscina requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'ID de piscina requerido'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -289,8 +299,8 @@ try {
         
         if (!isset($input['fecha_siembra']) || empty($input['fecha_siembra'])) {
             $response = [
-                'success' => false,
-                'message' => 'Fecha de siembra requerida'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Fecha de siembra requerida'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -299,8 +309,8 @@ try {
         
         if (!isset($input['cantidad_siembra']) || empty($input['cantidad_siembra'])) {
             $response = [
-                'success' => false,
-                'message' => 'Cantidad de siembra requerida'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Cantidad de siembra requerida'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -309,8 +319,8 @@ try {
         
         if (!isset($input['densidad']) || empty($input['densidad'])) {
             $response = [
-                'success' => false,
-                'message' => 'Densidad requerida'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Densidad requerida'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -319,8 +329,8 @@ try {
         
         if (!isset($input['tipo_siembra']) || empty($input['tipo_siembra'])) {
             $response = [
-                'success' => false,
-                'message' => 'Tipo de siembra requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Tipo de siembra requerido'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -329,8 +339,8 @@ try {
         
         if (!isset($input['id_tipo_alimentacion']) || empty($input['id_tipo_alimentacion'])) {
             $response = [
-                'success' => false,
-                'message' => 'Tipo de alimentación requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Tipo de alimentación requerido'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -339,8 +349,8 @@ try {
         
         if (!isset($input['estado']) || empty($input['estado'])) {
             $response = [
-                'success' => false,
-                'message' => 'Estado requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Estado requerido'
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -349,8 +359,8 @@ try {
         
         if (!isset($input['id_compania']) || empty($input['id_compania'])) {
             $response = [
-                'success' => false,
-                'message' => 'ID de compañía requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => VALIDATION_ID_COMPANIA_REQUIRED
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -359,8 +369,8 @@ try {
         
         if (!isset($input['id_usuario_actualiza']) || empty($input['id_usuario_actualiza'])) {
             $response = [
-                'success' => false,
-                'message' => 'ID de usuario requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => VALIDATION_ID_USUARIO_REQUIRED
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -376,8 +386,8 @@ try {
         
         if ($verifyStmt->rowCount() === 0) {
             $response = [
-                'success' => false,
-                'message' => 'Ciclo productivo no encontrado o no pertenece a su compañía'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Ciclo productivo no encontrado o no pertenece a su compañía'
             ];
             http_response_code(404);
             echo json_encode($response);
@@ -424,8 +434,8 @@ try {
         $stmt->execute();
         
         $response = [
-            'success' => true,
-            'message' => 'Ciclo productivo actualizado exitosamente'
+            RESPONSE_SUCCESS => true,
+            RESPONSE_MESSAGE => 'Ciclo productivo actualizado exitosamente'
         ];
         
         http_response_code(200);
@@ -440,8 +450,8 @@ try {
         
         if (!$id_compania) {
             $response = [
-                'success' => false,
-                'message' => 'ID de compañía requerido'
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => VALIDATION_ID_COMPANIA_REQUIRED
             ];
             http_response_code(400);
             echo json_encode($response);
@@ -491,8 +501,8 @@ try {
             
             if (!$ciclo) {
                 $response = [
-                    'success' => false,
-                    'message' => 'Ciclo productivo no encontrado'
+                    RESPONSE_SUCCESS => false,
+                    RESPONSE_MESSAGE => 'Ciclo productivo no encontrado'
                 ];
                 http_response_code(404);
                 echo json_encode($response);
@@ -500,8 +510,8 @@ try {
             }
             
             $response = [
-                'success' => true,
-                'data' => $ciclo
+                RESPONSE_SUCCESS => true,
+                RESPONSE_DATA => $ciclo
             ];
             
             http_response_code(200);
@@ -552,8 +562,8 @@ try {
 
         // Respuesta con los datos de los ciclos productivos
         $response = [
-            'success' => true,
-            'data' => $ciclos,
+            RESPONSE_SUCCESS => true,
+            RESPONSE_DATA => $ciclos,
             'total' => count($ciclos)
         ];
 
@@ -564,8 +574,8 @@ try {
     
     // Método no permitido
     $response = [
-        'success' => false,
-        'message' => 'Método no permitido'
+        RESPONSE_SUCCESS => false,
+        RESPONSE_MESSAGE => 'Método no permitido'
     ];
     http_response_code(405);
     echo json_encode($response);
@@ -574,8 +584,8 @@ try {
     error_log("Error en la consulta: " . $e->getMessage());
     
     $response = [
-        'success' => false,
-        'message' => 'Error al obtener los datos',
+        RESPONSE_SUCCESS => false,
+        RESPONSE_MESSAGE => ERROR_GET_DATA,
         'error' => $e->getMessage()
     ];
     
@@ -586,8 +596,8 @@ try {
     error_log("Error general: " . $e->getMessage());
     
     $response = [
-        'success' => false,
-        'message' => 'Error interno del servidor'
+        RESPONSE_SUCCESS => false,
+        RESPONSE_MESSAGE => ERROR_INTERNAL
     ];
     
     http_response_code(500);

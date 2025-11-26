@@ -3,6 +3,21 @@ import { useNavigate, useParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
+import { handleNavigationByProfile } from '../../../utils/navigationUtils';
+
+// Componente para mostrar mensaje de validación
+const ValidationMessage = ({ fieldName }) => (
+  <div className="validation-message">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span>Ingresa {fieldName}</span>
+  </div>
+);
+
+ValidationMessage.propTypes = {
+  fieldName: PropTypes.string.isRequired
+};
 
 export default function UsuarioEditForm() {
   const navigate = useNavigate();
@@ -169,22 +184,89 @@ export default function UsuarioEditForm() {
     setSuccessMessage('');
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  // Validar formulario
+  const validarFormulario = () => {
     if (!formData.nombre.trim()) {
       setError('El nombre es obligatorio');
-      return;
+      return false;
     }
 
     if (!formData.perfil) {
       setError('Debe seleccionar un perfil');
+      return false;
+    }
+
+    if (companiasDisponibles.length > 0 && formData.companias.length === 0) {
+      setError('Debe seleccionar al menos una compañía');
+      return false;
+    }
+
+    return true;
+  };
+
+  // Construir payload para enviar
+  const construirPayload = () => ({
+    nombre: formData.nombre.trim(),
+    perfiles: [Number.parseInt(formData.perfil)],
+    companias: formData.companias,
+    estado: formData.estado,
+    id_usuario_edit: Number.parseInt(idUsuarioParam),
+    id_usuario: idUsuarioAuth
+  });
+
+  // Actualizar contexto si el usuario se edita a sí mismo
+  const actualizarContextoSiNecesario = async () => {
+    if (Number.parseInt(idUsuarioParam) !== Number.parseInt(idUsuarioAuth)) {
       return;
     }
 
-    // Solo validar compañías si hay compañías disponibles
-    if (companiasDisponibles.length > 0 && formData.companias.length === 0) {
-      setError('Debe seleccionar al menos una compañía');
+    try {
+      const usuarioResponse = await fetch(
+        `${API_BASE_URL}/module/usuarios.php?id_usuario=${idUsuarioAuth}`,
+        { method: 'GET', credentials: 'include' }
+      );
+
+      if (!usuarioResponse.ok) return;
+
+      const usuarioResult = await usuarioResponse.json();
+      if (!usuarioResult.success || !usuarioResult.data) return;
+
+      const usuarioActualizado = usuarioResult.data.find(u => Number.parseInt(u.id_usuario) === Number.parseInt(idUsuarioAuth));
+      if (!usuarioActualizado) return;
+
+      const companiasDispResponse = await fetch(
+        `${API_BASE_URL}/module/companias.php?id_usuario=${idUsuarioAuth}`,
+        { method: 'GET', credentials: 'include' }
+      );
+
+      if (!companiasDispResponse.ok) return;
+
+      const companiasDispResult = await companiasDispResponse.json();
+      if (companiasDispResult.success && companiasDispResult.data) {
+        const companiasNombres = usuarioActualizado.companias 
+          ? usuarioActualizado.companias.split(', ').map(n => n.trim()) 
+          : [];
+        
+        const companiasActualizadas = companiasNombres
+          .map(nombre => companiasDispResult.data.find(c => c.nombre === nombre))
+          .filter(c => c !== undefined);
+        
+        actualizarCompanias(companiasActualizadas);
+      }
+    } catch (err) {
+      console.error('Error fetching updated user data:', err);
+    }
+  };
+
+  // Redirigir según perfil
+  const handleCancel = () => {
+    handleNavigationByProfile(navigate, perfilActivo);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validarFormulario()) {
       return;
     }
 
@@ -193,14 +275,7 @@ export default function UsuarioEditForm() {
     setSuccessMessage('');
 
     try {
-      const payload = {
-        nombre: formData.nombre.trim(),
-        perfiles: [Number.parseInt(formData.perfil)], // Enviar como array con un solo elemento
-        companias: formData.companias,
-        estado: formData.estado,
-        id_usuario_edit: Number.parseInt(idUsuarioParam),
-        id_usuario: idUsuarioAuth
-      };
+      const payload = construirPayload();
 
       const response = await fetch(`${API_BASE_URL}/module/usuarios.php`, {
         method: 'PUT',
@@ -216,96 +291,17 @@ export default function UsuarioEditForm() {
       const result = await response.json();
 
       if (result.success) {
-        // Si el usuario editado es a sí mismo, actualizar las compañías en el contexto
-        if (Number.parseInt(idUsuarioParam) === Number.parseInt(idUsuarioAuth)) {
-          try {
-            // Fetch para obtener los datos actualizados del usuario (incluyendo compañías)
-            const usuarioResponse = await fetch(
-              `${API_BASE_URL}/module/usuarios.php?id_usuario=${idUsuarioAuth}`,
-              {
-                method: 'GET',
-                credentials: 'include',
-              }
-            );
-
-            if (usuarioResponse.ok) {
-              const usuarioResult = await usuarioResponse.json();
-              if (usuarioResult.success && usuarioResult.data) {
-                // Encontrar el usuario actual en la lista
-                const usuarioActualizado = usuarioResult.data.find(u => Number.parseInt(u.id_usuario) === Number.parseInt(idUsuarioAuth));
-                
-                if (usuarioActualizado) {
-                  // Obtener todas las compañías disponibles para mapear nombres a objetos
-                  const companiasDispResponse = await fetch(
-                    `${API_BASE_URL}/module/companias.php?id_usuario=${idUsuarioAuth}`,
-                    {
-                      method: 'GET',
-                      credentials: 'include',
-                    }
-                  );
-                  
-                  if (companiasDispResponse.ok) {
-                    const companiasDispResult = await companiasDispResponse.json();
-                    if (companiasDispResult.success && companiasDispResult.data) {
-                      // Parseamos las compañías del usuario (están como string "nombre1, nombre2")
-                      const companiasNombres = usuarioActualizado.companias 
-                        ? usuarioActualizado.companias.split(', ').map(n => n.trim()) 
-                        : [];
-                      
-                      // Mapear nombres a objetos de compañías
-                      const companiasActualizadas = companiasNombres.map(nombre => {
-                        return companiasDispResult.data.find(c => c.nombre === nombre);
-                      }).filter(c => c !== undefined);
-                      
-                      actualizarCompanias(companiasActualizadas);
-                    }
-                  }
-                }
-              }
-            }
-          } catch (err) {
-            console.error('Error fetching updated user data:', err);
-          }
-        }
-        
-        // Redirigir según el perfil del usuario autenticado
-        if (perfilActivo === 'Superadministrador') {
-          navigate('/layout/dashboard/usuarios-admin');
-        } else {
-          navigate('/layout/dashboard/usuarios');
-        }
+        await actualizarContextoSiNecesario();
+        handleNavigationByProfile(navigate, perfilActivo);
       } else {
         throw new Error(result.message || 'Error al actualizar el usuario');
       }
-
     } catch (err) {
       console.error('Error updating usuario:', err);
       setError(err.message || 'No se pudo actualizar el usuario. Intente nuevamente.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleCancel = () => {
-    if (perfilActivo === 'Superadministrador') {
-      navigate('/layout/dashboard/usuarios-admin');
-    } else {
-      navigate('/layout/dashboard/usuarios');
-    }
-  };
-
-  // Componente para mostrar mensaje de validación
-  const ValidationMessage = ({ fieldName }) => (
-    <div className="validation-message">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <span>Ingresa {fieldName}</span>
-    </div>
-  );
-
-  ValidationMessage.propTypes = {
-    fieldName: PropTypes.string.isRequired
   };
 
   if (loading) {

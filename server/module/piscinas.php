@@ -3,6 +3,13 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/cors.php';  // Configuración CORS centralizada
 
+// Constantes para parámetros SQL
+define('PARAM_ID_COMPANIA', ':id_compania');
+define('PARAM_ID_PISCINA', ':id_piscina');
+define('PARAM_CODIGO', ':codigo');
+define('ERROR_PREFIX', 'Error: ');
+define('AND_ID_COMPANIA', ' AND id_compania = ');
+
 // Verificar que la conexión a la base de datos esté establecida
 if (!isset($conn)) {
     $response = [
@@ -42,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                     p.fecha_creacion,
                     p.fecha_actualizacion
                 FROM piscina p
-                WHERE p.id_compania = :id_compania
+                WHERE p.id_compania = " . PARAM_ID_COMPANIA . "
                 ORDER BY p.id_piscina";
 
         $stmt = $conn->prepare($sql);
@@ -50,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
             throw new Exception("Error preparando consulta: " . implode(", ", $conn->errorInfo()));
         }
 
-        $stmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
+        $stmt->bindParam(PARAM_ID_COMPANIA, $id_compania, PDO::PARAM_INT);
         
         if (!$stmt->execute()) {
             throw new Exception("Error ejecutando consulta: " . implode(", ", $stmt->errorInfo()));
@@ -83,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     } catch (Exception $e) {
         $response = [
             'success' => false,
-            'message' => 'Error: ' . $e->getMessage()
+            'message' => ERROR_PREFIX . $e->getMessage()
         ];
         http_response_code(500);
         echo json_encode($response);
@@ -121,10 +128,10 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         // Validar que el código no exista para la misma compañía
-        $check_sql = "SELECT id_piscina FROM piscina WHERE codigo = :codigo AND id_compania = :id_compania";
+        $check_sql = "SELECT id_piscina FROM piscina WHERE codigo = " . PARAM_CODIGO . AND_ID_COMPANIA . PARAM_ID_COMPANIA . "";
         $check_stmt = $conn->prepare($check_sql);
-        $check_stmt->bindParam(':codigo', $input['codigo'], PDO::PARAM_STR);
-        $check_stmt->bindParam(':id_compania', $input['id_compania'], PDO::PARAM_INT);
+        $check_stmt->bindParam(PARAM_CODIGO, $input['codigo'], PDO::PARAM_STR);
+        $check_stmt->bindParam(PARAM_ID_COMPANIA, $input['id_compania'], PDO::PARAM_INT);
         $check_stmt->execute();
         $check_result = $check_stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -140,18 +147,18 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Insertar nueva piscina
         $estado = isset($input['estado']) ? trim($input['estado']) : 'ACTIVA';
-        $insert_sql = "INSERT INTO piscina (codigo, hectareas, ubicacion, estado, id_compania, id_usuario_crea, id_usuario_actualiza) VALUES (:codigo, :hectareas, :ubicacion, :estado, :id_compania, :id_usuario_crea, :id_usuario_actualiza)";
+        $insert_sql = "INSERT INTO piscina (codigo, hectareas, ubicacion, estado, id_compania, id_usuario_crea, id_usuario_actualiza) VALUES (" . PARAM_CODIGO . ", :hectareas, :ubicacion, :estado, " . PARAM_ID_COMPANIA . ", :id_usuario_crea, :id_usuario_actualiza)";
         $insert_stmt = $conn->prepare($insert_sql);
         
         if (!$insert_stmt) {
             throw new Exception("Error preparando consulta de inserción: " . implode(", ", $conn->errorInfo()));
         }
 
-        $insert_stmt->bindParam(':codigo', $input['codigo'], PDO::PARAM_STR);
+        $insert_stmt->bindParam(PARAM_CODIGO, $input['codigo'], PDO::PARAM_STR);
         $insert_stmt->bindParam(':hectareas', $input['hectareas'], PDO::PARAM_STR);
         $insert_stmt->bindParam(':ubicacion', $input['ubicacion'], PDO::PARAM_STR);
         $insert_stmt->bindParam(':estado', $estado, PDO::PARAM_STR);
-        $insert_stmt->bindParam(':id_compania', $input['id_compania'], PDO::PARAM_INT);
+        $insert_stmt->bindParam(PARAM_ID_COMPANIA, $input['id_compania'], PDO::PARAM_INT);
         $insert_stmt->bindParam(':id_usuario_crea', $input['id_usuario_crea'], PDO::PARAM_INT);
         $insert_stmt->bindParam(':id_usuario_actualiza', $input['id_usuario_actualiza'], PDO::PARAM_INT);
 
@@ -172,7 +179,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } catch (Exception $e) {
         $response = [
             'success' => false,
-            'message' => 'Error: ' . $e->getMessage()
+            'message' => ERROR_PREFIX . $e->getMessage()
         ];
         http_response_code(500);
         echo json_encode($response);
@@ -210,11 +217,11 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
         }
 
         // Validar que el código no exista para otra piscina de la misma compañía
-        $check_sql = "SELECT id_piscina FROM piscina WHERE codigo = :codigo AND id_compania = :id_compania AND id_piscina != :id_piscina";
+        $check_sql = "SELECT id_piscina FROM piscina WHERE codigo = " . PARAM_CODIGO . AND_ID_COMPANIA . PARAM_ID_COMPANIA . " AND id_piscina != " . PARAM_ID_PISCINA . "";
         $check_stmt = $conn->prepare($check_sql);
-        $check_stmt->bindParam(':codigo', $input['codigo'], PDO::PARAM_STR);
-        $check_stmt->bindParam(':id_compania', $input['id_compania'], PDO::PARAM_INT);
-        $check_stmt->bindParam(':id_piscina', $input['id_piscina'], PDO::PARAM_INT);
+        $check_stmt->bindParam(PARAM_CODIGO, $input['codigo'], PDO::PARAM_STR);
+        $check_stmt->bindParam(PARAM_ID_COMPANIA, $input['id_compania'], PDO::PARAM_INT);
+        $check_stmt->bindParam(PARAM_ID_PISCINA, $input['id_piscina'], PDO::PARAM_INT);
         $check_stmt->execute();
         $check_result = $check_stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -230,19 +237,19 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
 
         // Actualizar piscina
         $estado = isset($input['estado']) ? trim($input['estado']) : 'ACTIVA';
-        $update_sql = "UPDATE piscina SET codigo = :codigo, hectareas = :hectareas, ubicacion = :ubicacion, estado = :estado WHERE id_piscina = :id_piscina AND id_compania = :id_compania";
+        $update_sql = "UPDATE piscina SET codigo = " . PARAM_CODIGO . ", hectareas = :hectareas, ubicacion = :ubicacion, estado = :estado WHERE id_piscina = " . PARAM_ID_PISCINA . AND_ID_COMPANIA . PARAM_ID_COMPANIA . "";
         $update_stmt = $conn->prepare($update_sql);
         
         if (!$update_stmt) {
             throw new Exception("Error preparando consulta de actualización: " . implode(", ", $conn->errorInfo()));
         }
 
-        $update_stmt->bindParam(':codigo', $input['codigo'], PDO::PARAM_STR);
+        $update_stmt->bindParam(PARAM_CODIGO, $input['codigo'], PDO::PARAM_STR);
         $update_stmt->bindParam(':hectareas', $input['hectareas'], PDO::PARAM_STR);
         $update_stmt->bindParam(':ubicacion', $input['ubicacion'], PDO::PARAM_STR);
         $update_stmt->bindParam(':estado', $estado, PDO::PARAM_STR);
-        $update_stmt->bindParam(':id_piscina', $input['id_piscina'], PDO::PARAM_INT);
-        $update_stmt->bindParam(':id_compania', $input['id_compania'], PDO::PARAM_INT);
+        $update_stmt->bindParam(PARAM_ID_PISCINA, $input['id_piscina'], PDO::PARAM_INT);
+        $update_stmt->bindParam(PARAM_ID_COMPANIA, $input['id_compania'], PDO::PARAM_INT);
 
         if (!$update_stmt->execute()) {
             throw new Exception("Error ejecutando actualización: " . implode(", ", $update_stmt->errorInfo()));
@@ -266,7 +273,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
     } catch (Exception $e) {
         $response = [
             'success' => false,
-            'message' => 'Error: ' . $e->getMessage()
+            'message' => ERROR_PREFIX . $e->getMessage()
         ];
         http_response_code(500);
         echo json_encode($response);
@@ -291,9 +298,9 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
         }
 
         // Verificar si la piscina tiene ciclos asociados
-        $check_cycles_sql = "SELECT COUNT(*) as cycle_count FROM ciclo WHERE id_piscina = :id_piscina";
+        $check_cycles_sql = "SELECT COUNT(*) as cycle_count FROM ciclo WHERE id_piscina = " . PARAM_ID_PISCINA . "";
         $check_cycles_stmt = $conn->prepare($check_cycles_sql);
-        $check_cycles_stmt->bindParam(':id_piscina', $id_piscina, PDO::PARAM_INT);
+        $check_cycles_stmt->bindParam(PARAM_ID_PISCINA, $id_piscina, PDO::PARAM_INT);
         $check_cycles_stmt->execute();
         $cycles_row = $check_cycles_stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -308,15 +315,15 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
         }
 
         // Eliminar piscina
-        $delete_sql = "DELETE FROM piscina WHERE id_piscina = :id_piscina AND id_compania = :id_compania";
+        $delete_sql = "DELETE FROM piscina WHERE id_piscina = " . PARAM_ID_PISCINA . AND_ID_COMPANIA . PARAM_ID_COMPANIA . "";
         $delete_stmt = $conn->prepare($delete_sql);
         
         if (!$delete_stmt) {
             throw new Exception("Error preparando consulta de eliminación: " . implode(", ", $conn->errorInfo()));
         }
 
-        $delete_stmt->bindParam(':id_piscina', $id_piscina, PDO::PARAM_INT);
-        $delete_stmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
+        $delete_stmt->bindParam(PARAM_ID_PISCINA, $id_piscina, PDO::PARAM_INT);
+        $delete_stmt->bindParam(PARAM_ID_COMPANIA, $id_compania, PDO::PARAM_INT);
 
         if (!$delete_stmt->execute()) {
             throw new Exception("Error ejecutando eliminación: " . implode(", ", $delete_stmt->errorInfo()));
@@ -340,7 +347,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
     } catch (Exception $e) {
         $response = [
             'success' => false,
-            'message' => 'Error: ' . $e->getMessage()
+            'message' => ERROR_PREFIX . $e->getMessage()
         ];
         http_response_code(500);
         echo json_encode($response);

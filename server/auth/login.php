@@ -1,4 +1,9 @@
 <?php
+define('RESPONSE_SUCCESS', 'success');
+define('RESPONSE_ERROR', 'error');
+define('RESPONSE_MESSAGE', 'message');
+define('PARAM_USER_ID', ':userId');
+
 require_once __DIR__ . '/../config/config.php';  // Incluir configuración
 require_once __DIR__ . '/../helpers/response.php';  // Función para enviar respuestas
 require_once __DIR__ . '/../helpers/cors.php';  // Configuración CORS centralizada
@@ -12,7 +17,7 @@ error_log("Datos recibidos del frontend: " . print_r($data, true));
 // Validar que se hayan recibido los datos
 if (!isset($data->username) || !isset($data->password)) {
     http_response_code(400);  // Código de estado 400 Bad Request
-    echo json_encode(['error' => 'Faltan datos']);
+    echo json_encode([RESPONSE_ERROR => 'Faltan datos']);
     exit;
 }
 
@@ -36,14 +41,14 @@ error_log("Datos del usuario desde la base de datos: " . print_r($user, true));
 // Si no se encuentra el usuario
 if (!$user) {
     http_response_code(401);  // Código de estado 401 Unauthorized
-    echo json_encode(['error' => 'Credenciales incorrectas']);
+    echo json_encode([RESPONSE_ERROR => 'Credenciales incorrectas']);
     exit;
 }
 
 // Verificar la contraseña usando password_verify()
 if (!password_verify($password, $user['password_hash'])) {
     http_response_code(401);  // Código de estado 401 Unauthorized
-    echo json_encode(['error' => 'Credenciales incorrectas']);
+    echo json_encode([RESPONSE_ERROR => 'Credenciales incorrectas']);
     exit;
 }
 
@@ -63,11 +68,11 @@ $query_perfiles = "
     SELECT p.id_perfil, p.nombre
     FROM perfil p
     JOIN usuario_perfil up ON p.id_perfil = up.id_perfil
-    WHERE up.id_usuario = :userId
+    WHERE up.id_usuario = " . PARAM_USER_ID . "
     ORDER BY p.nombre
 ";
 $stmt_perfiles = $conn->prepare($query_perfiles);
-$stmt_perfiles->bindParam(':userId', $user['id_usuario']);
+$stmt_perfiles->bindParam(PARAM_USER_ID, $user['id_usuario']);
 $stmt_perfiles->execute();
 
 $perfiles = $stmt_perfiles->fetchAll(PDO::FETCH_ASSOC);
@@ -77,11 +82,11 @@ $query_companias = "
     SELECT c.id_compania, c.nombre
     FROM compania c
     JOIN usuario_compania uc ON c.id_compania = uc.id_compania
-    WHERE uc.id_usuario = :userId
+    WHERE uc.id_usuario = " . PARAM_USER_ID . "
     ORDER BY c.nombre
 ";
 $stmt_companias = $conn->prepare($query_companias);
-$stmt_companias->bindParam(':userId', $user['id_usuario']);
+$stmt_companias->bindParam(PARAM_USER_ID, $user['id_usuario']);
 $stmt_companias->execute();
 
 $companias = $stmt_companias->fetchAll(PDO::FETCH_ASSOC);
@@ -94,12 +99,12 @@ $query_menus = "
     JOIN menu_perfil mp ON m.id_menu = mp.id_menu 
     WHERE m.estado = 'ACTIVO'
     AND mp.id_perfil IN (
-        SELECT id_perfil FROM usuario_perfil WHERE id_usuario = :userId
+        SELECT id_perfil FROM usuario_perfil WHERE id_usuario = " . PARAM_USER_ID . "
     )
     ORDER BY modu.nombre, m.nombre
 ";
 $stmt_menus = $conn->prepare($query_menus);
-$stmt_menus->bindParam(':userId', $user['id_usuario']);
+$stmt_menus->bindParam(PARAM_USER_ID, $user['id_usuario']);
 $stmt_menus->execute();
 
 $menus = $stmt_menus->fetchAll(PDO::FETCH_ASSOC);

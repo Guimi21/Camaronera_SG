@@ -3,6 +3,12 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/cors.php';  // Configuración CORS centralizada
 
+// Definir constantes
+define('PARAM_ID_COMPANIA', ':id_compania');
+define('PARAM_NOMBRE', ':nombre');
+define('ERROR_PREFIX', 'Error: ');
+define('INPUT_STREAM', 'php://input');
+
 // Verificar que la conexión a la base de datos esté establecida
 if (!isset($conn)) {
     $response = [
@@ -41,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                     tb.fecha_creacion,
                     tb.fecha_actualizacion
                 FROM tipo_balanceado tb
-                WHERE tb.id_compania = :id_compania
+                WHERE tb.id_compania = " . PARAM_ID_COMPANIA . "
                 ORDER BY tb.id_tipo_balanceado";
 
         $stmt = $conn->prepare($sql);
@@ -49,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
             throw new Exception("Error preparando consulta: " . implode(", ", $conn->errorInfo()));
         }
 
-        $stmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
+        $stmt->bindParam(PARAM_ID_COMPANIA, $id_compania, PDO::PARAM_INT);
         
         if (!$stmt->execute()) {
             throw new Exception("Error ejecutando consulta: " . implode(", ", $stmt->errorInfo()));
@@ -81,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     } catch (Exception $e) {
         $response = [
             'success' => false,
-            'message' => 'Error: ' . $e->getMessage()
+            'message' => ERROR_PREFIX . $e->getMessage()
         ];
         http_response_code(500);
         echo json_encode($response);
@@ -92,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
         // Obtener datos del cuerpo de la solicitud
-        $input = json_decode(file_get_contents('php://input'), true);
+        $input = json_decode(file_get_contents(INPUT_STREAM), true);
         
         if (!$input) {
             $response = [
@@ -133,10 +139,10 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Verificar si el tipo de balanceado ya existe en esta compañía
         $checkSql = "SELECT COUNT(*) as count FROM tipo_balanceado 
-                     WHERE nombre = :nombre AND id_compania = :id_compania";
+                     WHERE nombre = " . PARAM_NOMBRE . " AND id_compania = " . PARAM_ID_COMPANIA . "";
         $checkStmt = $conn->prepare($checkSql);
-        $checkStmt->bindParam(':nombre', $nombre);
-        $checkStmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
+        $checkStmt->bindParam(PARAM_NOMBRE, $nombre);
+        $checkStmt->bindParam(PARAM_ID_COMPANIA, $id_compania, PDO::PARAM_INT);
         $checkStmt->execute();
         $checkResult = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -153,12 +159,12 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Insertar el nuevo tipo de balanceado
         $estado = isset($input['estado']) ? trim($input['estado']) : 'ACTIVO';
         $insertSql = "INSERT INTO tipo_balanceado (nombre, unidad, id_compania, estado, id_usuario_crea, id_usuario_actualiza) 
-                      VALUES (:nombre, :unidad, :id_compania, :estado, :id_usuario_crea, :id_usuario_actualiza)";
+                      VALUES (" . PARAM_NOMBRE . ", :unidad, " . PARAM_ID_COMPANIA . ", :estado, :id_usuario_crea, :id_usuario_actualiza)";
         
         $insertStmt = $conn->prepare($insertSql);
-        $insertStmt->bindParam(':nombre', $nombre);
+        $insertStmt->bindParam(PARAM_NOMBRE, $nombre);
         $insertStmt->bindParam(':unidad', $unidad);
-        $insertStmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
+        $insertStmt->bindParam(PARAM_ID_COMPANIA, $id_compania, PDO::PARAM_INT);
         $insertStmt->bindParam(':estado', $estado, PDO::PARAM_STR);
         $insertStmt->bindParam(':id_usuario_crea', $id_usuario_crea, PDO::PARAM_INT);
         $insertStmt->bindParam(':id_usuario_actualiza', $id_usuario_actualiza, PDO::PARAM_INT);
@@ -188,7 +194,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } catch (Exception $e) {
         $response = [
             'success' => false,
-            'message' => 'Error: ' . $e->getMessage()
+            'message' => ERROR_PREFIX . $e->getMessage()
         ];
         http_response_code(500);
         echo json_encode($response);
@@ -198,7 +204,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
 // Manejar solicitudes PUT para actualizar tipo de balanceado
 elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
     try {
-        $input = json_decode(file_get_contents('php://input'), true);
+        $input = json_decode(file_get_contents(INPUT_STREAM), true);
         
         if (!$input || !isset($input['id_tipo_balanceado'])) {
             $response = [
@@ -220,8 +226,8 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
         $params = [':id_tipo_balanceado' => $id_tipo_balanceado];
 
         if ($nombre !== null && $nombre !== '') {
-            $updates[] = "nombre = :nombre";
-            $params[':nombre'] = $nombre;
+            $updates[] = "nombre = " . PARAM_NOMBRE;
+            $params[PARAM_NOMBRE] = $nombre;
         }
 
         if ($unidad !== null && $unidad !== '') {
@@ -266,7 +272,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
     } catch (Exception $e) {
         $response = [
             'success' => false,
-            'message' => 'Error: ' . $e->getMessage()
+            'message' => ERROR_PREFIX . $e->getMessage()
         ];
         http_response_code(500);
         echo json_encode($response);
@@ -276,7 +282,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
 // Manejar solicitudes DELETE para eliminar tipo de balanceado
 elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
     try {
-        $input = json_decode(file_get_contents('php://input'), true);
+        $input = json_decode(file_get_contents(INPUT_STREAM), true);
         
         if (!$input || !isset($input['id_tipo_balanceado'])) {
             $response = [
@@ -307,7 +313,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
     } catch (Exception $e) {
         $response = [
             'success' => false,
-            'message' => 'Error: ' . $e->getMessage()
+            'message' => ERROR_PREFIX . $e->getMessage()
         ];
         http_response_code(500);
         echo json_encode($response);
