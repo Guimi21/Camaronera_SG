@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import config from '../../../config';
 
 export default function MenuForm() {
@@ -129,7 +130,7 @@ export default function MenuForm() {
     try {
       const method = isEditing ? 'PUT' : 'POST';
       const payload = {
-        id_modulo: parseInt(formData.id_modulo),
+        id_modulo: Number.parseInt(formData.id_modulo),
         nombre: formData.nombre.trim(),
         ruta: formData.ruta.trim() || null,
         icono: formData.icono.trim() || null,
@@ -137,7 +138,7 @@ export default function MenuForm() {
       };
 
       if (isEditing) {
-        payload.id_menu = parseInt(idMenu);
+        payload.id_menu = Number.parseInt(idMenu);
       }
 
       const response = await fetch(`${API_BASE_URL}/module/menus.php`, {
@@ -181,6 +182,10 @@ export default function MenuForm() {
     </div>
   );
 
+  ValidationMessage.propTypes = {
+    fieldName: PropTypes.string.isRequired
+  };
+
   return (
     <div className="form-container min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -208,8 +213,9 @@ export default function MenuForm() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Módulo *</label>
+                <label htmlFor="id_modulo" className="block text-sm font-medium text-gray-700 mb-2">Módulo *</label>
                 <select 
+                  id="id_modulo"
                   name="id_modulo" 
                   value={formData.id_modulo} 
                   onChange={handleChange}
@@ -227,8 +233,9 @@ export default function MenuForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del Menú *</label>
+                <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-2">Nombre del Menú *</label>
                 <input 
+                  id="nombre"
                   type="text" 
                   name="nombre" 
                   value={formData.nombre} 
@@ -242,8 +249,9 @@ export default function MenuForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Ruta</label>
+                <label htmlFor="ruta" className="block text-sm font-medium text-gray-700 mb-2">Ruta</label>
                 <input 
+                  id="ruta"
                   type="text" 
                   name="ruta" 
                   value={formData.ruta} 
@@ -255,8 +263,9 @@ export default function MenuForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Icono</label>
+                <label htmlFor="icono" className="block text-sm font-medium text-gray-700 mb-2">Icono</label>
                 <input 
+                  id="icono"
                   type="text" 
                   name="icono" 
                   value={formData.icono} 
@@ -268,8 +277,8 @@ export default function MenuForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Estado *</label>
-                <select name="estado" value={formData.estado} onChange={handleChange}
+                <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-2">Estado *</label>
+                <select id="estado" name="estado" value={formData.estado} onChange={handleChange}
                   className="w-full p-3 border border-gray-300 rounded-lg">
                   <option value="ACTIVO">Activo</option>
                   <option value="INACTIVO">Inactivo</option>

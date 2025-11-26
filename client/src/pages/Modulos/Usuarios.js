@@ -174,7 +174,7 @@ export default function Usuarios() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Usuarios');
 
-    const companiaSlug = compania ? compania.replace(/\s+/g, '_').toLowerCase() : 'compania';
+    const companiaSlug = compania ? compania.replaceAll(' ', '_').toLowerCase() : 'compania';
     const fileName = `reporte_usuarios_${companiaSlug}_${getLocalDateString()}.xlsx`;
     XLSX.writeFile(workbook, fileName);
   };
@@ -182,12 +182,12 @@ export default function Usuarios() {
   // Obtener perfiles únicos para el filtro
   const perfilesUnicos = [...new Set(
     usuarios.flatMap(u => u.perfiles ? u.perfiles.split(', ') : [])
-  )].sort();
+  )].sort((a, b) => a.localeCompare(b, 'es'));
 
   // Obtener compañías únicas para el filtro
   const companiasUnicas = [...new Set(
     usuarios.flatMap(u => u.companias ? u.companias.split(', ') : [])
-  )].sort();
+  )].sort((a, b) => a.localeCompare(b, 'es'));
 
   // Paginación
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -222,8 +222,9 @@ export default function Usuarios() {
               <div className="flex flex-wrap items-center gap-3">
                 {/* Filtro de búsqueda */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Buscar:</label>
+                  <label htmlFor="busqueda_usuarios" className="text-sm font-medium mb-1">Buscar:</label>
                   <input
+                    id="busqueda_usuarios"
                     type="text"
                     name="busqueda"
                     value={filters.busqueda}
@@ -235,8 +236,9 @@ export default function Usuarios() {
 
                 {/* Filtro de estado */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Estado:</label>
+                  <label htmlFor="estado_usuarios" className="text-sm font-medium mb-1">Estado:</label>
                   <select 
+                    id="estado_usuarios"
                     name="estado" 
                     value={filters.estado} 
                     onChange={handleFilterChange} 
@@ -250,8 +252,9 @@ export default function Usuarios() {
 
                 {/* Filtro de perfil */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Perfil:</label>
+                  <label htmlFor="perfil_usuarios" className="text-sm font-medium mb-1">Perfil:</label>
                   <select 
+                    id="perfil_usuarios"
                     name="perfil" 
                     value={filters.perfil} 
                     onChange={handleFilterChange} 
@@ -266,8 +269,9 @@ export default function Usuarios() {
 
                 {/* Filtro de compañía */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Compañía:</label>
+                  <label htmlFor="compania_usuarios" className="text-sm font-medium mb-1">Compañía:</label>
                   <select 
+                    id="compania_usuarios"
                     name="compania" 
                     value={filters.compania} 
                     onChange={handleFilterChange} 

@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -324,10 +325,12 @@ export default function EditarCicloProductivoForm() {
     const piscinaSeleccionada = piscinas.find(p => p.id_piscina == idPiscina);
     if (!piscinaSeleccionada || !piscinaSeleccionada.hectareas) return '';
     
-    const cantidadNum = parseFloat(cantidadSiembra);
-    const hectareasNum = parseFloat(piscinaSeleccionada.hectareas);
-    
-    if (isNaN(cantidadNum) || isNaN(hectareasNum) || hectareasNum === 0) return '';
+    const cantidadNum = Number.parseFloat(cantidadSiembra);
+    const hectareasNum = Number.parseFloat(piscinaSeleccionada.hectareas);
+
+    if (Number.isNaN(cantidadNum) || Number.isNaN(hectareasNum) || hectareasNum === 0) {
+      return '';
+    }
     
     const densidad = cantidadNum / hectareasNum;
     return densidad.toFixed(2);
@@ -340,10 +343,12 @@ export default function EditarCicloProductivoForm() {
     const piscinaSeleccionada = piscinas.find(p => p.id_piscina == idPiscina);
     if (!piscinaSeleccionada || !piscinaSeleccionada.hectareas) return '';
     
-    const cantidadNum = parseFloat(cantidadCosecha);
-    const hectareasNum = parseFloat(piscinaSeleccionada.hectareas);
-    
-    if (isNaN(cantidadNum) || isNaN(hectareasNum) || hectareasNum === 0) return '';
+    const cantidadNum = Number.parseFloat(cantidadCosecha);
+    const hectareasNum = Number.parseFloat(piscinaSeleccionada.hectareas);
+
+    if (Number.isNaN(cantidadNum) || Number.isNaN(hectareasNum) || hectareasNum === 0) {
+      return '';
+    }
     
     const libras = cantidadNum / hectareasNum;
     return libras.toFixed(2);
@@ -354,16 +359,16 @@ export default function EditarCicloProductivoForm() {
     
     // Validación para cantidad_siembra
     if (name === 'cantidad_siembra') {
-      const numericValue = parseFloat(value);
-      if (value !== '' && (isNaN(numericValue) || numericValue <= 0)) {
+      const numericValue = Number.parseFloat(value);
+      if (value !== '' && (Number.isNaN(numericValue) || numericValue <= 0)) {
         return;
       }
     }
     
     // Validación para biomasa_cosecha
     if (name === 'biomasa_cosecha') {
-      const numericValue = parseFloat(value);
-      if (value !== '' && (isNaN(numericValue) || numericValue <= 0)) {
+      const numericValue = Number.parseFloat(value);
+      if (value !== '' && (Number.isNaN(numericValue) || numericValue <= 0)) {
         return;
       }
     }
@@ -421,7 +426,7 @@ export default function EditarCicloProductivoForm() {
       return;
     }
     
-    if (!formData.cantidad_siembra || parseFloat(formData.cantidad_siembra) <= 0) {
+    if (!formData.cantidad_siembra || Number.parseFloat(formData.cantidad_siembra) <= 0) {
       setError('La cantidad de siembra debe ser un número positivo.');
       return;
     }
@@ -446,7 +451,7 @@ export default function EditarCicloProductivoForm() {
       return;
     }
     
-    if (formData.estado === 'FINALIZADO' && (!formData.biomasa_cosecha || parseFloat(formData.biomasa_cosecha) <= 0)) {
+    if (formData.estado === 'FINALIZADO' && (!formData.biomasa_cosecha || Number.parseFloat(formData.biomasa_cosecha) <= 0)) {
       setError('La cosecha en libras debe ser un número positivo cuando el estado es "Finalizado".');
       return;
     }
@@ -503,17 +508,17 @@ export default function EditarCicloProductivoForm() {
       }
       
       const dataToSend = {
-        id_ciclo: parseInt(id),
-        id_piscina: parseInt(formData.id_piscina),
+        id_ciclo: Number.parseInt(id),
+        id_piscina: Number.parseInt(formData.id_piscina),
         fecha_siembra: formData.fecha_siembra,
         fecha_cosecha: formData.fecha_cosecha || null,
-        cantidad_siembra: parseInt(formData.cantidad_siembra),
-        densidad: parseFloat(formData.densidad),
-        biomasa_cosecha: (formData.estado === 'FINALIZADO' && formData.biomasa_cosecha) ? parseInt(formData.biomasa_cosecha) : null,
-        libras_por_hectarea: (formData.estado === 'FINALIZADO' && formData.libras_por_hectarea) ? parseFloat(formData.libras_por_hectarea) : null,
+        cantidad_siembra: Number.parseInt(formData.cantidad_siembra),
+        densidad: Number.parseFloat(formData.densidad),
+        biomasa_cosecha: (formData.estado === 'FINALIZADO' && formData.biomasa_cosecha) ? Number.parseInt(formData.biomasa_cosecha) : null,
+        libras_por_hectarea: (formData.estado === 'FINALIZADO' && formData.libras_por_hectarea) ? Number.parseFloat(formData.libras_por_hectarea) : null,
         tipo_siembra: formData.tipo_siembra.trim(),
-        id_tipo_alimentacion: parseInt(formData.id_tipo_alimentacion),
-        promedio_incremento_peso: (formData.promedio_incremento_peso !== '' && formData.promedio_incremento_peso !== null) ? parseFloat(formData.promedio_incremento_peso) : null,
+        id_tipo_alimentacion: Number.parseInt(formData.id_tipo_alimentacion),
+        promedio_incremento_peso: (formData.promedio_incremento_peso !== '' && formData.promedio_incremento_peso !== null) ? Number.parseFloat(formData.promedio_incremento_peso) : null,
         ruta_pdf: rutaPdf || null,
         estado: formData.estado,
         id_compania: idCompania,
@@ -557,6 +562,10 @@ export default function EditarCicloProductivoForm() {
       <span>Ingresa {fieldName}</span>
     </div>
   );
+
+  ValidationMessage.propTypes = {
+    fieldName: PropTypes.string.isRequired
+  };
 
   if (loadingCiclo || loadingPiscinas) {
     return (

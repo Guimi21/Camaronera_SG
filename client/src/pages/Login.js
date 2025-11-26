@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react"; // íconos
 import Swal from "sweetalert2";
 import "../App.css"; // importa los estilos
 
@@ -66,8 +65,9 @@ export default function Login() {
       <form onSubmit={handleLogin} className="login-form">
         <h2>Iniciar Sesión</h2>
 
-        <label>Usuario</label>
+        <label htmlFor="usuario">Usuario</label>
         <input
+          id="usuario"
           type="text"
           value={usuario}
           onChange={(e) => setUsuario(e.target.value)}
@@ -75,30 +75,33 @@ export default function Login() {
           required
         />
 
-        <label>Contraseña</label>
-        <div className="relative w-full">
+        <label htmlFor="password">Contraseña</label>
+        <input
+          id="password"
+          type={showPassword ? "text" : "password"}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Ingrese su contraseña"
+          required
+          className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+        />
+        <div className="flex items-center mt-2">
           <input
-            type={showPassword ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Ingrese su contraseña"
-            required
-            className="w-full pr-10 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            id="showPassword"
+            type="checkbox"
+            checked={showPassword}
+            onChange={(e) => setShowPassword(e.target.checked)}
           />
-
-          <span
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute inset-y-0 right-3 flex items-center cursor-pointer text-gray-500 hover:text-gray-700"
-          >
-            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-          </span>
+          <label htmlFor="showPassword" className="ml-2 text-sm text-gray-700 cursor-pointer">
+            Mostrar contraseña
+          </label>
         </div>
 
-        <button type="submit" disabled={loading}>
+        <button type="submit" className="mt-1" disabled={loading}>
           {loading ? "Iniciando sesión..." : "Entrar"}
         </button>
 
-        <div className="link-text">
+        <div className="link-text mt-1">
           <p>
             ¿No tienes cuenta?{" "}
             <button type="button" onClick={() => navigate("/home")}>

@@ -87,7 +87,7 @@ export default function Menus() {
 
     // Filtrar por módulo
     if (filters.modulo !== "todos") {
-      filtered = filtered.filter(menu => menu.id_modulo && menu.id_modulo === parseInt(filters.modulo));
+      filtered = filtered.filter(menu => menu.id_modulo && menu.id_modulo === Number.parseInt(filters.modulo));
     }
 
     setFilteredMenus(filtered);
@@ -195,8 +195,9 @@ export default function Menus() {
               <div className="flex flex-wrap items-center gap-3">
                 {/* Filtro de búsqueda */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Buscar:</label>
+                  <label htmlFor="busqueda" className="text-sm font-medium mb-1">Buscar:</label>
                   <input
+                    id="busqueda"
                     type="text"
                     name="busqueda"
                     value={filters.busqueda}
@@ -208,8 +209,9 @@ export default function Menus() {
 
                 {/* Filtro de estado */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Estado:</label>
+                  <label htmlFor="estado" className="text-sm font-medium mb-1">Estado:</label>
                   <select 
+                    id="estado"
                     name="estado" 
                     value={filters.estado} 
                     onChange={handleFilterChange} 
@@ -223,8 +225,9 @@ export default function Menus() {
 
                 {/* Filtro de módulo */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Módulo:</label>
+                  <label htmlFor="modulo" className="text-sm font-medium mb-1">Módulo:</label>
                   <select 
+                    id="modulo"
                     name="modulo" 
                     value={filters.modulo} 
                     onChange={handleFilterChange} 

@@ -1,7 +1,7 @@
 <?php
-require_once(__DIR__ . '/../config/config.php');
-require_once(__DIR__ . '/../helpers/response.php');
-require_once(__DIR__ . '/../helpers/cors.php');  // Configuración CORS centralizada
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../helpers/response.php';
+require_once __DIR__ . '/../helpers/cors.php';  // Configuración CORS centralizada
 
 // Verificar que la conexión a la base de datos esté establecida
 if (!isset($conn)) {

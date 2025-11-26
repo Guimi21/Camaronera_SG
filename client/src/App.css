@@ -205,8 +205,11 @@ nav a.active {
     color: #ffffff;
 }
 
-nav.md\\:block {
-  display: block;
+/* Para pantallas md y superiores */
+@media (min-width: 768px) {
+  nav {
+    display: block;
+  }
 }
 
 /* Para pantallas móviles */
@@ -1091,10 +1094,9 @@ table tr:hover {
 
     /* Formularios 100% en móviles */
     .form-container, .login-form {
-        width: 100%;
+        width: calc(100% - 1.5rem);
         padding: 1rem 0.75rem;
         margin: 1rem auto;
-        width: calc(100% - 1.5rem);
         animation: fadeIn 0.8s ease-in-out;
     }
 

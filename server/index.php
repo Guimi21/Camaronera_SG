@@ -17,7 +17,7 @@ switch ($requestUri) {
     case '/auth/login':  // Ruta de login (sin .php)
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Aquí solo incluimos login.php, ya que la lógica ya está en el archivo
-            require_once(__DIR__ . '/auth/login.php');
+            require_once __DIR__ . '/auth/login.php';
         } else {
             // Responder con un método incorrecto
             header("HTTP/1.1 405 Method Not Allowed");
@@ -27,7 +27,7 @@ switch ($requestUri) {
            case '/module/cicloproductivo':  // Ruta para obtener los datos del ciclo productivo
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             // Incluir el archivo cicloproductivo.php
-            require_once(__DIR__ . '/module/cicloproductivo.php');
+            require_once __DIR__ . '/module/cicloproductivo.php';
         } else {
             // Responder con un método incorrecto
             header("HTTP/1.1 405 Method Not Allowed");

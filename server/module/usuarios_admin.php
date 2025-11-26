@@ -1,7 +1,7 @@
 <?php
-require_once(__DIR__ . '/../config/config.php');
-require_once(__DIR__ . '/../helpers/response.php');
-require_once(__DIR__ . '/../helpers/cors.php');
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../helpers/response.php';
+require_once __DIR__ . '/../helpers/cors.php';
 
 // Obtener solo usuarios con perfil "Administrador"
 $id_usuario = isset($_GET['id_usuario']) ? $_GET['id_usuario'] : null;

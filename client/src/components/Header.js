@@ -45,7 +45,7 @@ export default function Header() {
 
   // Función para manejar el cambio de compañía
   const handleCompaniaChange = (e) => {
-    const nuevaCompaniaId = parseInt(e.target.value);
+    const nuevaCompaniaId = Number.parseInt(e.target.value);
     cambiarCompania(nuevaCompaniaId);
   };
 
@@ -59,10 +59,8 @@ export default function Header() {
         <div className="logoContainer">
           <img src={logo} alt="Logo Camaronera" className="logoPrincipal" />
           <div>
-            <h1 className="logoTitulo"></h1>
+            <h1 className="logoTitulo">{grupoEmpresarial || "Sistema Camaronera"}</h1>
             <div className="logoText">
-              <p className="logoTitulo text-lg">{grupoEmpresarial || "Súper Admin"}</p>
-              
               {/* Selector de compañía - solo se muestra si hay compañías */}
               {companias && companias.length > 0 ? (
                 companias.length > 1 ? (

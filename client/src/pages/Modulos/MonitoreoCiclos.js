@@ -121,7 +121,7 @@ export default function MonitoreoCiclos() {
       }
       if (v !== null && v !== undefined && String(v).trim() !== '') set.add(String(v));
     });
-    return Array.from(set).sort();
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'es'));
   };
 
   // Manejo de cambios en los filtros
@@ -153,12 +153,12 @@ export default function MonitoreoCiclos() {
         const [year, month, day] = datePart.split('-');
         
         // Validar que los valores sean válidos
-        if (!year || !month || !day || isNaN(year) || isNaN(month) || isNaN(day)) {
+        if (!year || !month || !day || Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
           return "N/A";
         }
         
         // Crear fecha sin conversión de zona horaria
-        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        const date = new Date(Number.parseInt(year), Number.parseInt(month) - 1, Number.parseInt(day));
         return date.toLocaleDateString('es-ES', {
           year: 'numeric',
           month: '2-digit',
@@ -209,7 +209,7 @@ export default function MonitoreoCiclos() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Ciclos Productivos');
 
-    const companiaSlug = compania ? compania.replace(/\s+/g, '_').toLowerCase() : 'compania';
+    const companiaSlug = compania ? compania.replaceAll(' ', '_').toLowerCase() : 'compania';
     const fileName = `monitoreo_ciclos_${companiaSlug}_${getLocalDateString()}.xlsx`;
     XLSX.writeFile(workbook, fileName);
   };

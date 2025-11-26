@@ -1,7 +1,7 @@
 <?php
-require_once(__DIR__ . '/../config/config.php');  // Incluir configuración
-require_once(__DIR__ . '/../helpers/response.php');  // Función para enviar respuestas
-require_once(__DIR__ . '/../helpers/cors.php');  // Configuración CORS centralizada
+require_once __DIR__ . '/../config/config.php';  // Incluir configuración
+require_once __DIR__ . '/../helpers/response.php';  // Función para enviar respuestas
+require_once __DIR__ . '/../helpers/cors.php';  // Configuración CORS centralizada
 
 // Obtener los datos enviados (usuario y contraseña)
 $data = json_decode(file_get_contents("php://input"));  

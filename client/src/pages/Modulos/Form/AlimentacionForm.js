@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -96,6 +97,10 @@ export default function AlimentacionForm() {
       <span>Ingresa {fieldName}</span>
     </div>
   );
+
+  ValidationMessage.propTypes = {
+    fieldName: PropTypes.string.isRequired
+  };
 
   return (
     <div className="form-container max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">

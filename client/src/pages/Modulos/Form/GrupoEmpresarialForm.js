@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import config from '../../../config';
 
 export default function GrupoEmpresarialForm() {
@@ -107,6 +108,10 @@ export default function GrupoEmpresarialForm() {
       <span>Ingresa {fieldName}</span>
     </div>
   );
+
+  ValidationMessage.propTypes = {
+    fieldName: PropTypes.string.isRequired
+  };
 
   return (
     <div className="form-container min-h-screen bg-gray-50 py-8">

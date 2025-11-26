@@ -154,7 +154,7 @@ export default function MonitoreoAlimentaciones() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Tipos de Alimentación');
 
-    const companiaSlug = compania ? compania.replace(/\s+/g, '_').toLowerCase() : 'compania';
+    const companiaSlug = compania ? compania.replaceAll(' ', '_').toLowerCase() : 'compania';
     const fileName = `monitoreo_alimentaciones_${companiaSlug}_${getLocalDateString()}.xlsx`;
     XLSX.writeFile(workbook, fileName);
   };

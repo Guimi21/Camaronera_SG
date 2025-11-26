@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -194,10 +195,10 @@ export default function UsuarioEditForm() {
     try {
       const payload = {
         nombre: formData.nombre.trim(),
-        perfiles: [parseInt(formData.perfil)], // Enviar como array con un solo elemento
+        perfiles: [Number.parseInt(formData.perfil)], // Enviar como array con un solo elemento
         companias: formData.companias,
         estado: formData.estado,
-        id_usuario_edit: parseInt(idUsuarioParam),
+        id_usuario_edit: Number.parseInt(idUsuarioParam),
         id_usuario: idUsuarioAuth
       };
 
@@ -216,7 +217,7 @@ export default function UsuarioEditForm() {
 
       if (result.success) {
         // Si el usuario editado es a sí mismo, actualizar las compañías en el contexto
-        if (parseInt(idUsuarioParam) === parseInt(idUsuarioAuth)) {
+        if (Number.parseInt(idUsuarioParam) === Number.parseInt(idUsuarioAuth)) {
           try {
             // Fetch para obtener los datos actualizados del usuario (incluyendo compañías)
             const usuarioResponse = await fetch(
@@ -231,7 +232,7 @@ export default function UsuarioEditForm() {
               const usuarioResult = await usuarioResponse.json();
               if (usuarioResult.success && usuarioResult.data) {
                 // Encontrar el usuario actual en la lista
-                const usuarioActualizado = usuarioResult.data.find(u => parseInt(u.id_usuario) === parseInt(idUsuarioAuth));
+                const usuarioActualizado = usuarioResult.data.find(u => Number.parseInt(u.id_usuario) === Number.parseInt(idUsuarioAuth));
                 
                 if (usuarioActualizado) {
                   // Obtener todas las compañías disponibles para mapear nombres a objetos
@@ -303,6 +304,10 @@ export default function UsuarioEditForm() {
     </div>
   );
 
+  ValidationMessage.propTypes = {
+    fieldName: PropTypes.string.isRequired
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -345,15 +350,15 @@ export default function UsuarioEditForm() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
-                <input type="text" name="nombre" value={formData.nombre} onChange={handleChange}
+                <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
+                <input id="nombre" type="text" name="nombre" value={formData.nombre} onChange={handleChange}
                   className="w-full p-3 border border-gray-300 rounded-lg" placeholder="Nombre completo" required />
                 {formData.nombre === '' && <ValidationMessage fieldName="un Nombre" />}
                 <p className="leyenda text-sm text-gray-500 mt-1">Nombre completo del usuario.</p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Perfil *</label>
+              <fieldset>
+                <legend className="block text-sm font-medium text-gray-700 mb-2">Perfil *</legend>
                 <div className="space-y-2 border border-gray-300 rounded-lg bg-gray-50">
                   {perfilesDisponibles.length > 0 ? (
                     perfilesDisponibles.map(perfil => (
@@ -377,10 +382,10 @@ export default function UsuarioEditForm() {
                 </div>
                 {formData.perfil === '' && <ValidationMessage fieldName="un Perfil" />}
                 <p className="leyenda text-sm text-gray-500 mt-1">Seleccione un perfil para el usuario.</p>
-              </div>
+              </fieldset>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Compañías *</label>
+              <fieldset>
+                <legend className="block text-sm font-medium text-gray-700 mb-2">Compañías *</legend>
                 <div className="space-y-2 border border-gray-300 rounded-lg bg-gray-50">
                   {companiasDisponibles.length > 0 ? (
                     companiasDisponibles.map(compania => (
@@ -402,11 +407,11 @@ export default function UsuarioEditForm() {
                 </div>
                 {formData.companias.length === 0 && <ValidationMessage fieldName="al menos una Compañía" />}
                 <p className="leyenda text-sm text-gray-500 mt-1">Seleccione al menos una compañía para el usuario.</p>
-              </div>
+              </fieldset>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Estado *</label>
-                <select name="estado" value={formData.estado} onChange={handleChange}
+                <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-2">Estado *</label>
+                <select id="estado" name="estado" value={formData.estado} onChange={handleChange}
                   className="w-full p-3 border border-gray-300 rounded-lg">
                   <option value="ACTIVO">Activo</option>
                   <option value="INACTIVO">Inactivo</option>

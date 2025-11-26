@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import PropTypes from "prop-types";
 import config from "../config";
 
 const AuthContext = createContext();
@@ -62,7 +63,7 @@ export const AuthProvider = ({ children }) => {
       // Establecer la compañía activa (desde localStorage si existe, o la primera del array)
       const companiaActivaId = localStorage.getItem('companiaActivaId');
       if (companiaActivaId && parsedData.companias) {
-        const companiaEncontrada = parsedData.companias.find(c => c.id_compania === parseInt(companiaActivaId));
+        const companiaEncontrada = parsedData.companias.find(c => c.id_compania === Number.parseInt(companiaActivaId));
         if (companiaEncontrada) {
           setCompania(companiaEncontrada.nombre);
           setIdCompania(companiaEncontrada.id_compania);
@@ -202,6 +203,10 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
+};
+
+AuthProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 };
 
 export const useAuth = () => {

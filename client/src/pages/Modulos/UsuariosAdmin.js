@@ -172,7 +172,7 @@ export default function UsuariosAdmin() {
   // Obtener grupos empresariales únicos para el filtro
   const gruposEmpresarialesUnicos = [...new Set(
     usuarios.flatMap(u => u.grupo_empresarial ? [u.grupo_empresarial] : [])
-  )].sort();
+  )].sort((a, b) => a.localeCompare(b, 'es'));
 
   // Paginación
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -207,8 +207,9 @@ export default function UsuariosAdmin() {
               <div className="flex flex-wrap items-center gap-3">
                 {/* Filtro de búsqueda */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Buscar:</label>
+                  <label htmlFor="busqueda_admin" className="text-sm font-medium mb-1">Buscar:</label>
                   <input
+                    id="busqueda_admin"
                     type="text"
                     name="busqueda"
                     value={filters.busqueda}
@@ -220,8 +221,9 @@ export default function UsuariosAdmin() {
 
                 {/* Filtro de estado */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Estado:</label>
+                  <label htmlFor="estado_admin" className="text-sm font-medium mb-1">Estado:</label>
                   <select
+                    id="estado_admin"
                     name="estado"
                     value={filters.estado}
                     onChange={handleFilterChange}
@@ -235,8 +237,9 @@ export default function UsuariosAdmin() {
 
                 {/* Filtro de grupo empresarial */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Grupo Empresarial:</label>
+                  <label htmlFor="grupo_admin" className="text-sm font-medium mb-1">Grupo Empresarial:</label>
                   <select
+                    id="grupo_admin"
                     name="grupoEmpresarial"
                     value={filters.grupoEmpresarial}
                     onChange={handleFilterChange}

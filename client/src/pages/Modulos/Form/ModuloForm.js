@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import config from '../../../config';
 
 export default function ModuloForm() {
@@ -96,7 +97,7 @@ export default function ModuloForm() {
       };
 
       if (isEditing) {
-        payload.id_modulo = parseInt(idModulo);
+        payload.id_modulo = Number.parseInt(idModulo);
       }
 
       const response = await fetch(`${API_BASE_URL}/module/modulos.php`, {
@@ -140,6 +141,10 @@ export default function ModuloForm() {
     </div>
   );
 
+  ValidationMessage.propTypes = {
+    fieldName: PropTypes.string.isRequired
+  };
+
   return (
     <div className="form-container min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -167,8 +172,9 @@ export default function ModuloForm() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del Módulo *</label>
+                <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-2">Nombre del Módulo *</label>
                 <input 
+                  id="nombre"
                   type="text" 
                   name="nombre" 
                   value={formData.nombre} 
@@ -182,8 +188,9 @@ export default function ModuloForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
                 <textarea 
+                  id="descripcion"
                   name="descripcion" 
                   value={formData.descripcion} 
                   onChange={handleChange}
@@ -195,8 +202,8 @@ export default function ModuloForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
-                <select 
+                <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                <select id="estado" 
                   name="estado" 
                   value={formData.estado} 
                   onChange={handleChange}

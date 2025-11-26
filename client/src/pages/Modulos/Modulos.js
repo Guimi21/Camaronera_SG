@@ -172,8 +172,9 @@ export default function Modulos() {
               <div className="flex flex-wrap items-center gap-3">
                 {/* Filtro de búsqueda */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Buscar:</label>
+                  <label htmlFor="busqueda" className="text-sm font-medium mb-1">Buscar:</label>
                   <input
+                    id="busqueda"
                     type="text"
                     name="busqueda"
                     value={filters.busqueda}

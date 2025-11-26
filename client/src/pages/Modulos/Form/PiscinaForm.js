@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -40,8 +41,8 @@ export default function PiscinaForm() {
     
     // Para el campo hectareas, validar que sea un número positivo
     if (name === 'hectareas') {
-      const numericValue = parseFloat(value);
-      if (value !== '' && (isNaN(numericValue) || numericValue <= 0)) {
+      const numericValue = Number.parseFloat(value);
+      if (value !== '' && (Number.isNaN(numericValue) || numericValue <= 0)) {
         return; // No actualizar si no es un número válido positivo
       }
     }
@@ -61,7 +62,7 @@ export default function PiscinaForm() {
       return;
     }
     
-    if (!formData.hectareas || parseFloat(formData.hectareas) <= 0) {
+    if (!formData.hectareas || Number.parseFloat(formData.hectareas) <= 0) {
       setError('Las hectáreas deben ser un número positivo.');
       return;
     }
@@ -82,7 +83,7 @@ export default function PiscinaForm() {
     try {
       const dataToSend = {
         codigo: formData.codigo.trim(),
-        hectareas: parseFloat(formData.hectareas),
+        hectareas: Number.parseFloat(formData.hectareas),
         ubicacion: formData.ubicacion.trim(),
         estado: formData.estado,
         id_compania: idCompania,
@@ -128,6 +129,10 @@ export default function PiscinaForm() {
       <span>Ingresa {fieldName}</span>
     </div>
   );
+
+  ValidationMessage.propTypes = {
+    fieldName: PropTypes.string.isRequired
+  };
 
   return (
     <div className="form-container max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">

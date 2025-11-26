@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import PropTypes from 'prop-types';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -178,7 +178,7 @@ export default function UsuarioForm() {
         username: formData.username.trim(),
         password: formData.password,
         estado: formData.estado,
-        perfiles: [parseInt(formData.perfil)],
+        perfiles: [Number.parseInt(formData.perfil)],
         companias: formData.companias,
         idGrupoEmpresarial: formData.idGrupoEmpresarial || null,
         id_usuario: idUsuario
@@ -237,6 +237,10 @@ export default function UsuarioForm() {
     </div>
   );
 
+  ValidationMessage.propTypes = {
+    fieldName: PropTypes.string.isRequired
+  };
+
   return (
     <div className="form-container min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -258,46 +262,50 @@ export default function UsuarioForm() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
-                <input type="text" name="nombre" value={formData.nombre} onChange={handleChange}
+                <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-2">Nombre *</label>
+                <input id="nombre" type="text" name="nombre" value={formData.nombre} onChange={handleChange}
                   className="w-full p-3 border border-gray-300 rounded-lg" placeholder="Nombre completo" required />
                 {formData.nombre === '' && <ValidationMessage fieldName="un Nombre" />}
                 <p className="leyenda text-sm text-gray-500 mt-1">Nombre completo del usuario.</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Usuario (username) *</label>
-                <input type="text" name="username" value={formData.username} onChange={handleChange}
+                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">Usuario (username) *</label>
+                <input id="username" type="text" name="username" value={formData.username} onChange={handleChange}
                   className="w-full p-3 border border-gray-300 rounded-lg" placeholder="usuario123" required />
                 {formData.username === '' && <ValidationMessage fieldName="un Usuario (username)" />}
                 <p className="leyenda text-sm text-gray-500 mt-1">Nombre de usuario único para acceder al sistema.</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Contraseña *</label>
-                <div className="relative w-full">
-                  <input 
-                    type={showPassword ? 'text' : 'password'} 
-                    name="password" 
-                    value={formData.password} 
-                    onChange={handleChange}
-                    className="w-full pr-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" 
-                    placeholder="Contraseña" 
-                    required 
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">Contraseña *</label>
+                <input 
+                  id="password"
+                  type={showPassword ? 'text' : 'password'} 
+                  name="password" 
+                  value={formData.password} 
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" 
+                  placeholder="Contraseña" 
+                  required 
+                />
+                <div className="flex items-center mt-2">
+                  <input
+                    id="showPassword"
+                    type="checkbox"
+                    checked={showPassword}
+                    onChange={(e) => setShowPassword(e.target.checked)}
                   />
-                  <span
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-3 flex items-center cursor-pointer text-gray-500 hover:text-gray-700"
-                  >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </span>
+                  <label htmlFor="showPassword" className="ml-2 text-sm text-gray-700 cursor-pointer">
+                    Mostrar contraseña
+                  </label>
                 </div>
                 {formData.password === '' && <ValidationMessage fieldName="una Contraseña" />}
                 <p className="leyenda text-sm text-gray-500 mt-1">La contraseña será hasheada con bcrypt en el servidor.</p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Perfil *</label>
+              <fieldset>
+                <legend className="block text-sm font-medium text-gray-700 mb-2">Perfil *</legend>
                 <div className="space-y-2 border border-gray-300 rounded-lg bg-gray-50">
                   {perfilesDisponibles.length > 0 ? (
                     perfilesDisponibles.map(perfil => (
@@ -322,11 +330,11 @@ export default function UsuarioForm() {
                 </div>
                 {formData.perfil === '' && <ValidationMessage fieldName="un Perfil" />}
                 <p className="leyenda text-sm text-gray-500 mt-1">Seleccione un perfil para el usuario.</p>
-              </div>
+              </fieldset>
 
               {perfilActivo !== 'Superadministrador' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Compañías *</label>
+              <fieldset>
+                <legend className="block text-sm font-medium text-gray-700 mb-2">Compañías *</legend>
                 <div className="space-y-2 border border-gray-300 rounded-lg bg-gray-50">
                   {companiasDisponibles.length > 0 ? (
                     companiasDisponibles.map(compania => (
@@ -349,13 +357,14 @@ export default function UsuarioForm() {
                 </div>
                 {formData.companias.length === 0 && <ValidationMessage fieldName="al menos una Compañía" />}
                 <p className="leyenda text-sm text-gray-500 mt-1">Seleccione al menos una compañía para el usuario.</p>
-              </div>
+              </fieldset>
               )}
 
               {perfilActivo === 'Superadministrador' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Grupo Empresarial *</label>
+                <label htmlFor="idGrupoEmpresarial" className="block text-sm font-medium text-gray-700 mb-2">Grupo Empresarial *</label>
                 <select 
+                  id="idGrupoEmpresarial"
                   name="idGrupoEmpresarial" 
                   value={formData.idGrupoEmpresarial} 
                   onChange={handleChange}
@@ -374,8 +383,8 @@ export default function UsuarioForm() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Estado *</label>
-                <select name="estado" value={formData.estado} onChange={handleChange}
+                <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-2">Estado *</label>
+                <select id="estado" name="estado" value={formData.estado} onChange={handleChange}
                   className="w-full p-3 border border-gray-300 rounded-lg">
                   <option value="ACTIVO">Activo</option>
                   <option value="INACTIVO">Inactivo</option>

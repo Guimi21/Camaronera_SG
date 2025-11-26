@@ -352,7 +352,7 @@ export default function Directivo() {
     labels: ['Supervivencia (%)', 'Pérdidas (%)'],
     datasets: [
       {
-        data: [parseFloat(porcentajeSupervivencia), 100 - parseFloat(porcentajeSupervivencia)],
+        data: [Number.parseFloat(porcentajeSupervivencia), 100 - Number.parseFloat(porcentajeSupervivencia)],
         backgroundColor: ['rgba(54, 162, 235, 0.8)', 'rgba(255, 99, 132, 0.8)'],
         borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)'],
         borderWidth: 1,
@@ -452,12 +452,12 @@ export default function Directivo() {
         const [year, month, day] = datePart.split('-');
         
         // Validar que los valores sean válidos
-        if (!year || !month || !day || isNaN(year) || isNaN(month) || isNaN(day)) {
+        if (!year || !month || !day || Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
           return "N/A";
         }
         
         // Crear fecha sin conversión de zona horaria
-        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        const date = new Date(Number.parseInt(year), Number.parseInt(month) - 1, Number.parseInt(day));
         return date.toLocaleDateString('es-ES', {
           year: 'numeric',
           month: '2-digit',
@@ -554,7 +554,7 @@ export default function Directivo() {
     const ws = XLSX.utils.json_to_sheet(finalData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Reporte Producción");
-    const companiaSlug = compania ? compania.replace(/\s+/g, '_').toLowerCase() : 'compania';
+    const companiaSlug = compania ? compania.replaceAll(' ', '_').toLowerCase() : 'compania';
     const fileName = `reporte_produccion_${companiaSlug}_${getLocalDateString()}.xlsx`;
     XLSX.writeFile(wb, fileName);
   };
@@ -593,8 +593,9 @@ export default function Directivo() {
               <div className="flex flex-wrap items-center gap-3">
                 {/* Filtro de Piscina */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Muestras:</label>
+                  <label htmlFor="piscinaTable" className="text-sm font-medium mb-1">Muestras:</label>
                   <select 
+                    id="piscinaTable"
                     name="piscinaTable" 
                     value={filters.piscinaTable} 
                     onChange={handleFilterChange} 
@@ -609,29 +610,33 @@ export default function Directivo() {
                     ))}
                   </select>
                 </div>
-                <label className="text-sm font-medium mb-1">Fecha de Muestra:</label>
-                {/* Filtro de Fecha */}
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Muestra Desde:</label>
-                  <input 
-                    type="date" 
-                    name="startDate" 
-                    value={filters.startDate} 
-                    onChange={handleFilterChange} 
-                    className="border rounded p-2 text-sm dateInput" 
-                  />
-                </div>
-                
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Muestra Hasta:</label>
-                  <input 
-                    type="date" 
-                    name="endDate" 
-                    value={filters.endDate} 
-                    onChange={handleFilterChange} 
-                    className="border rounded p-2 text-sm dateInput" 
-                  />
-                </div>
+                <fieldset className="flex flex-col gap-2">
+                  <legend className="text-sm font-medium">Fecha de Muestra:</legend>
+                  {/* Filtro de Fecha */}
+                  <div className="flex flex-col">
+                    <label htmlFor="startDate" className="text-sm font-medium mb-1">Muestra Desde:</label>
+                    <input 
+                      id="startDate"
+                      type="date" 
+                      name="startDate" 
+                      value={filters.startDate} 
+                      onChange={handleFilterChange} 
+                      className="border rounded p-2 text-sm dateInput" 
+                    />
+                  </div>
+                  
+                  <div className="flex flex-col">
+                    <label htmlFor="endDate" className="text-sm font-medium mb-1">Muestra Hasta:</label>
+                    <input 
+                      id="endDate"
+                      type="date" 
+                      name="endDate" 
+                      value={filters.endDate} 
+                      onChange={handleFilterChange} 
+                      className="border rounded p-2 text-sm dateInput" 
+                    />
+                  </div>
+                </fieldset>
 
                 <div className="flex items-end">
                   <button 
@@ -699,7 +704,7 @@ export default function Directivo() {
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.has}</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{formatDate(item.fecha_siembra, false)}</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.dias_cultivo}</td>
-                            <td className="py-3 px-4 border-b whitespace-nowrap">{item.siembra_larvas ? parseInt(item.siembra_larvas) : 0}</td>
+                            <td className="py-3 px-4 border-b whitespace-nowrap">{item.siembra_larvas ? Number.parseInt(item.siembra_larvas) : 0}</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.densidad_ha}</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.tipo_siembra}</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.peso}</td>
@@ -712,7 +717,7 @@ export default function Directivo() {
                             ))}
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.balanceado_acu?.toLocaleString() || '0'}</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.conversion_alimenticia}</td>
-                            <td className="py-3 px-4 border-b whitespace-nowrap">{item.poblacion_actual ? parseInt(item.poblacion_actual) : 0}</td>
+                            <td className="py-3 px-4 border-b whitespace-nowrap">{item.poblacion_actual ? Number.parseInt(item.poblacion_actual) : 0}</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.supervivencia}%</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{item.observaciones}</td>
                             <td className="py-3 px-4 border-b whitespace-nowrap">{getEstadoBadge(item.estado)}</td>

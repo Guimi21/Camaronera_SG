@@ -277,7 +277,7 @@ export default function MuestraEditView() {
       const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == formData.id_ciclo);
       if (cicloSeleccionado) {
         const diasCultivo = calcularDiasCultivo(cicloSeleccionado.fecha_siembra, formData.fecha_muestra);
-        if (diasCultivo !== formData.dias_cultivo) {
+        if (diasCultivo != formData.dias_cultivo) {
           setFormData(prev => ({
             ...prev,
             dias_cultivo: diasCultivo
@@ -412,14 +412,14 @@ export default function MuestraEditView() {
     if (!pesoActual) return '';
     
     if (pesoAnterior === null || pesoAnterior === undefined) {
-      const pesoActualNum = parseFloat(pesoActual);
-      return isNaN(pesoActualNum) ? '' : pesoActualNum.toFixed(2);
+      const pesoActualNum = Number.parseFloat(pesoActual);
+      return Number.isNaN(pesoActualNum) ? '' : pesoActualNum.toFixed(2);
     }
     
-    const pesoActualNum = parseFloat(pesoActual);
-    const pesoAnteriorNum = parseFloat(pesoAnterior);
+    const pesoActualNum = Number.parseFloat(pesoActual);
+    const pesoAnteriorNum = Number.parseFloat(pesoAnterior);
     
-    if (isNaN(pesoActualNum) || isNaN(pesoAnteriorNum)) return '';
+    if (Number.isNaN(pesoActualNum) || Number.isNaN(pesoAnteriorNum)) return '';
     
     const incremento = pesoActualNum - pesoAnteriorNum;
     return incremento.toFixed(2);
@@ -427,11 +427,11 @@ export default function MuestraEditView() {
 
   const calcularBalanceadoAcumulado = (balanceadosObj, balanceadoAnterior) => {
     const sumaActual = Object.values(balanceadosObj).reduce((sum, val) => {
-      const numVal = (val === '' || val === null || val === undefined) ? 0 : parseFloat(val) || 0;
+      const numVal = (val === '' || val === null || val === undefined) ? 0 : Number.parseFloat(val) || 0;
       return sum + numVal;
     }, 0);
     
-    const valAnterior = (balanceadoAnterior === null || balanceadoAnterior === undefined) ? 0 : parseFloat(balanceadoAnterior) || 0;
+    const valAnterior = (balanceadoAnterior === null || balanceadoAnterior === undefined) ? 0 : Number.parseFloat(balanceadoAnterior) || 0;
     const acumuladoTotal = valAnterior + sumaActual;
     
     return acumuladoTotal.toFixed(2);
@@ -440,10 +440,10 @@ export default function MuestraEditView() {
   const calcularPoblacionActual = (supervivencia, cantidadSiembra) => {
     if (!supervivencia || !cantidadSiembra) return '';
     
-    const supervivenciaNum = parseFloat(supervivencia);
-    const cantidadSiembraNum = parseFloat(cantidadSiembra);
+    const supervivenciaNum = Number.parseFloat(supervivencia);
+    const cantidadSiembraNum = Number.parseFloat(cantidadSiembra);
     
-    if (isNaN(supervivenciaNum) || isNaN(cantidadSiembraNum)) return '';
+    if (Number.isNaN(supervivenciaNum) || Number.isNaN(cantidadSiembraNum)) return '';
     
     const supervivenciaDecimal = supervivenciaNum / 100;
     const poblacionActual = cantidadSiembraNum * supervivenciaDecimal;
@@ -454,10 +454,10 @@ export default function MuestraEditView() {
   const calcularBiomasa = (pesoGramos, poblacionActual) => {
     if (!pesoGramos || !poblacionActual) return '';
     
-    const pesoGramosNum = parseFloat(pesoGramos);
-    const poblacionActualNum = parseFloat(poblacionActual);
+    const pesoGramosNum = Number.parseFloat(pesoGramos);
+    const poblacionActualNum = Number.parseFloat(poblacionActual);
     
-    if (isNaN(pesoGramosNum) || isNaN(poblacionActualNum)) return '';
+    if (Number.isNaN(pesoGramosNum) || Number.isNaN(poblacionActualNum)) return '';
     
     const pesoLibras = pesoGramosNum / 454;
     const biomasaLbs = pesoLibras * poblacionActualNum;
@@ -468,10 +468,10 @@ export default function MuestraEditView() {
   const calcularConversionAlimenticia = (balanceadoAcumulado, biomasaLbs) => {
     if (!balanceadoAcumulado || !biomasaLbs) return '';
     
-    const balanceadoNum = parseFloat(balanceadoAcumulado);
-    const biomasaNum = parseFloat(biomasaLbs);
+    const balanceadoNum = Number.parseFloat(balanceadoAcumulado);
+    const biomasaNum = Number.parseFloat(biomasaLbs);
     
-    if (isNaN(balanceadoNum) || isNaN(biomasaNum) || biomasaNum === 0) return '';
+    if (Number.isNaN(balanceadoNum) || Number.isNaN(biomasaNum) || biomasaNum === 0) return '';
     
     const conversionAlimenticia = balanceadoNum / biomasaNum;
     
@@ -484,10 +484,10 @@ export default function MuestraEditView() {
     const { name, value } = e.target;
     
     if (name === 'peso' || name === 'supervivencia' || name.startsWith('balanceado_')) {
-      if (value !== '' && parseFloat(value) < 0) {
+      if (value !== '' && Number.parseFloat(value) < 0) {
         return;
       }
-      if (name === 'supervivencia' && value !== '' && parseFloat(value) > 100) {
+      if (name === 'supervivencia' && value !== '' && Number.parseFloat(value) > 100) {
         return;
       }
     }
@@ -604,18 +604,18 @@ export default function MuestraEditView() {
 
     if (!formData.peso || String(formData.peso).trim() === '') {
       errores.push('El peso es requerido.');
-    } else if (parseFloat(formData.peso) <= 0) {
+    } else if (Number.parseFloat(formData.peso) <= 0) {
       errores.push('El peso debe ser mayor a 0.');
     }
 
     if (!formData.supervivencia || String(formData.supervivencia).trim() === '') {
       errores.push('La supervivencia es requerida.');
-    } else if (parseFloat(formData.supervivencia) < 0 || parseFloat(formData.supervivencia) > 100) {
+    } else if (Number.parseFloat(formData.supervivencia) < 0 || Number.parseFloat(formData.supervivencia) > 100) {
       errores.push('La supervivencia debe estar entre 0 y 100.');
     }
 
     const tieneBalanceado = Object.values(formData.balanceados).some(
-      val => val !== '' && val !== null && val !== undefined && parseFloat(val) > 0
+      val => val !== '' && val !== null && val !== undefined && Number.parseFloat(val) > 0
     );
     if (!tieneBalanceado) {
       errores.push('Debes ingresar al menos un tipo de balanceado.');
@@ -638,10 +638,10 @@ export default function MuestraEditView() {
 
     try {
       const balanceadosArray = Object.entries(formData.balanceados)
-        .filter(([id, cantidad]) => cantidad !== '' && cantidad !== null && cantidad !== undefined && parseFloat(cantidad) > 0)
+        .filter(([id, cantidad]) => cantidad !== '' && cantidad !== null && cantidad !== undefined && Number.parseFloat(cantidad) > 0)
         .map(([id, cantidad]) => ({
-          id_tipo_balanceado: parseInt(id),
-          cantidad: parseFloat(cantidad)
+          id_tipo_balanceado: Number.parseInt(id),
+          cantidad: Number.parseFloat(cantidad)
         }));
       
       const dataToSend = {
@@ -723,10 +723,11 @@ export default function MuestraEditView() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Selección de Ciclo Productivo */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="id_ciclo" className="block text-sm font-medium text-gray-700 mb-2">
               Seleccionar Ciclo Productivo {!isReadOnly && '*'}
             </label>
             <select
+              id="id_ciclo"
               name="id_ciclo"
               value={formData.id_ciclo}
               onChange={handleChange}
@@ -754,10 +755,11 @@ export default function MuestraEditView() {
           {/* Información de muestra */}
           <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="fecha_muestra" className="block text-sm font-medium text-gray-700 mb-2">
                 Fecha de Muestra {!isReadOnly && '*'}
               </label>
               <input
+                id="fecha_muestra"
                 type="date"
                 name="fecha_muestra"
                 value={formData.fecha_muestra}
@@ -771,10 +773,11 @@ export default function MuestraEditView() {
           {/* Información de producción */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="dias_cultivo" className="block text-sm font-medium text-gray-700 mb-2">
                 Días de Cultivo <span className="text-blue-600 text-xs">(Automático)</span>
               </label>
               <input
+                id="dias_cultivo"
                 type="text"
                 name="dias_cultivo"
                 value={formData.dias_cultivo}
@@ -784,10 +787,11 @@ export default function MuestraEditView() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="peso" className="block text-sm font-medium text-gray-700 mb-2">
                 Peso (g)
               </label>
               <input
+                id="peso"
                 type="number"
                 step="0.01"
                 min="0"
@@ -811,10 +815,11 @@ export default function MuestraEditView() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="incremento_peso" className="block text-sm font-medium text-gray-700 mb-2">
                 Incremento Peso (g) <span className="text-blue-600 text-xs">(Automático)</span>
               </label>
               <input
+                id="incremento_peso"
                 type="text"
                 name="incremento_peso"
                 value={formData.incremento_peso}
@@ -824,10 +829,11 @@ export default function MuestraEditView() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="supervivencia" className="block text-sm font-medium text-gray-700 mb-2">
                 Supervivencia (%)
               </label>
               <input
+                id="supervivencia"
                 type="number"
                 step="0.01"
                 min="0"
@@ -844,10 +850,11 @@ export default function MuestraEditView() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="poblacion_actual" className="block text-sm font-medium text-gray-700 mb-2">
                 Población Actual <span className="text-blue-600 text-xs">(Automático)</span>
               </label>
               <input
+                id="poblacion_actual"
                 type="text"
                 name="poblacion_actual"
                 value={formData.poblacion_actual}
@@ -857,10 +864,11 @@ export default function MuestraEditView() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="biomasa_lbs" className="block text-sm font-medium text-gray-700 mb-2">
                 Biomasa (lbs) <span className="text-blue-600 text-xs">(Automático)</span>
               </label>
               <input
+                id="biomasa_lbs"
                 type="text"
                 name="biomasa_lbs"
                 value={formData.biomasa_lbs}
@@ -879,10 +887,11 @@ export default function MuestraEditView() {
             ) : (
               tiposBalanceado.map((tipo) => (
                 <div key={tipo.id_tipo_balanceado}>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor={`balanceado_${tipo.id_tipo_balanceado}`} className="block text-sm font-medium text-gray-700 mb-2">
                     {tipo.nombre}
                   </label>
                   <input
+                    id={`balanceado_${tipo.id_tipo_balanceado}`}
                     type="number"
                     step="0.01"
                     min="0"
@@ -907,10 +916,11 @@ export default function MuestraEditView() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="balanceado_acumulado" className="block text-sm font-medium text-gray-700 mb-2">
                 Balanceado Acumulado <span className="text-blue-600 text-xs">(Automático)</span>
               </label>
               <input
+                id="balanceado_acumulado"
                 type="text"
                 name="balanceado_acumulado"
                 value={formData.balanceado_acumulado}
@@ -920,10 +930,11 @@ export default function MuestraEditView() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="conversion_alimenticia" className="block text-sm font-medium text-gray-700 mb-2">
                 Conversión Alimenticia <span className="text-blue-600 text-xs">(Automático)</span>
               </label>
               <input
+                id="conversion_alimenticia"
                 type="text"
                 name="conversion_alimenticia"
                 value={formData.conversion_alimenticia}
@@ -934,10 +945,11 @@ export default function MuestraEditView() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="observaciones" className="block text-sm font-medium text-gray-700 mb-2">
               Observaciones <span className="text-gray-500 text-xs">(Opcional)</span>
             </label>
             <textarea
+              id="observaciones"
               name="observaciones"
               value={formData.observaciones}
               onChange={handleChange}

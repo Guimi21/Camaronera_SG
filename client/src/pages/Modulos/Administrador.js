@@ -162,7 +162,7 @@ export default function Administrador() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Compañías');
 
-    const companiaSlug = compania ? compania.replace(/\s+/g, '_').toLowerCase() : 'sistema';
+    const companiaSlug = compania ? compania.replaceAll(' ', '_').toLowerCase() : 'sistema';
     const fileName = `reporte_companias_${companiaSlug}_${getLocalDateString()}.xlsx`;
     XLSX.writeFile(workbook, fileName);
   };
@@ -200,8 +200,9 @@ export default function Administrador() {
               <div className="flex flex-wrap items-center gap-3">
                 {/* Filtro de búsqueda */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Buscar:</label>
+                  <label htmlFor="busqueda" className="text-sm font-medium mb-1">Buscar:</label>
                   <input
+                    id="busqueda"
                     type="text"
                     name="busqueda"
                     value={filters.busqueda}
@@ -213,8 +214,9 @@ export default function Administrador() {
 
                 {/* Filtro de estado */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium mb-1">Estado:</label>
+                  <label htmlFor="estado" className="text-sm font-medium mb-1">Estado:</label>
                   <select 
+                    id="estado"
                     name="estado" 
                     value={filters.estado} 
                     onChange={handleFilterChange} 

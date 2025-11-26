@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -230,7 +231,7 @@ export default function MuestraForm() {
       const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == formData.id_ciclo);
       if (cicloSeleccionado) {
         const diasCultivo = calcularDiasCultivo(cicloSeleccionado.fecha_siembra, formData.fecha_muestra);
-        if (diasCultivo !== formData.dias_cultivo) {
+        if (diasCultivo != formData.dias_cultivo) {
           setFormData(prev => ({
             ...prev,
             dias_cultivo: diasCultivo
@@ -368,14 +369,14 @@ export default function MuestraForm() {
     
     // Si no hay peso anterior (primer muestra del ciclo), el incremento es el peso actual
     if (pesoAnterior === null || pesoAnterior === undefined) {
-      const pesoActualNum = parseFloat(pesoActual);
-      return isNaN(pesoActualNum) ? '' : pesoActualNum.toFixed(2);
+      const pesoActualNum = Number.parseFloat(pesoActual);
+      return Number.isNaN(pesoActualNum) ? '' : pesoActualNum.toFixed(2);
     }
     
-    const pesoActualNum = parseFloat(pesoActual);
-    const pesoAnteriorNum = parseFloat(pesoAnterior);
+    const pesoActualNum = Number.parseFloat(pesoActual);
+    const pesoAnteriorNum = Number.parseFloat(pesoAnterior);
     
-    if (isNaN(pesoActualNum) || isNaN(pesoAnteriorNum)) return '';
+    if (Number.isNaN(pesoActualNum) || Number.isNaN(pesoAnteriorNum)) return '';
     
     const incremento = pesoActualNum - pesoAnteriorNum;
     return incremento.toFixed(2);
@@ -385,11 +386,11 @@ export default function MuestraForm() {
   const calcularBalanceadoAcumulado = (balanceadosObj, balanceadoAnterior) => {
     // Sumar todos los valores de balanceado ingresados
     const sumaActual = Object.values(balanceadosObj).reduce((sum, val) => {
-      const numVal = (val === '' || val === null || val === undefined) ? 0 : parseFloat(val) || 0;
+      const numVal = (val === '' || val === null || val === undefined) ? 0 : Number.parseFloat(val) || 0;
       return sum + numVal;
     }, 0);
     
-    const valAnterior = (balanceadoAnterior === null || balanceadoAnterior === undefined) ? 0 : parseFloat(balanceadoAnterior) || 0;
+    const valAnterior = (balanceadoAnterior === null || balanceadoAnterior === undefined) ? 0 : Number.parseFloat(balanceadoAnterior) || 0;
     const acumuladoTotal = valAnterior + sumaActual;
     
     return acumuladoTotal.toFixed(2);
@@ -399,10 +400,10 @@ export default function MuestraForm() {
   const calcularPoblacionActual = (supervivencia, cantidadSiembra) => {
     if (!supervivencia || !cantidadSiembra) return '';
     
-    const supervivenciaNum = parseFloat(supervivencia);
-    const cantidadSiembraNum = parseFloat(cantidadSiembra);
+    const supervivenciaNum = Number.parseFloat(supervivencia);
+    const cantidadSiembraNum = Number.parseFloat(cantidadSiembra);
     
-    if (isNaN(supervivenciaNum) || isNaN(cantidadSiembraNum)) return '';
+    if (Number.isNaN(supervivenciaNum) || Number.isNaN(cantidadSiembraNum)) return '';
     
     // Convertir supervivencia de porcentaje a decimal (dividir entre 100)
     const supervivenciaDecimal = supervivenciaNum / 100;
@@ -415,10 +416,10 @@ export default function MuestraForm() {
   const calcularBiomasa = (pesoGramos, poblacionActual) => {
     if (!pesoGramos || !poblacionActual) return '';
     
-    const pesoGramosNum = parseFloat(pesoGramos);
-    const poblacionActualNum = parseFloat(poblacionActual);
+    const pesoGramosNum = Number.parseFloat(pesoGramos);
+    const poblacionActualNum = Number.parseFloat(poblacionActual);
     
-    if (isNaN(pesoGramosNum) || isNaN(poblacionActualNum)) return '';
+    if (Number.isNaN(pesoGramosNum) || Number.isNaN(poblacionActualNum)) return '';
     
     // Convertir peso de gramos a libras (1 libra = 454 gramos)
     const pesoLibras = pesoGramosNum / 454;
@@ -431,10 +432,10 @@ export default function MuestraForm() {
   const calcularConversionAlimenticia = (balanceadoAcumulado, biomasaLbs) => {
     if (!balanceadoAcumulado || !biomasaLbs) return '';
     
-    const balanceadoNum = parseFloat(balanceadoAcumulado);
-    const biomasaNum = parseFloat(biomasaLbs);
+    const balanceadoNum = Number.parseFloat(balanceadoAcumulado);
+    const biomasaNum = Number.parseFloat(biomasaLbs);
     
-    if (isNaN(balanceadoNum) || isNaN(biomasaNum) || biomasaNum === 0) return '';
+    if (Number.isNaN(balanceadoNum) || Number.isNaN(biomasaNum) || biomasaNum === 0) return '';
     
     const conversionAlimenticia = balanceadoNum / biomasaNum;
     
@@ -447,12 +448,12 @@ export default function MuestraForm() {
     // Validaciones para campos numéricos
     if (name === 'peso' || name === 'supervivencia' || name.startsWith('balanceado_')) {
       // No permitir valores negativos
-      if (value !== '' && parseFloat(value) < 0) {
+      if (value !== '' && Number.parseFloat(value) < 0) {
         return;
       }
       
       // Validación específica para supervivencia (no mayor a 100)
-      if (name === 'supervivencia' && value !== '' && parseFloat(value) > 100) {
+      if (name === 'supervivencia' && value !== '' && Number.parseFloat(value) > 100) {
         return;
       }
     }
@@ -580,10 +581,10 @@ export default function MuestraForm() {
       // Preparar los datos para enviar
       // Extraer los campos de balanceado del objeto y convertirlos a un array
       const balanceadosArray = Object.entries(formData.balanceados)
-        .filter(([id, cantidad]) => cantidad !== '' && cantidad !== null && cantidad !== undefined && parseFloat(cantidad) > 0)
+        .filter(([id, cantidad]) => cantidad !== '' && cantidad !== null && cantidad !== undefined && Number.parseFloat(cantidad) > 0)
         .map(([id, cantidad]) => ({
-          id_tipo_balanceado: parseInt(id),
-          cantidad: parseFloat(cantidad)
+          id_tipo_balanceado: Number.parseInt(id),
+          cantidad: Number.parseFloat(cantidad)
         }));
       
       const dataToSend = {
@@ -644,6 +645,10 @@ export default function MuestraForm() {
     </div>
   );
 
+  ValidationMessage.propTypes = {
+    fieldName: PropTypes.string.isRequired
+  };
+
   return (
     <div className="form-container max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
       <div className="mb-8">
@@ -675,7 +680,7 @@ export default function MuestraForm() {
       <form onSubmit={handleSubmit} className="space-y-6">
             {/* Selección de Ciclo Productivo */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="id_ciclo_muestra" className="block text-sm font-medium text-gray-700 mb-2">
                 Seleccionar Ciclo Productivo *
               </label>
               {loadingCiclos ? (
@@ -684,6 +689,7 @@ export default function MuestraForm() {
                 </div>
               ) : (
                 <select
+                  id="id_ciclo_muestra"
                   name="id_ciclo"
                   value={formData.id_ciclo}
                   onChange={handleChange}
@@ -723,10 +729,11 @@ export default function MuestraForm() {
             {/* Información de muestra */}
             <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="fecha_muestra_nuevo" className="block text-sm font-medium text-gray-700 mb-2">
                   Fecha de Muestra *
                 </label>
                 <input
+                  id="fecha_muestra_nuevo"
                   type="date"
                   name="fecha_muestra"
                   value={formData.fecha_muestra}
@@ -745,10 +752,11 @@ export default function MuestraForm() {
             {/* Información de producción */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="dias_cultivo_nuevo" className="block text-sm font-medium text-gray-700 mb-2">
                   Días de Cultivo <span className="text-blue-600 text-xs">(Calculado automáticamente)</span>
                 </label>
                 <input
+                  id="dias_cultivo_nuevo"
                   type="text"
                   name="dias_cultivo"
                   value={formData.dias_cultivo}
@@ -762,10 +770,11 @@ export default function MuestraForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="peso_nuevo" className="block text-sm font-medium text-gray-700 mb-2">
                   Peso Promedio (g)
                 </label>
                 <input
+                  id="peso_nuevo"
                   type="number"
                   step="0.01"
                   min="0"
@@ -791,10 +800,11 @@ export default function MuestraForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="incremento_peso_nuevo" className="block text-sm font-medium text-gray-700 mb-2">
                   Incremento Peso (g) <span className="text-blue-600 text-xs">(Calculado automáticamente)</span>
                 </label>
                 <input
+                  id="incremento_peso_nuevo"
                   type="text"
                   name="incremento_peso"
                   value={formData.incremento_peso}
@@ -808,10 +818,11 @@ export default function MuestraForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="supervivencia_nuevo" className="block text-sm font-medium text-gray-700 mb-2">
                   Supervivencia (%)
                 </label>
                 <input
+                  id="supervivencia_nuevo"
                   type="number"
                   step="0.01"
                   min="0"
@@ -832,7 +843,7 @@ export default function MuestraForm() {
                     ? (() => {
                         const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == formData.id_ciclo);
                         if (cicloSeleccionado && cicloSeleccionado.cantidad_siembra) {
-                          return `Cantidad siembra: ${parseInt(cicloSeleccionado.cantidad_siembra).toLocaleString()} individuos`;
+                          return `Cantidad siembra: ${Number.parseInt(cicloSeleccionado.cantidad_siembra).toLocaleString()} individuos`;
                         } else if (cicloSeleccionado) {
                           return "Ciclo seleccionado, pero no hay datos de cantidad de siembra";
                         } else {
@@ -845,10 +856,11 @@ export default function MuestraForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="poblacion_actual_nuevo" className="block text-sm font-medium text-gray-700 mb-2">
                   Población Actual <span className="text-blue-600 text-xs">(Calculado automáticamente)</span>
                 </label>
                 <input
+                  id="poblacion_actual_nuevo"
                   type="text"
                   name="poblacion_actual"
                   value={formData.poblacion_actual}
@@ -862,10 +874,11 @@ export default function MuestraForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="biomasa_lbs_nuevo" className="block text-sm font-medium text-gray-700 mb-2">
                   Biomasa (lbs) <span className="text-blue-600 text-xs">(Calculado automáticamente)</span>
                 </label>
                 <input
+                  id="biomasa_lbs_nuevo"
                   type="text"
                   name="biomasa_lbs"
                   value={formData.biomasa_lbs}
@@ -900,10 +913,11 @@ export default function MuestraForm() {
               ) : (
                 tiposBalanceado.map((tipo) => (
                   <div key={tipo.id_tipo_balanceado}>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor={`balanceado_${tipo.id_tipo_balanceado}`} className="block text-sm font-medium text-gray-700 mb-2">
                       {tipo.nombre}
                     </label>
                     <input
+                      id={`balanceado_${tipo.id_tipo_balanceado}`}
                       type="number"
                       step="0.01"
                       min="0"
@@ -928,10 +942,11 @@ export default function MuestraForm() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="balanceado_acumulado_nuevo" className="block text-sm font-medium text-gray-700 mb-2">
                   Balanceado Acumulado <span className="text-blue-600 text-xs">(Calculado automáticamente)</span>
                 </label>
                 <input
+                  id="balanceado_acumulado_nuevo"
                   type="text"
                   name="balanceado_acumulado"
                   value={formData.balanceado_acumulado}
@@ -948,10 +963,11 @@ export default function MuestraForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="conversion_alimenticia_nuevo" className="block text-sm font-medium text-gray-700 mb-2">
                   Conversión Alimenticia <span className="text-blue-600 text-xs">(Calculado automáticamente)</span>
                 </label>
                 <input
+                  id="conversion_alimenticia_nuevo"
                   type="text"
                   name="conversion_alimenticia"
                   value={formData.conversion_alimenticia}
@@ -966,10 +982,11 @@ export default function MuestraForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="observaciones_nuevo" className="block text-sm font-medium text-gray-700 mb-2">
                 Observaciones <span className="text-gray-500 text-xs">(Opcional)</span>
               </label>
               <textarea
+                id="observaciones_nuevo"
                 name="observaciones"
                 value={formData.observaciones}
                 onChange={handleChange}
@@ -980,10 +997,11 @@ export default function MuestraForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="estado_muestra" className="block text-sm font-medium text-gray-700 mb-2">
                 Estado
               </label>
               <select
+                id="estado_muestra"
                 name="estado"
                 value={formData.estado}
                 onChange={handleChange}

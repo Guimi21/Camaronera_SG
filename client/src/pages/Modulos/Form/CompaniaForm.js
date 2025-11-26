@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -47,7 +48,7 @@ export default function CompaniaForm() {
       return { valido: true, razon: '' }; // El teléfono es opcional
     }
     
-    const telefonoSinEspacios = telefono.replace(/\s/g, '');
+    const telefonoSinEspacios = telefono.replaceAll(' ', '');
     const soloDigitos = /^\d+$/.test(telefonoSinEspacios);
     const tieneExactamente10 = telefonoSinEspacios.length === 10;
     
@@ -67,7 +68,7 @@ export default function CompaniaForm() {
     
     // Si es el campo de teléfono, permitir solo dígitos
     if (name === 'telefono') {
-      const soloDigitos = value.replace(/\D/g, '');
+      const soloDigitos = value.replaceAll(/\D/g, '');
       // Limitar a máximo 10 dígitos
       const telefonoLimitado = soloDigitos.slice(0, 10);
       setFormData(prev => ({
@@ -178,6 +179,10 @@ export default function CompaniaForm() {
       <span>Ingresa {fieldName}</span>
     </div>
   );
+
+  ValidationMessage.propTypes = {
+    fieldName: PropTypes.string.isRequired
+  };
 
   return (
     <div className="form-container min-h-screen bg-gray-50 py-8">
