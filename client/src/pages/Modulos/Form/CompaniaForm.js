@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
+import {
+  validarFormulario,
+  construirPayloadCreacion,
+  construirPayloadEdicion,
+  procesarMensajeError
+} from '../../../utils/companiaFormHelpers';
 
 // Componente para mostrar mensaje de validación
 const ValidationMessage = ({ fieldName }) => (
@@ -20,9 +26,14 @@ ValidationMessage.propTypes = {
 
 export default function CompaniaForm() {
   const navigate = useNavigate();
+  const { idCompania } = useParams();
   const { API_BASE_URL } = config;
-  const { idUsuario } = useAuth(); // Obtener ID de usuario para obtener su grupo empresarial
-  
+  const { idUsuario } = useAuth();
+
+  // Determinar si es modo edición
+  const isEditMode = !!idCompania;
+
+  const [compania, setCompania] = useState(null);
   const [formData, setFormData] = useState({
     nombre: '',
     direccion: '',
@@ -30,107 +41,113 @@ export default function CompaniaForm() {
     estado: 'ACTIVA'
   });
   
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(isEditMode ? true : false);
   const [error, setError] = useState('');
 
   // Hacer scroll al inicio cuando hay un error
-  React.useEffect(() => {
+  useEffect(() => {
     if (error) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [error]);
 
-  // Función para obtener los campos requeridos vacíos
-  const obtenerCamposVacios = () => {
-    const camposVacios = [];
-
-    // Validar nombre
-    if (!formData.nombre || formData.nombre.trim() === '') {
-      camposVacios.push({
-        campo: 'Nombre de la Compañía',
-        tipo: 'vacio',
-        razon: 'Este campo es obligatorio'
-      });
+  // Cargar datos de la compañía a editar en modo edición
+  useEffect(() => {
+    if (isEditMode && idCompania && idUsuario) {
+      fetchCompaniaData();
     }
+  }, [idCompania, idUsuario, isEditMode]);
 
-    return camposVacios;
+  const fetchCompaniaData = async () => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/module/companias.php?id_usuario=${idUsuario}`,
+        {
+          method: 'GET',
+          credentials: 'include',
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        // Buscar la compañía específica en la lista
+        const companiaEncontrada = result.data.find(c => 
+          String(c.id_compania) === String(idCompania)
+        );
+        
+        if (companiaEncontrada) {
+          setCompania(companiaEncontrada);
+          setFormData({
+            nombre: companiaEncontrada.nombre || '',
+            direccion: companiaEncontrada.direccion || '',
+            telefono: companiaEncontrada.telefono || '',
+            estado: companiaEncontrada.estado || 'ACTIVA'
+          });
+        } else {
+          throw new Error('Compañía no encontrada en la lista');
+        }
+      } else {
+        throw new Error('Error al obtener compañías');
+      }
+    } catch (err) {
+      console.error('Error fetching compania data:', err);
+      setError(err.message || 'No se pudo cargar la compañía');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Función para validar teléfono
-  const validarTelefono = (telefono) => {
-    if (!telefono || telefono.trim() === '') {
-      return { valido: true, razon: '' }; // El teléfono es opcional
-    }
-    
-    const telefonoSinEspacios = telefono.replaceAll(' ', '');
-    const soloDigitos = /^\d+$/.test(telefonoSinEspacios);
-    const tieneExactamente10 = telefonoSinEspacios.length === 10;
-    
-    if (!soloDigitos) {
-      return { valido: false, razon: 'El teléfono solo puede contener dígitos' };
-    }
-    
-    if (!tieneExactamente10) {
-      return { valido: false, razon: `El teléfono debe tener exactamente 10 dígitos (actualmente tiene ${telefonoSinEspacios.length})` };
-    }
-    
-    return { valido: true, razon: '' };
-  };
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
-    // Si es el campo de teléfono, permitir solo dígitos
-    if (name === 'telefono') {
-      const soloDigitos = value.replaceAll(/\D/g, '');
-      // Limitar a máximo 10 dígitos
-      const telefonoLimitado = soloDigitos.slice(0, 10);
-      setFormData(prev => ({
-        ...prev,
-        [name]: telefonoLimitado
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
-    // Limpiar mensajes al escribir
+    const processedValue = name === 'telefono' 
+      ? value.replaceAll(/\D/g, '').slice(0, 10)
+      : value;
+    setFormData(prev => ({
+      ...prev,
+      [name]: processedValue
+    }));
     setError('');
+  };
+
+  const handleScrollToTop = () => {
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 0);
+  };
+
+  const handleValidationError = (mensaje) => {
+    setError(mensaje);
+    handleScrollToTop();
+  };
+
+  const handleAPICall = async (method, payload) => {
+    const response = await fetch(`${API_BASE_URL}/module/companias.php`, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload)
+    });
+    return response;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Verificar si hay campos vacíos
-    const camposVacios = obtenerCamposVacios();
-    if (camposVacios.length > 0) {
-      // Hacer scroll al inicio para mostrar el mensaje de campos pendientes
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }, 0);
+
+    // Validar formulario
+    const validacion = validarFormulario(formData);
+    if (!validacion.valido) {
+      handleValidationError(validacion.error);
       return;
     }
 
-    // Validar teléfono si fue ingresado
-    if (formData.telefono.trim()) {
-      const validacionTelefono = validarTelefono(formData.telefono);
-      if (!validacionTelefono.valido) {
-        setError(`Teléfono: ${validacionTelefono.razon}`);
-        // Hacer scroll al inicio inmediatamente
-        setTimeout(() => {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }, 0);
-        return;
-      }
-    }
-
     if (!idUsuario) {
-      setError('No se pudo obtener la información del usuario');
-      // Hacer scroll al inicio inmediatamente
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }, 0);
+      handleValidationError('No se pudo obtener la información del usuario');
       return;
     }
 
@@ -138,51 +155,64 @@ export default function CompaniaForm() {
     setError('');
 
     try {
-      // Datos a enviar
-      const dataToSend = {
-        nombre: formData.nombre.trim(),
-        direccion: formData.direccion.trim() || null,
-        telefono: formData.telefono.trim() || null,
-        estado: formData.estado,
-        id_usuario: idUsuario // Enviar el ID del usuario para obtener su grupo empresarial
-      };
+      const payload = isEditMode
+        ? construirPayloadEdicion(formData, idCompania, idUsuario)
+        : construirPayloadCreacion(formData, idUsuario);
 
-      const response = await fetch(`${API_BASE_URL}/module/companias.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(dataToSend)
-      });
-
+      const method = isEditMode ? 'PUT' : 'POST';
+      const response = await handleAPICall(method, payload);
       const result = await response.json();
 
-      if (result.success) {
-        // Limpiar formulario
-        setFormData({
-          nombre: '',
-          direccion: '',
-          telefono: '',
-          estado: 'ACTIVA'
-        });
+      if (!response.ok) {
+        throw new Error(result.message || `Error HTTP: ${response.status}`);
+      }
 
-        // Redirigir inmediatamente
+      if (result.success) {
         navigate('/layout/dashboard/companias');
       } else {
-        throw new Error(result.message || 'Error al crear la compañía');
+        throw new Error(result.message || (isEditMode ? 'Error al actualizar' : 'Error al crear'));
       }
     } catch (err) {
-      console.error('Error creating compania:', err);
-      setError(err.message || 'No se pudo crear la compañía. Por favor, intente nuevamente.');
+      console.error('Error:', err);
+      const detailedError = procesarMensajeError(err.message);
+      setError(detailedError);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCancel = () => {
-    navigate('/directivo/companias');
+  const getButtonText = () => {
+    if (loading) {
+      return (
+        <>
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+          Guardando...
+        </>
+      );
+    }
+    return isEditMode ? 'Guardar Cambios' : 'Guardar Compañía';
   };
+
+  const handleCancel = () => {
+    navigate('/layout/dashboard/companias');
+  };
+
+  if (isEditMode && loading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <span className="ml-3">Cargando...</span>
+      </div>
+    );
+  }
+
+  if (isEditMode && !compania) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="text-red-700">Compañía no encontrada</div>
+      </div>
+    );
+  }
 
   return (
     <div className="form-container min-h-screen bg-gray-50 py-8">
@@ -190,10 +220,13 @@ export default function CompaniaForm() {
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-blue-800 mb-2">
-              Registrar Nueva Compañía
+              {isEditMode ? 'Editar Compañía' : 'Registrar Nueva Compañía'}
             </h1>
             <p className="text-gray-600">
-              Complete el formulario para agregar una nueva compañía al sistema.
+              {isEditMode 
+                ? `Modifique los datos de la compañía: ${compania?.nombre}`
+                : 'Complete el formulario para agregar una nueva compañía al sistema.'
+              }
             </p>
           </div>
 
@@ -298,14 +331,7 @@ export default function CompaniaForm() {
                 disabled={loading}
                 className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Guardando...
-                  </>
-                ) : (
-                  'Guardar Compañía'
-                )}
+                {getButtonText()}
               </button>
 
               <button

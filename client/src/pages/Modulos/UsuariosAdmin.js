@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import config from "../../config";
 import { useAuth } from "../../context/AuthContext";
+import { fetchApi } from "../../services/api";
 
 // Función para obtener la fecha local en formato YYYY-MM-DD
 const getLocalDateString = () => {
@@ -46,30 +47,14 @@ export default function UsuariosAdmin() {
         return;
       }
 
-      const queryParams = new URLSearchParams();
-      queryParams.append('id_usuario', idUsuario);
-
-      const response = await fetch(`${API_BASE_URL}/module/usuarios_admin.php?${queryParams.toString()}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      if (result.success) {
-        setUsuarios(result.data);
-        setFilteredUsuarios(result.data);
-        setError(null);
-      } else {
-        throw new Error(result.message || "Error al obtener usuarios administradores");
-      }
+      const data = await fetchApi(
+        `${API_BASE_URL}/module/usuarios_admin.php?id_usuario=${idUsuario}`,
+        "Error al obtener usuarios administradores"
+      );
+      
+      setUsuarios(data);
+      setFilteredUsuarios(data);
+      setError(null);
 
     } catch (err) {
       console.error("Error fetching usuarios admin:", err);
@@ -267,6 +252,7 @@ export default function UsuariosAdmin() {
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Estado</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Fecha Creación</th>
                       <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Última Actualización</th>
+                      <th className="py-3 px-4 border-b text-left text-blue-800 font-semibold whitespace-nowrap">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -294,11 +280,22 @@ export default function UsuariosAdmin() {
                           <td className="py-3 px-4 border-b whitespace-nowrap">
                             {formatDate(usuario.fecha_actualizacion)}
                           </td>
+                          <td className="py-3 px-4 border-b whitespace-nowrap">
+                            <button
+                              onClick={() => navigate(`/layout/form/usuario/${usuario.id_usuario}`)}
+                              className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition flex items-center gap-1"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              Editar
+                            </button>
+                          </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="7" className="py-4 px-4 text-center text-gray-500">
+                        <td colSpan="8" className="py-4 px-4 text-center text-gray-500">
                           No hay usuarios administradores disponibles
                         </td>
                       </tr>

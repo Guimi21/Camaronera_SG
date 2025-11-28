@@ -24,18 +24,14 @@ import PiscinaForm from "./pages/Modulos/Form/PiscinaForm";
 import MuestraForm from "./pages/Modulos/Form/MuestraForm";
 import MuestraEditView from "./pages/Modulos/MuestraEditView";
 import CicloProductivoForm from "./pages/Modulos/Form/CicloProductivoForm";
-import EditarCicloProductivoForm from "./pages/Modulos/Form/EditarCicloProductivoForm";
-import ConsultarCicloProductivoForm from "./pages/Modulos/Form/ConsultarCicloProductivoForm";
 import BalanceadoForm from "./pages/Modulos/Form/BalanceadoForm";
 import AlimentacionForm from "./pages/Modulos/Form/AlimentacionForm";
 import CompaniaForm from "./pages/Modulos/Form/CompaniaForm";
-import CompaniaEditForm from "./pages/Modulos/Form/CompaniaEditForm";
 import GrupoEmpresarialForm from "./pages/Modulos/Form/GrupoEmpresarialForm";
 import ModuloForm from "./pages/Modulos/Form/ModuloForm";
 import MenuForm from "./pages/Modulos/Form/MenuForm";
 import PerfilForm from "./pages/Modulos/Form/PerfilForm";
 import UsuarioForm from "./pages/Modulos/Form/UsuarioForm";
-import UsuarioEditForm from "./pages/Modulos/Form/UsuarioEditForm";
 
 // Redirección por defecto según perfil activo
 function DefaultModuleRedirect() {
@@ -93,12 +89,11 @@ function App() {
             <Route path="form/muestra" element={<MuestraForm />} />
             <Route path="dashboard/muestra-edit" element={<MuestraEditView />} />
             <Route path="form/ciclo" element={<CicloProductivoForm />} />
-            <Route path="form/editar-ciclo/:id" element={<EditarCicloProductivoForm />} />
-            <Route path="form/consultar-ciclo/:id" element={<ConsultarCicloProductivoForm />} />
+            <Route path="form/ciclo/:id" element={<CicloProductivoForm />} />
             <Route path="form/balanceado" element={<BalanceadoForm />} />
             <Route path="form/alimentacion" element={<AlimentacionForm />} />
             <Route path="form/compania" element={<CompaniaForm />} />
-            <Route path="form/compania/:idCompania" element={<CompaniaEditForm />} />
+            <Route path="form/compania/:idCompania" element={<CompaniaForm />} />
             <Route path="form/grupo-empresarial" element={<GrupoEmpresarialForm />} />
             <Route path="form/modulo" element={<ModuloForm />} />
             <Route path="form/modulo/:idModulo" element={<ModuloForm />} />
@@ -107,7 +102,7 @@ function App() {
             <Route path="form/perfil" element={<PerfilForm />} />
             <Route path="form/perfil/:idPerfil" element={<PerfilForm />} />
             <Route path="form/usuario" element={<UsuarioForm />} />
-            <Route path="form/usuario/:idUsuario" element={<UsuarioEditForm />} />
+            <Route path="form/usuario/:idUsuario" element={<UsuarioForm />} />
 
             {/* Dashboard - Monitoreo */}
             <Route path="dashboard/monitoreo-piscinas" element={<MonitoreoPiscinas />} />

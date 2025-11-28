@@ -4,6 +4,7 @@ import { Bar, Pie, Line, Doughnut } from 'react-chartjs-2';
 import * as XLSX from "xlsx";
 import config from "../../config";
 import { useAuth } from "../../context/AuthContext";
+import { fetchApi } from "../../services/api";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, LineElement, PointElement } from 'chart.js';
 
 ChartJS.register(
@@ -42,7 +43,6 @@ export default function Directivo() {
   const navigate = useNavigate();
   const { API_BASE_URL } = config;
   const { idCompania, compania } = useAuth(); // Obtener ID de compañía y nombre del usuario autenticado
-  const [filteredGeneralData, setFilteredGeneralData] = useState([]);
   const [filteredTableData, setFilteredTableData] = useState([]);
   const [availablePiscinas, setAvailablePiscinas] = useState([]); // Piscinas disponibles para el usuario
   const [tiposBalanceado, setTiposBalanceado] = useState([]); // Tipos de balanceado de la compañía
@@ -110,58 +110,38 @@ export default function Directivo() {
     try {
       setLoading(true);
       
-      const queryParams = new URLSearchParams();
+      let url = `${API_BASE_URL}/module/muestras.php?id_compania=${idCompania}`;
       if (piscinaValue !== "todas") {
-        queryParams.append('piscina', piscinaValue);
+        url += `&piscina=${piscinaValue}`;
       }
       
-      // Agregar el id_compania del usuario autenticado
-      queryParams.append('id_compania', idCompania);
+      const data = await fetchApi(url, "Error al obtener datos generales");
       
-      const response = await fetch(`${API_BASE_URL}/module/muestras.php?${queryParams.toString()}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const normalizedData = normalizeData(data, tipos);
+      
+      // Actualizar piscinas disponibles (únicas) para el usuario de esta compañía
+      // Preservar el orden que viene del backend (ordenado por id_piscina)
+      const uniquePiscinas = [];
+      const seenPiscinas = new Set();
+      
+      normalizedData.forEach(item => {
+        if (!seenPiscinas.has(item.piscina)) {
+          uniquePiscinas.push(item.piscina);
+          seenPiscinas.add(item.piscina);
+        }
       });
       
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
+      setAvailablePiscinas(uniquePiscinas);
+      
+      // Resetear filtros de piscina si la piscina seleccionada ya no está disponible
+      if (filters.piscinaTable !== "todas" && !uniquePiscinas.includes(filters.piscinaTable)) {
+        setFilters(prev => ({ ...prev, piscinaTable: "todas" }));
+      }
+      if (filters.piscinaGeneral !== "todas" && !uniquePiscinas.includes(filters.piscinaGeneral)) {
+        setFilters(prev => ({ ...prev, piscinaGeneral: "todas" }));
       }
       
-      const result = await response.json();
-      
-      if (result.success) {
-        const normalizedData = normalizeData(result.data, tipos);
-        setFilteredGeneralData(normalizedData);
-        
-        // Actualizar piscinas disponibles (únicas) para el usuario de esta compañía
-        // Preservar el orden que viene del backend (ordenado por id_piscina)
-        const uniquePiscinas = [];
-        const seenPiscinas = new Set();
-        
-        normalizedData.forEach(item => {
-          if (!seenPiscinas.has(item.piscina)) {
-            uniquePiscinas.push(item.piscina);
-            seenPiscinas.add(item.piscina);
-          }
-        });
-        
-        setAvailablePiscinas(uniquePiscinas);
-        
-        // Resetear filtros de piscina si la piscina seleccionada ya no está disponible
-        if (filters.piscinaTable !== "todas" && !uniquePiscinas.includes(filters.piscinaTable)) {
-          setFilters(prev => ({ ...prev, piscinaTable: "todas" }));
-        }
-        if (filters.piscinaGeneral !== "todas" && !uniquePiscinas.includes(filters.piscinaGeneral)) {
-          setFilters(prev => ({ ...prev, piscinaGeneral: "todas" }));
-        }
-        
-        setError(null);
-      } else {
-        throw new Error(result.message || "Error al obtener datos generales");
-      }
+      setError(null);
       
     } catch (err) {
       console.error("Error fetching general data:", err);
@@ -183,44 +163,23 @@ export default function Directivo() {
     try {
       setLoadingTable(true);
       
-      const queryParams = new URLSearchParams();
+      let url = `${API_BASE_URL}/module/muestras.php?id_compania=${idCompania}`;
 
       // Filtro de piscina (si no es "todas")
       if (filterParams.piscina && filterParams.piscina !== "todas") {
-        queryParams.append('piscina', filterParams.piscina);
+        url += `&piscina=${filterParams.piscina}`;
       }
 
       // Filtro de fecha (si se han establecido las fechas)
       if (filterParams.startDate && filterParams.endDate) {
-        queryParams.append('startDate', filterParams.startDate);
-        queryParams.append('endDate', filterParams.endDate);
+        url += `&startDate=${filterParams.startDate}&endDate=${filterParams.endDate}`;
       }
       
-      // Agregar el id_compania del usuario autenticado
-      queryParams.append('id_compania', idCompania);
+      const data = await fetchApi(url, "Error al obtener datos de tabla");
       
-      // Hacer la llamada GET con los parámetros de la URL
-      const response = await fetch(`${API_BASE_URL}/module/muestras.php?${queryParams.toString()}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        const normalizedData = normalizeData(result.data, tipos);
-        setFilteredTableData(normalizedData);
-        setError(null);
-      } else {
-        throw new Error(result.message || "Error al obtener datos de tabla");
-      }
+      const normalizedData = normalizeData(data, tipos);
+      setFilteredTableData(normalizedData);
+      setError(null);
       
     } catch (err) {
       console.error("Error fetching table data:", err);
@@ -239,28 +198,12 @@ export default function Directivo() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/module/tipos_balanceado.php?id_compania=${idCompania}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      
-      if (result.success && result.data) {
-        setTiposBalanceado(result.data);
-        return result.data;
-      } else {
-        console.error("Error al obtener tipos de balanceado:", result.message);
-        setTiposBalanceado([]);
-        return [];
-      }
+      const data = await fetchApi(
+        `${API_BASE_URL}/module/tipos_balanceado.php?id_compania=${idCompania}`,
+        "Error al obtener tipos de balanceado"
+      );
+      setTiposBalanceado(data);
+      return data;
     } catch (err) {
       console.error("Error fetching tipos balanceado:", err);
       setTiposBalanceado([]);

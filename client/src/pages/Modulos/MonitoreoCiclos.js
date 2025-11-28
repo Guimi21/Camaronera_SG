@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import config from "../../config";
 import { useAuth } from "../../context/AuthContext";
+import { fetchApi } from "../../services/api";
 
 // Función para obtener la fecha local en formato YYYY-MM-DD
 const getLocalDateString = () => {
@@ -42,30 +43,14 @@ export default function MonitoreoCiclos() {
     try {
       setLoading(true);
       
-      const queryParams = new URLSearchParams();
-      queryParams.append('id_compania', idCompania);
+      const data = await fetchApi(
+        `${API_BASE_URL}/module/ciclosproductivos.php?id_compania=${idCompania}`,
+        "Error al obtener datos de ciclos productivos"
+      );
       
-      const response = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php?${queryParams.toString()}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        setCiclos(result.data);
-        setFilteredTableData(result.data);
-        setError(null);
-      } else {
-        throw new Error(result.message || "Error al obtener datos de ciclos productivos");
-      }
+      setCiclos(data);
+      setFilteredTableData(data);
+      setError(null);
       
     } catch (err) {
       console.error("Error fetching ciclos data:", err);
@@ -444,7 +429,7 @@ export default function MonitoreoCiclos() {
                       <div className="flex items-center justify-center gap-2">
                         {ciclo.estado === 'FINALIZADO' ? (
                           <button
-                            onClick={() => navigate(`/layout/form/consultar-ciclo/${ciclo.id_ciclo}`)}
+                            onClick={() => navigate(`/layout/form/ciclo/${ciclo.id_ciclo}`)}
                             className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200 flex items-center gap-1"
                             title="Consultar ciclo productivo"
                           >
@@ -462,7 +447,7 @@ export default function MonitoreoCiclos() {
                           </button>
                         ) : (
                           <button
-                            onClick={() => navigate(`/layout/form/editar-ciclo/${ciclo.id_ciclo}`)}
+                            onClick={() => navigate(`/layout/form/ciclo/${ciclo.id_ciclo}`)}
                             className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200 flex items-center gap-1"
                             title="Editar ciclo productivo"
                           >

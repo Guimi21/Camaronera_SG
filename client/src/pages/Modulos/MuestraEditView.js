@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import config from '../../config';
 import { useAuth } from '../../context/AuthContext';
+import { fetchApi } from '../../services/api';
 
 // Función para obtener la fecha local en formato YYYY-MM-DD
 const getLocalDateString = () => {
@@ -71,28 +72,12 @@ export default function MuestraEditView() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/module/tipos_balanceado.php?id_compania=${idCompania}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      
-      if (result.success && result.data) {
-        setTiposBalanceado(result.data);
-        return result.data;
-      } else {
-        console.error("Error al obtener tipos de balanceado:", result.message);
-        setTiposBalanceado([]);
-        return [];
-      }
+      const data = await fetchApi(
+        `${API_BASE_URL}/module/tipos_balanceado.php?id_compania=${idCompania}`,
+        "Error al obtener tipos de balanceado"
+      );
+      setTiposBalanceado(data);
+      return data;
     } catch (err) {
       console.error("Error fetching tipos balanceado:", err);
       setTiposBalanceado([]);
@@ -111,28 +96,15 @@ export default function MuestraEditView() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php?id_compania=${idCompania}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
+      const data = await fetchApi(
+        `${API_BASE_URL}/module/ciclosproductivos.php?id_compania=${idCompania}`,
+        "Error al obtener ciclos productivos"
+      );
       
-      if (result.success) {
-        // En modo edición, mostrar todos los ciclos; en modo view, solo ciclos en curso
-        const ciclos = isReadOnly ? result.data : result.data.filter(ciclo => ciclo.estado === 'EN_CURSO');
-        setCiclosDisponibles(ciclos);
-        setError('');
-      } else {
-        throw new Error(result.message || "Error al obtener ciclos productivos");
-      }
+      // En modo edición, mostrar todos los ciclos; en modo view, solo ciclos en curso
+      const ciclos = isReadOnly ? data : data.filter(ciclo => ciclo.estado === 'EN_CURSO');
+      setCiclosDisponibles(ciclos);
+      setError('');
     } catch (err) {
       console.error("Error fetching ciclos:", err);
       setError(err.message || "No se pudieron cargar los ciclos productivos.");
@@ -150,46 +122,40 @@ export default function MuestraEditView() {
 
     try {
       setLoadingMuestra(true);
-      const response = await fetch(`${API_BASE_URL}/module/muestras.php?id_muestra=${muestraId}&id_compania=${idCompania}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
+      const data = await fetchApi(
+        `${API_BASE_URL}/module/muestras.php?id_muestra=${muestraId}&id_compania=${idCompania}`,
+        "Error al cargar los datos de la muestra"
+      );
+      
+      if (data && data.length > 0) {
+        const muestraData = data[0];
+        
+        // Normalizar balanceados por ID de tipo
+        const balanceadosObj = {};
+        tipos.forEach(tipo => {
+          const nombreBalanceado = tipo.nombre;
+          balanceadosObj[tipo.id_tipo_balanceado] = muestraData[nombreBalanceado] || '';
+        });
 
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.data && result.data.length > 0) {
-          const muestraData = result.data[0];
-          
-          // Normalizar balanceados por ID de tipo
-          const balanceadosObj = {};
-          tipos.forEach(tipo => {
-            const nombreBalanceado = tipo.nombre;
-            balanceadosObj[tipo.id_tipo_balanceado] = muestraData[nombreBalanceado] || '';
-          });
+        setFormData({
+          id_muestra: muestraData.id_muestra,
+          id_ciclo: muestraData.id_ciclo,
+          dias_cultivo: muestraData['Dias cultivo'] ?? '',
+          peso: muestraData['Peso'] ?? '',
+          incremento_peso: muestraData['Inc.P'] ?? '',
+          biomasa_lbs: muestraData['Biomasa Lbs'] ?? '',
+          balanceados: balanceadosObj,
+          balanceado_acumulado: muestraData['Balanceado Acumulado'] ?? '',
+          conversion_alimenticia: muestraData['Conversión Alimenticia'] ?? '',
+          poblacion_actual: muestraData['Población actual'] ?? '',
+          supervivencia: muestraData['Sobrev. Actual %'] ?? '',
+          observaciones: muestraData['Observaciones'] ?? '',
+          fecha_muestra: muestraData['Fecha Muestra'] ?? getLocalDateString()
+        });
 
-          setFormData({
-            id_muestra: muestraData.id_muestra,
-            id_ciclo: muestraData.id_ciclo,
-            dias_cultivo: muestraData['Dias cultivo'] ?? '',
-            peso: muestraData['Peso'] ?? '',
-            incremento_peso: muestraData['Inc.P'] ?? '',
-            biomasa_lbs: muestraData['Biomasa Lbs'] ?? '',
-            balanceados: balanceadosObj,
-            balanceado_acumulado: muestraData['Balanceado Acumulado'] ?? '',
-            conversion_alimenticia: muestraData['Conversión Alimenticia'] ?? '',
-            poblacion_actual: muestraData['Población actual'] ?? '',
-            supervivencia: muestraData['Sobrev. Actual %'] ?? '',
-            observaciones: muestraData['Observaciones'] ?? '',
-            fecha_muestra: muestraData['Fecha Muestra'] ?? getLocalDateString()
-          });
-
-          // Obtener el último muestra anterior
-          if (muestraData.id_ciclo) {
-            fetchUltimoMuestraData(muestraData.id_ciclo, muestraData.id_muestra);
-          }
+        // Obtener el último muestra anterior
+        if (muestraData.id_ciclo) {
+          fetchUltimoMuestraData(muestraData.id_ciclo, muestraData.id_muestra);
         }
       }
     } catch (err) {
@@ -215,28 +181,19 @@ export default function MuestraEditView() {
         ? `${API_BASE_URL}/module/muestras.php?id_ciclo=${idCiclo}&ultimo=1&id_compania=${idCompania}`
         : `${API_BASE_URL}/module/muestras.php?id_ciclo=${idCiclo}&penultimo=1&id_compania=${idCompania}`;
 
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.data && result.data.length > 0) {
-          const muestraAnterior = result.data[0];
-          if (muestraAnterior && muestraAnterior.id_muestra != excludeMuestraId) {
-            setUltimoMuestra({
-              peso: muestraAnterior['Peso'],
-              balanceado_acumulado: muestraAnterior['Balanceado Acumulado'],
-              fecha_muestra: muestraAnterior['Fecha Muestra'],
-              id_muestra: muestraAnterior['id_muestra']
-            });
-          } else {
-            setUltimoMuestra(null);
-          }
+      const data = await fetchApi(endpoint, "Error al obtener el último muestra");
+      
+      if (data && data.length > 0) {
+        const muestraAnterior = data[0];
+        if (muestraAnterior && muestraAnterior.id_muestra != excludeMuestraId) {
+          setUltimoMuestra({
+            peso: muestraAnterior['Peso'],
+            balanceado_acumulado: muestraAnterior['Balanceado Acumulado'],
+            fecha_muestra: muestraAnterior['Fecha Muestra'],
+            id_muestra: muestraAnterior['id_muestra']
+          });
+        } else {
+          setUltimoMuestra(null);
         }
       }
     } catch (err) {
@@ -448,7 +405,7 @@ export default function MuestraEditView() {
     const supervivenciaDecimal = supervivenciaNum / 100;
     const poblacionActual = cantidadSiembraNum * supervivenciaDecimal;
     
-    return Math.round(poblacionActual);
+    return String(Math.round(poblacionActual));
   };
 
   const calcularBiomasa = (pesoGramos, poblacionActual) => {

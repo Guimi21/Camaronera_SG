@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import PropTypes from "prop-types";
 import config from "../config";
 
@@ -178,28 +178,48 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const value = useMemo(
+    () => ({
+      nombre,
+      user,
+      perfiles,
+      perfilActivo, 
+      menus,
+      loading,
+      token,
+      grupoEmpresarial,
+      companias,
+      compania,
+      idCompania,
+      idUsuario,
+      login,
+      logout,
+      cambiarCompania,
+      actualizarCompanias,
+      isAuthenticated: !!user,
+    }),
+    [
+      nombre,
+      user,
+      perfiles,
+      perfilActivo,
+      menus,
+      loading,
+      token,
+      grupoEmpresarial,
+      companias,
+      compania,
+      idCompania,
+      idUsuario,
+      login,
+      logout,
+      cambiarCompania,
+      actualizarCompanias,
+    ]
+  );
+
   return (
-    <AuthContext.Provider
-      value={{
-        nombre,
-        user,
-        perfiles,
-        perfilActivo, 
-        menus,
-        loading,
-        token,
-        grupoEmpresarial,
-        companias, // Array de todas las compañías
-        compania,
-        idCompania, // Agregamos idCompania al context
-        idUsuario, // Agregamos idUsuario al context
-        login,
-        logout,
-        cambiarCompania, // Nueva función para cambiar compañía
-        actualizarCompanias, // Nueva función para actualizar compañías
-        isAuthenticated: !!user,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

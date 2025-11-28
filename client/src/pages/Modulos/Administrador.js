@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import config from "../../config";
 import { useAuth } from "../../context/AuthContext";
+import { fetchApi } from "../../services/api";
 
 // Función para obtener la fecha local en formato YYYY-MM-DD
 const getLocalDateString = () => {
@@ -46,30 +47,14 @@ export default function Administrador() {
         return;
       }
       
-      const queryParams = new URLSearchParams();
-      queryParams.append('id_usuario', idUsuario);
+      const data = await fetchApi(
+        `${API_BASE_URL}/module/companias.php?id_usuario=${idUsuario}`,
+        "Error al obtener compañías"
+      );
       
-      const response = await fetch(`${API_BASE_URL}/module/companias.php?${queryParams.toString()}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        setCompanias(result.data);
-        setFilteredCompanias(result.data);
-        setError(null);
-      } else {
-        throw new Error(result.message || "Error al obtener compañías");
-      }
+      setCompanias(data);
+      setFilteredCompanias(data);
+      setError(null);
       
     } catch (err) {
       console.error("Error fetching companias:", err);

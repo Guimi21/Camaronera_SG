@@ -1,5 +1,28 @@
 import config from "../config";
 
+// Función auxiliar para hacer fetch GET reutilizable (sin autenticación JWT)
+export const fetchApi = async (url, errorMsg = 'Error en la solicitud') => {
+  const response = await fetch(url, {
+    method: 'GET',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error HTTP: ${response.status}`);
+  }
+
+  const result = await response.json();
+  
+  if (!result.success) {
+    throw new Error(result.message || errorMsg);
+  }
+
+  return result.data;
+};
+
 // Servicio para manejar las solicitudes relacionadas con el usuario
 export const userService = {
   getProfile: async (authFetch, userId) => {

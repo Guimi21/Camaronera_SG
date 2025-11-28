@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../helpers/CustomExceptions.php';
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/cors.php';  // Configuración CORS centralizada
@@ -52,13 +53,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
-            throw new Exception("Error preparando consulta: " . implode(", ", $conn->errorInfo()));
+            throw new QueryPrepareException("Error preparando consulta: " . implode(", ", $conn->errorInfo()));
         }
 
         $stmt->bindParam(PARAM_ID_COMPANIA, $id_compania, PDO::PARAM_INT);
         
         if (!$stmt->execute()) {
-            throw new Exception("Error ejecutando consulta: " . implode(", ", $stmt->errorInfo()));
+            throw new QueryExecutionException("Error ejecutando consulta: " . implode(", ", $stmt->errorInfo()));
         }
 
         $tipos_alimentacion = [];
@@ -184,7 +185,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
             http_response_code(201);
             echo json_encode($response);
         } else {
-            throw new Exception("Error al insertar tipo de alimentación");
+            throw new InsertException("Error al insertar tipo de alimentación");
         }
 
     } catch (Exception $e) {
@@ -256,7 +257,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
             ];
             echo json_encode($response);
         } else {
-            throw new Exception("Error al actualizar tipo de alimentación");
+            throw new UpdateException("Error al actualizar tipo de alimentación");
         }
 
     } catch (Exception $e) {
@@ -297,7 +298,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
             ];
             echo json_encode($response);
         } else {
-            throw new Exception("Error al eliminar tipo de alimentación");
+            throw new DeleteException("Error al eliminar tipo de alimentación");
         }
 
     } catch (Exception $e) {

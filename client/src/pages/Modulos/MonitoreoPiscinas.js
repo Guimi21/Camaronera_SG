@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-// import { Bar, Doughnut } from 'react-chartjs-2';
 import * as XLSX from "xlsx";
 import config from "../../config";
 import { useAuth } from "../../context/AuthContext";
+import { fetchApi } from "../../services/api";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 
 ChartJS.register(
@@ -62,30 +62,14 @@ export default function MonitoreoPiscinas() {
     try {
       setLoading(true);
       
-      const queryParams = new URLSearchParams();
-      queryParams.append('id_compania', idCompania);
-      
-      const response = await fetch(`${API_BASE_URL}/module/piscinas.php?${queryParams.toString()}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const piscinasData = await fetchApi(
+        `${API_BASE_URL}/module/piscinas.php?id_compania=${idCompania}`,
+        "Error al obtener datos de piscinas"
+      );
 
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        setPiscinas(result.data);
-        setfilteredTableData(result.data);
-        setError(null);
-      } else {
-        throw new Error(result.message || "Error al obtener datos de piscinas");
-      }
+      setPiscinas(piscinasData);
+      setfilteredTableData(piscinasData);
+      setError(null);
       
     } catch (err) {
       console.error("Error fetching piscinas data:", err);
@@ -119,43 +103,6 @@ export default function MonitoreoPiscinas() {
     setfilteredTableData(filtered);
     setCurrentPage(1); // Resetear página al filtrar
   }, [filters, piscinas]);
-
-  // Cálculos estadísticos
-  const totalPiscinas = piscinas.length;
-  const hectareasTotal = piscinas.reduce((total, p) => total + p.hectareas, 0);
-  const promedioHectareasPorPiscina = totalPiscinas > 0 ? 
-    (hectareasTotal / totalPiscinas).toFixed(2) : 0;
-
-  // Configuración de gráficos
-  const hectareasPorPiscinaData = {
-    labels: piscinas.map(p => p.codigo),
-    datasets: [
-      {
-        label: 'Hectáreas',
-        data: piscinas.map(p => p.hectareas),
-        backgroundColor: 'rgba(59, 130, 246, 0.6)',
-        borderColor: 'rgba(59, 130, 246, 1)',
-        borderWidth: 1,
-      }
-    ]
-  };
-
-  // Distribución de tamaños de piscinas
-  const distribucionTamanoData = {
-    labels: ['Pequeñas (<5 ha)', 'Medianas (5-15 ha)', 'Grandes (>15 ha)'],
-    datasets: [
-      {
-        data: [
-          piscinas.filter(p => p.hectareas < 5).length,
-          piscinas.filter(p => p.hectareas >= 5 && p.hectareas <= 15).length,
-          piscinas.filter(p => p.hectareas > 15).length
-        ],
-        backgroundColor: ['rgba(34, 197, 94, 0.8)', 'rgba(59, 130, 246, 0.8)', 'rgba(168, 85, 247, 0.8)'],
-        borderColor: ['rgba(34, 197, 94, 1)', 'rgba(59, 130, 246, 1)', 'rgba(168, 85, 247, 1)'],
-        borderWidth: 1,
-      }
-    ]
-  };
 
   // Manejo de cambios en los filtros
   const handleFilterChange = (event) => {
@@ -217,10 +164,6 @@ export default function MonitoreoPiscinas() {
   const currentData = filteredTableData.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredTableData.length / itemsPerPage);
 
-  const goToPage = (page) => {
-    setCurrentPage(page);
-  };
-
   const nextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
@@ -264,65 +207,6 @@ export default function MonitoreoPiscinas() {
         <h1 className="text-3xl font-bold text-gray-800 mb-2">Monitoreo de Piscinas</h1>
         <p className="text-gray-600">Panel de control para el muestra de piscinas de la compañía</p>
       </div>
-
-      {/* 
-      Estadísticas Generales
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Total de Piscinas</h3>
-          <p className="text-3xl font-bold text-blue-600">{totalPiscinas}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Hectáreas Totales</h3>
-          <p className="text-3xl font-bold text-purple-600">{hectareasTotal.toFixed(2)}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Promedio Hectáreas</h3>
-          <p className="text-3xl font-bold text-orange-600">{promedioHectareasPorPiscina}</p>
-        </div>
-      </div>
-
-      Gráficos
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="grafico-container bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">Hectáreas por Piscina</h3>
-          <Bar 
-            data={hectareasPorPiscinaData}
-            options={{
-              responsive: true,
-              plugins: {
-                legend: {
-                  display: false,
-                }
-              },
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  title: {
-                    display: true,
-                    text: 'Hectáreas'
-                  }
-                }
-              }
-            }}
-          />
-        </div>
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">Distribución por Tamaño</h3>
-          <Doughnut 
-            data={distribucionTamanoData}
-            options={{
-              responsive: true,
-              plugins: {
-                legend: {
-                  position: 'bottom',
-                }
-              }
-            }}
-          />
-        </div>
-      </div>
-      */}
 
       {/* Filtros y Tabla */}
       <div className="bg-white rounded-lg shadow-md p-6">

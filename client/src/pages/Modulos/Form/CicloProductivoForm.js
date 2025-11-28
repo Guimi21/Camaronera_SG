@@ -1,8 +1,44 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import PropTypes from 'prop-types';
+import React, { useState, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
+import { 
+  getCssClassNames, 
+  getFormTexts, 
+  isSubmitDisabledCalc,
+  validateFieldsByType,
+  validateSelectionFields,
+  validateFinalizedFields,
+  validatePdfType,
+  buildCreationData,
+  buildEditionData,
+  cargarPdf,
+  validarValorNumerico,
+  isValidNumericField,
+  updateDensityIfNeeded
+} from '../../../utils/cicloProductivoHelpers';
+import {
+  useCicloData,
+  usePiscinasData,
+  useTiposAlimentacion,
+  usePromedioIncrementoPeso,
+  useErrorHandling,
+  usePdfValidation,
+  useFormValidation,
+  useDensityCalculation,
+  useLibrasCalculation
+} from '../../../utils/cicloProductivoHooks';
+import {
+  ErrorAlert,
+  IncompleteUserInfo,
+  NoPiscinasAlert,
+  NoPiscinasAlertEdit,
+  CycleWithSamplesAlert,
+  PiscinaSelect
+} from './CicloProductivoFormView';
+import { BasicFieldsGrid } from './CicloProductivoFormFields';
+import { FinalizedCycleFields } from './CicloProductivoFinalizedFields';
+import { FormActions } from './CicloProductivoFormActions';
 
 // Función para obtener la fecha local en formato YYYY-MM-DD
 const getLocalDateString = () => {
@@ -13,24 +49,23 @@ const getLocalDateString = () => {
   return `${year}-${month}-${day}`;
 };
 
-// Componente para mostrar mensaje de validación
-const ValidationMessage = ({ fieldName }) => (
-  <div className="validation-message">
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-    <span>Ingresa {fieldName}</span>
-  </div>
-);
+// Función helper para validar valor numérico
+// (Ahora importada de cicloProductivoCalculators)
 
-ValidationMessage.propTypes = {
-  fieldName: PropTypes.string.isRequired
+// Validadores separados
+const validateBasicFields = (formData) => {
+  const fieldError = validateFieldsByType(formData);
+  if (fieldError) return fieldError;
+  return validateSelectionFields(formData);
 };
 
 export default function CicloProductivoForm() {
   const navigate = useNavigate();
+  const { id: idCicloParam } = useParams();
   const { API_BASE_URL } = config;
   const { idCompania, idUsuario } = useAuth();
+  
+  const isEditMode = !!idCicloParam;
   
   const [formData, setFormData] = useState({
     id_piscina: '',
@@ -38,246 +73,127 @@ export default function CicloProductivoForm() {
     fecha_cosecha: '',
     cantidad_siembra: '',
     densidad: '',
+    biomasa_cosecha: '',
     tipo_siembra: '',
     id_tipo_alimentacion: '',
+    nombre_tipo_alimentacion: '',
     promedio_incremento_peso: '',
     libras_por_hectarea: '',
+    ruta_pdf: '',
     estado: 'EN_CURSO'
   });
-  
-  const [piscinas, setPiscinas] = useState([]);
-  const [tiposAlimentacion, setTiposAlimentacion] = useState([]);
+
+  const [pdfFile, setPdfFile] = useState(null);
+  const [pdfFileName, setPdfFileName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [loadingPiscinas, setLoadingPiscinas] = useState(true);
   const [error, setError] = useState('');
+  
+  const isConsultaMode = isEditMode && formData.estado === 'FINALIZADO';
+  const inputRef1 = useRef(null);
 
-  // Hacer scroll al inicio cuando hay un error
-  useEffect(() => {
-    if (error) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [error]);
+  // Usar hooks personalizados
+  const cicloDataResult = useCicloData(idCompania, idCicloParam, isEditMode, API_BASE_URL, setFormData);
+  const piscinasDataResult = usePiscinasData(idCompania, isEditMode, API_BASE_URL);
+  const tiposAlimentacion = useTiposAlimentacion(idCompania, API_BASE_URL);
+  
+  usePromedioIncrementoPeso(formData, idCicloParam, API_BASE_URL);
 
-  // Referencias para inputs numéricos
-  const inputRef1 = useRef(null); // Cantidad de Siembra
+  // Combinar errores de múltiples fuentes
+  const loadingCiclo = cicloDataResult.loadingCiclo;
+  const loadingPiscinas = piscinasDataResult.loadingPiscinas;
+  const piscinas = piscinasDataResult.piscinas;
+  const tieneMuestras = cicloDataResult.tieneMuestras;
 
+  // Usar hook personalizado para manejar errores de múltiples fuentes
+  useErrorHandling(cicloDataResult.error, piscinasDataResult.error, setError);
+
+  // Usar custom hooks para cálculos automáticos
+  useDensityCalculation(formData, setFormData, piscinas);
+  useLibrasCalculation(formData, setFormData, piscinas);
+
+  // Prevenir scroll en inputs numéricos
   const handleWheel = (e) => {
-    // Solo bloquea el scroll si el input está enfocado
     if (document.activeElement === e.target) {
       e.preventDefault();
     }
   };
 
-  useEffect(() => {
-    const fetchPiscinasDisponibles = async () => {
-      if (!idCompania) {
-        setError("No se pudo obtener la información de la compañía del usuario.");
-        setLoadingPiscinas(false);
-        return;
-      }
-
-      try {
-        // Obtener todas las piscinas
-        const piscinasResponse = await fetch(`${API_BASE_URL}/module/piscinas.php?id_compania=${idCompania}`, {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!piscinasResponse.ok) {
-          throw new Error(`Error HTTP: ${piscinasResponse.status}`);
-        }
-
-        const piscinasResult = await piscinasResponse.json();
-        
-        if (!piscinasResult.success) {
-          throw new Error(piscinasResult.message || "Error al obtener piscinas");
-        }
-
-        // Obtener todos los ciclos productivos
-        const ciclosResponse = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php?id_compania=${idCompania}`, {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!ciclosResponse.ok) {
-          throw new Error(`Error HTTP: ${ciclosResponse.status}`);
-        }
-
-        const ciclosResult = await ciclosResponse.json();
-        
-        if (!ciclosResult.success) {
-          throw new Error(ciclosResult.message || "Error al obtener ciclos productivos");
-        }
-
-        // Filtrar piscinas que NO tienen ciclos EN_CURSO
-        const piscinasConCicloEnCurso = ciclosResult.data
-          .filter(ciclo => ciclo.estado === 'EN_CURSO')
-          .map(ciclo => ciclo.id_piscina);
-
-        const piscinasDisponibles = piscinasResult.data.filter(
-          piscina => !piscinasConCicloEnCurso.includes(piscina.id_piscina)
-        );
-
-        setPiscinas(piscinasDisponibles);
-        setError('');
-      } catch (err) {
-        console.error("Error fetching piscinas disponibles:", err);
-        setError(err.message || "No se pudieron cargar las piscinas disponibles.");
-      } finally {
-        setLoadingPiscinas(false);
-      }
-    };
-
-    if (idCompania) {
-      fetchPiscinasDisponibles();
-    } else {
-      setLoadingPiscinas(false);
-    }
-  }, [idCompania, API_BASE_URL]);
-
-  // Cargar tipos de alimentación disponibles
-  useEffect(() => {
-    const fetchTiposAlimentacion = async () => {
-      if (!idCompania) {
-        return;
-      }
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/module/tipo_alimentacion.php?id_compania=${idCompania}`, {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`Error HTTP: ${response.status}`);
-        }
-
-        const result = await response.json();
-        
-        if (result.success) {
-          setTiposAlimentacion(result.data);
-        } else {
-          throw new Error(result.message || "Error al obtener tipos de alimentación");
-        }
-      } catch (err) {
-        console.error("Error fetching tipos de alimentación:", err);
-      }
-    };
-
-    if (idCompania) {
-      fetchTiposAlimentacion();
-    }
-  }, [idCompania, API_BASE_URL]);
-
-  // Efecto para recalcular densidad cuando cambien los datos relevantes
-  useEffect(() => {
-    if (formData.cantidad_siembra && formData.id_piscina && piscinas.length > 0) {
-      const densidadCalculada = calcularDensidad(formData.cantidad_siembra, formData.id_piscina);
-      if (densidadCalculada !== formData.densidad) {
-        setFormData(prevData => ({
-          ...prevData,
-          densidad: densidadCalculada
-        }));
-      }
-    } else if (formData.densidad !== '') {
-      // Si no hay datos para calcular, limpiar el campo de densidad
-      setFormData(prevData => ({
-        ...prevData,
-        densidad: ''
-      }));
-    }
-  }, [formData.cantidad_siembra, formData.id_piscina, piscinas]);
-
-  // Función para calcular densidad
-  const calcularDensidad = (cantidadSiembra, idPiscina) => {
-    if (!cantidadSiembra || !idPiscina) return '';
-    
-    const piscinaSeleccionada = piscinas.find(p => p.id_piscina == idPiscina);
-    if (!piscinaSeleccionada?.hectareas) return '';
-    
-    const cantidadNum = Number.parseFloat(cantidadSiembra);
-    const hectareasNum = Number.parseFloat(piscinaSeleccionada.hectareas);
-
-    if (Number.isNaN(cantidadNum) || Number.isNaN(hectareasNum) || hectareasNum === 0) {
-      return '';
-    }
-    
-    const densidad = cantidadNum / hectareasNum;
-    return densidad.toFixed(2);
-  };
-
+  // Handlers
   const handleChange = (e) => {
     const { name, value } = e.target;
     
-    // Validación para cantidad_siembra
-    if (name === 'cantidad_siembra') {
-      const numericValue = Number.parseFloat(value);
-      if (value !== '' && (Number.isNaN(numericValue) || numericValue <= 0)) {
-        return;
-      }
+    if (isValidNumericField(name) && !validarValorNumerico(value)) {
+      return;
     }
     
-    // Crear nuevo formData con el cambio
     const newFormData = {
       ...formData,
-      [name]: value
+      [name]: value,
+      densidad: formData.densidad
     };
     
-    // Calcular densidad automáticamente si cambia la cantidad de siembra o la piscina
-    if (name === 'cantidad_siembra' || name === 'id_piscina') {
-      const cantidadSiembra = name === 'cantidad_siembra' ? value : formData.cantidad_siembra;
-      const idPiscina = name === 'id_piscina' ? value : formData.id_piscina;
-      
-      newFormData.densidad = calcularDensidad(cantidadSiembra, idPiscina);
-    }
-    
+    newFormData.densidad = updateDensityIfNeeded(name, value, newFormData, piscinas);
     setFormData(newFormData);
+  };
+
+  // Usar hook personalizado para validación de PDF
+  const handlePdfChange = usePdfValidation(pdfFile, setPdfFile, setPdfFileName, setError);
+
+  // Construir datos (delegado a funciones del módulo)
+  const construirDataCreacion = () => buildCreationData(formData, idCompania, idUsuario);
+
+  const construirDataEdicion = (rutaPdf) => buildEditionData(formData, idCicloParam, idCompania, idUsuario, rutaPdf);
+
+  // Usar hook personalizado para validación de formulario
+  const realizarValidacionesBasicas = useFormValidation({
+    formData,
+    pdfFile,
+    idCompania,
+    idUsuario,
+    setError,
+    validateBasicFields,
+    validateFinalizedFields,
+    validatePdfType
+  });
+
+  const ejecutarCreacion = async () => {
+    const dataToSend = construirDataCreacion();
+    const response = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(dataToSend)
+    });
+    return response;
+  };
+
+  const ejecutarEdicion = async (rutaPdf) => {
+    const dataToSend = construirDataEdicion(rutaPdf);
+    const response = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(dataToSend)
+    });
+    return response;
+  };
+
+  const procesarRespuesta = (response, result, operacion) => {
+    if (response.ok && result.success) {
+      navigate('/layout/dashboard/monitoreo-ciclos');
+    } else {
+      const mensajeDefault = operacion === 'edicion' 
+        ? 'Error al actualizar el ciclo productivo. Por favor intente nuevamente.'
+        : 'Error al crear el ciclo productivo. Por favor intente nuevamente.';
+      setError(result.message || mensajeDefault);
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.id_piscina) {
-      setError('Debe seleccionar una piscina.');
-      return;
-    }
-    
-    if (!formData.fecha_siembra) {
-      setError('La fecha de siembra es requerida.');
-      return;
-    }
-    
-    if (!formData.cantidad_siembra || Number.parseFloat(formData.cantidad_siembra) <= 0) {
-      setError('La cantidad de siembra debe ser un número positivo.');
-      return;
-    }
-    
-    if (!formData.densidad) {
-      setError('La densidad no pudo calcularse. Verifica la cantidad de siembra y la piscina seleccionada.');
-      return;
-    }
-    
-    if (!formData.tipo_siembra.trim()) {
-      setError('El tipo de siembra es requerido.');
-      return;
-    }
-    
-    if (!formData.id_tipo_alimentacion) {
-      setError('El tipo de alimentación es requerido.');
-      return;
-    }
-    
-    if (!idCompania || !idUsuario) {
-      setError('No se pudo obtener la información del usuario o compañía.');
+    if (!realizarValidacionesBasicas()) {
       return;
     }
 
@@ -285,306 +201,106 @@ export default function CicloProductivoForm() {
     setError('');
 
     try {
-      const dataToSend = {
-        id_piscina: Number.parseInt(formData.id_piscina),
-        fecha_siembra: formData.fecha_siembra,
-        fecha_cosecha: formData.fecha_cosecha || null,
-        cantidad_siembra: Number.parseInt(formData.cantidad_siembra),
-        densidad: Number.parseFloat(formData.densidad),
-        tipo_siembra: formData.tipo_siembra.trim(),
-        id_tipo_alimentacion: Number.parseInt(formData.id_tipo_alimentacion),
-        promedio_incremento_peso: null,
-        estado: formData.estado,
-        id_compania: idCompania,
-        id_usuario_crea: idUsuario,
-        id_usuario_actualiza: idUsuario // Mismo usuario que crea el registro
-      };
-
-      const response = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(dataToSend)
-      });
-
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        navigate('/layout/dashboard/monitoreo-ciclos');
+      if (isEditMode) {
+        const rutaPdf = await cargarPdf(pdfFile, idCicloParam, idCompania, formData, API_BASE_URL);
+        const response = await ejecutarEdicion(rutaPdf);
+        const result = await response.json();
+        procesarRespuesta(response, result, 'edicion');
       } else {
-        setError(result.message || 'Error al crear el ciclo productivo. Por favor intente nuevamente.');
+        const response = await ejecutarCreacion();
+        const result = await response.json();
+        procesarRespuesta(response, result, 'creacion');
       }
     } catch (error) {
-      console.error('Error creating ciclo:', error);
-      setError('Error de conexión. Por favor intente nuevamente.');
-    } finally {
+      console.error('Error:', error);
+      setError(error.message || 'Error de conexión. Por favor intente nuevamente.');
       setLoading(false);
     }
   };
 
   const handleCancel = () => {
-    navigate('/directivo/ciclos-productivos');
+    navigate('/layout/dashboard/monitoreo-ciclos');
   };
+
+  const classNames = getCssClassNames(formData, isConsultaMode, pdfFile);
+  const formTexts = getFormTexts(isConsultaMode, isEditMode, loading, piscinas, loadingPiscinas);
+  const isDisabled = isSubmitDisabledCalc(loading, isEditMode, piscinas, loadingPiscinas);
+
+  if (loadingCiclo || loadingPiscinas) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="form-container max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Agregar Nuevo Ciclo Productivo</h1>
-        <p className="text-gray-600">Complete los campos para registrar un nuevo ciclo productivo en el sistema.</p>
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          {formTexts.title}
+        </h1>
+        <p className="text-gray-600">
+          {formTexts.description}
+        </p>
       </div>
 
-      {error && (
-        <div className="header-user mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-center gap-3">
-          <svg className="info w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-          </svg>
-          {error}
-        </div>
-      )}
+      {error && <ErrorAlert error={error} />}
 
-      {(!idCompania || !idUsuario) && (
-        <div className="mb-6 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
-          <p><strong>⚠️ Información de usuario incompleta</strong></p>
-          <p className="text-sm mt-1">
-            No se pudo cargar la información de la compañía o del usuario. Por favor, cierre sesión e inicie sesión nuevamente.
-          </p>
-          <p className="text-xs mt-2 font-mono">
-            Debug: idCompania={idCompania || 'undefined'}, idUsuario={idUsuario || 'undefined'}
-          </p>
-        </div>
-      )}
+      {(!idCompania || !idUsuario) && <IncompleteUserInfo />}
 
-      {!loadingPiscinas && piscinas.length === 0 && !error && (
-        <div className="header-user mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded flex items-center gap-3">
-          <svg className="info w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-          </svg>
-          <div>
-            <p><strong>No hay piscinas disponibles.</strong></p>
-            <p className="text-sm mt-1">
-              Para agregar ciclos productivos, debe haber piscinas sin ciclos activos en el sistema.
-              Las piscinas con ciclos "EN_CURSO" no están disponibles para nuevos ciclos.
-            </p>
-          </div>
-        </div>
-      )}
+      {!isEditMode && !loadingPiscinas && piscinas.length === 0 && !error && <NoPiscinasAlert />}
+
+      {isEditMode && !loadingPiscinas && piscinas.length === 0 && !error && <NoPiscinasAlertEdit />}
+
+      {tieneMuestras && !isConsultaMode && <CycleWithSamplesAlert />}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label htmlFor="id_piscina" className="block text-sm font-medium text-gray-700 mb-2">
-            Piscina *
-          </label>
-          {loadingPiscinas ? (
-            <div className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
-              Cargando piscinas...
-            </div>
-          ) : (
-            <select
-              id="id_piscina"
-              name="id_piscina"
-              value={formData.id_piscina}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              disabled={piscinas.length === 0}
-              required
-            >
-              <option value="">
-                {piscinas.length === 0 
-                  ? "No hay piscinas disponibles" 
-                  : "Seleccione una piscina"
-                }
-              </option>
-              {piscinas.map(piscina => (
-                <option key={piscina.id_piscina} value={piscina.id_piscina}>
-                  {piscina.codigo} - {piscina.hectareas} ha - {piscina.ubicacion}
-                </option>
-              ))}
-            </select>
-          )}
-          {formData.id_piscina === '' && <ValidationMessage fieldName="una Piscina" />}
-          <p className="text-xs text-gray-500 mt-1 leyenda">
-            Solo se muestran piscinas sin ciclos productivos activos (EN_CURSO)
-          </p>
-        </div>
+        <PiscinaSelect 
+          formData={{ ...formData, isEditMode }}
+          piscinas={piscinas}
+          loadingPiscinas={loadingPiscinas}
+          handleChange={handleChange}
+          tieneMuestras={tieneMuestras}
+          isConsultaMode={isConsultaMode}
+        />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label htmlFor="fecha_siembra" className="block text-sm font-medium text-gray-700 mb-2">
-              Fecha de Siembra *
-            </label>
-            <input
-              type="date"
-              id="fecha_siembra"
-              name="fecha_siembra"
-              value={formData.fecha_siembra}
-              onChange={handleChange}
-              max={getLocalDateString()}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-            {formData.fecha_siembra === '' && <ValidationMessage fieldName="una Fecha de Siembra" />}
-            <p className="text-xs text-gray-500 mt-1 leyenda">
-              Fecha en la que se realiza la siembra
-            </p>
-          </div>
+        <BasicFieldsGrid
+          formData={formData}
+          isConsultaMode={isConsultaMode}
+          tieneMuestras={tieneMuestras}
+          handleChange={handleChange}
+          handleWheel={handleWheel}
+          inputRef1={inputRef1}
+          piscinas={piscinas}
+          tiposAlimentacion={tiposAlimentacion}
+          isEditMode={isEditMode}
+          classNames={classNames}
+          getLocalDateString={getLocalDateString}
+        />
 
-          <div>
-            <label htmlFor="fecha_cosecha" className="block text-sm font-medium text-gray-700 mb-2">
-              Fecha de Cosecha (Opcional)
-            </label>
-            <input
-              type="date"
-              id="fecha_cosecha"
-              name="fecha_cosecha"
-              value={formData.fecha_cosecha}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            <p className="text-xs text-gray-500 mt-1 leyenda">
-              Fecha estimada de cosecha
-            </p>
-          </div>
+        {formData.estado === 'FINALIZADO' && (
+          <FinalizedCycleFields
+            formData={formData}
+            isConsultaMode={isConsultaMode}
+            classNames={classNames}
+            handleChange={handleChange}
+            handleWheel={handleWheel}
+            pdfFile={pdfFile}
+            pdfFileName={pdfFileName}
+            handlePdfChange={handlePdfChange}
+            API_BASE_URL={API_BASE_URL}
+          />
+        )}
 
-          <div>
-            <label htmlFor="cantidad_siembra" className="block text-sm font-medium text-gray-700 mb-2">
-              Cantidad de Siembra *
-            </label>
-            <input
-              type="number"
-              id="cantidad_siembra"
-              name="cantidad_siembra"
-              value={formData.cantidad_siembra}
-              ref={inputRef1}
-              onFocus={(e) => e.target.addEventListener('wheel', handleWheel, { passive: false })}
-              onBlur={(e) => e.target.removeEventListener('wheel', handleWheel)}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Ej: 500000"
-              min="1"
-              step="1"
-              required
-            />
-            {formData.cantidad_siembra === '' && <ValidationMessage fieldName="una Cantidad de Siembra" />}
-            <p className="text-xs text-gray-500 mt-1 leyenda">
-              Número de larvas o individuos sembrados
-            </p>
-          </div>
-
-          <div>
-            <label htmlFor="densidad" className="block text-sm font-medium text-gray-700 mb-2">
-              Densidad (por hectárea) * <span className="text-blue-600 text-xs">(Calculado automáticamente)</span>
-            </label>
-            <input
-              type="text"
-              id="densidad"
-              name="densidad"
-              value={formData.densidad}
-              readOnly
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
-              placeholder="Se calcula automáticamente"
-            />
-            <p className="text-xs text-gray-500 mt-1 leyenda">
-              Cantidad de siembra ÷ Hectáreas de la piscina
-              {formData.id_piscina && piscinas.length > 0 && (() => {
-                const piscinaSeleccionada = piscinas.find(p => p.id_piscina == formData.id_piscina);
-                return piscinaSeleccionada ? ` (${piscinaSeleccionada.hectareas} ha)` : '';
-              })()}
-            </p>
-          </div>
-
-          <div>
-            <label htmlFor="tipo_siembra" className="block text-sm font-medium text-gray-700 mb-2">
-              Tipo de Siembra *
-            </label>
-            <select
-              id="tipo_siembra"
-              name="tipo_siembra"
-              value={formData.tipo_siembra}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            >
-              <option value="">Seleccione un tipo de siembra</option>
-              <option value="transf">transf</option>
-              <option value="Directo">Directo</option>
-            </select>
-            {formData.tipo_siembra === '' && <ValidationMessage fieldName="un Tipo de Siembra" />}
-            <p className="text-xs text-gray-500 mt-1 leyenda">
-              Tipo o método de siembra utilizado
-            </p>
-          </div>
-
-          <div>
-            <label htmlFor="id_tipo_alimentacion" className="block text-sm font-medium text-gray-700 mb-2">
-              Tipo de Alimentación *
-            </label>
-            <select
-              id="id_tipo_alimentacion"
-              name="id_tipo_alimentacion"
-              value={formData.id_tipo_alimentacion}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            >
-              <option value="">Seleccione un tipo de alimentación</option>
-              {tiposAlimentacion.map(tipo => (
-                <option key={tipo.id_tipo_alimentacion} value={tipo.id_tipo_alimentacion}>
-                  {tipo.nombre}
-                </option>
-              ))}
-            </select>
-            {formData.id_tipo_alimentacion === '' && <ValidationMessage fieldName="un Tipo de Alimentación" />}
-            <p className="text-xs text-gray-500 mt-1 leyenda">
-              Tipo de alimentación a utilizar en el ciclo productivo
-            </p>
-          </div>
-
-          <div>
-            <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-2">
-              Estado *
-            </label>
-            <input
-              type="text"
-              id="estado"
-              name="estado"
-              value="En Curso"
-              readOnly
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
-            />
-            <p className="text-xs text-gray-500 mt-1 leyenda">
-              Los ciclos se crean siempre en estado "En Curso"
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-4 pt-6">
-          <button
-            type="submit"
-            disabled={loading || loadingPiscinas || piscinas.length === 0}
-            className={`flex-1 sm:flex-none px-6 py-3 rounded-md font-medium text-white transition-colors duration-200 ${
-              loading || loadingPiscinas || piscinas.length === 0
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-            }`}
-          >
-            {loading ? (
-              'Guardando Ciclo...'
-            ) : (
-              'Guardar Ciclo Productivo'
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleCancel}
-            disabled={loading || loadingPiscinas}
-            className="flex-1 sm:flex-none px-6 py-3 border border-gray-300 rounded-md font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
-          >
-            Cancelar
-          </button>
-        </div>
+        <FormActions
+          isConsultaMode={isConsultaMode}
+          isDisabled={isDisabled}
+          loading={loading}
+          submitText={formTexts.submitText}
+          submitButtonClassName={formTexts.submitButtonClassName}
+          onCancel={handleCancel}
+        />
       </form>
     </div>
   );

@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../helpers/CustomExceptions.php';
+
 define('RESPONSE_SUCCESS', 'success');
 define('RESPONSE_MESSAGE', 'message');
 define('RESPONSE_DATA', 'data');
@@ -8,6 +10,7 @@ define('VALIDATION_ID_COMPANIA_REQUIRED', 'ID de compañía requerido');
 define('PARAM_GRUPO_EMPRESARIAL', ':id_grupo_empresarial');
 define('PARAM_ID_USUARIO', ':id_usuario');
 define('PARAM_NOMBRE', ':nombre');
+define('PARAM_ID_COMPANIA', ':id_compania');
 define('QUERY_USUARIO_GRUPO', "SELECT id_grupo_empresarial FROM usuario WHERE id_usuario = " . PARAM_ID_USUARIO . "");
 define('SUBQUERY_USUARIO_GRUPO', "SELECT id_grupo_empresarial FROM usuario WHERE id_usuario = " . PARAM_ID_USUARIO . "");
 
@@ -183,7 +186,7 @@ try {
             http_response_code(201);
             echo json_encode($response);
         } else {
-            throw new Exception('Error al insertar la compañía en la base de datos');
+            throw new InsertException('Error al insertar la compañía en la base de datos');
         }
         
     } elseif ($method === 'PUT') {
@@ -241,13 +244,13 @@ try {
         // Verificar que la compañía pertenece al mismo grupo empresarial del usuario
         $queryVerify = "SELECT c.id_compania 
                         FROM compania c
-                        WHERE c.id_compania = :id_compania 
+                        WHERE c.id_compania = " . PARAM_ID_COMPANIA . " 
                         AND c.id_grupo_empresarial = (
                             " . SUBQUERY_USUARIO_GRUPO . "
                         )";
         
         $stmtVerify = $conn->prepare($queryVerify);
-        $stmtVerify->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
+        $stmtVerify->bindParam(PARAM_ID_COMPANIA, $id_compania, PDO::PARAM_INT);
         $stmtVerify->bindParam(PARAM_ID_USUARIO, $id_usuario, PDO::PARAM_INT);
         $stmtVerify->execute();
         
@@ -260,6 +263,27 @@ try {
             echo json_encode($response);
             exit();
         }
+
+        // Verificar que no exista otra compañía con el mismo nombre en el mismo grupo empresarial
+        $checkQuery = "SELECT id_compania FROM compania WHERE nombre = " . PARAM_NOMBRE . " AND id_grupo_empresarial = (
+            " . SUBQUERY_USUARIO_GRUPO . "
+        ) AND id_compania != " . PARAM_ID_COMPANIA . "";
+        
+        $checkStmt = $conn->prepare($checkQuery);
+        $checkStmt->bindParam(PARAM_NOMBRE, $nombre, PDO::PARAM_STR);
+        $checkStmt->bindParam(PARAM_ID_USUARIO, $id_usuario, PDO::PARAM_INT);
+        $checkStmt->bindParam(PARAM_ID_COMPANIA, $id_compania, PDO::PARAM_INT);
+        $checkStmt->execute();
+        
+        if ($checkStmt->fetch()) {
+            $response = [
+                RESPONSE_SUCCESS => false,
+                RESPONSE_MESSAGE => 'Ya existe una compañía con este nombre para este grupo empresarial'
+            ];
+            http_response_code(400);
+            echo json_encode($response);
+            exit();
+        }
         
         // Actualizar la compañía
         $updateQuery = "UPDATE compania 
@@ -268,14 +292,14 @@ try {
                             telefono = :telefono, 
                             estado = :estado, 
                             fecha_actualizacion = NOW() 
-                        WHERE id_compania = :id_compania";
+                        WHERE id_compania = " . PARAM_ID_COMPANIA . "";
         
         $updateStmt = $conn->prepare($updateQuery);
         $updateStmt->bindParam(PARAM_NOMBRE, $nombre, PDO::PARAM_STR);
         $updateStmt->bindParam(':direccion', $direccion, PDO::PARAM_STR);
         $updateStmt->bindParam(':telefono', $telefono, PDO::PARAM_STR);
         $updateStmt->bindParam(':estado', $estado, PDO::PARAM_STR);
-        $updateStmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
+        $updateStmt->bindParam(PARAM_ID_COMPANIA, $id_compania, PDO::PARAM_INT);
         
         if ($updateStmt->execute()) {
             $response = [
@@ -292,7 +316,7 @@ try {
             http_response_code(200);
             echo json_encode($response);
         } else {
-            throw new Exception('Error al actualizar la compañía en la base de datos');
+            throw new UpdateException('Error al actualizar la compañía en la base de datos');
         }
         
     } else {

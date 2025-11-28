@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../helpers/CustomExceptions.php';
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/cors.php';  // Configuración CORS centralizada
@@ -54,13 +55,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
-            throw new Exception("Error preparando consulta: " . implode(", ", $conn->errorInfo()));
+            throw new QueryPrepareException("Error preparando consulta: " . implode(", ", $conn->errorInfo()));
         }
 
         $stmt->bindParam(PARAM_ID_COMPANIA, $id_compania, PDO::PARAM_INT);
         
         if (!$stmt->execute()) {
-            throw new Exception("Error ejecutando consulta: " . implode(", ", $stmt->errorInfo()));
+            throw new QueryExecutionException("Error ejecutando consulta: " . implode(", ", $stmt->errorInfo()));
         }
 
         $piscinas = [];
@@ -151,7 +152,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $insert_stmt = $conn->prepare($insert_sql);
         
         if (!$insert_stmt) {
-            throw new Exception("Error preparando consulta de inserción: " . implode(", ", $conn->errorInfo()));
+            throw new QueryPrepareException("Error preparando consulta de inserción: " . implode(", ", $conn->errorInfo()));
         }
 
         $insert_stmt->bindParam(PARAM_CODIGO, $input['codigo'], PDO::PARAM_STR);
@@ -163,7 +164,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $insert_stmt->bindParam(':id_usuario_actualiza', $input['id_usuario_actualiza'], PDO::PARAM_INT);
 
         if (!$insert_stmt->execute()) {
-            throw new Exception("Error ejecutando inserción: " . implode(", ", $insert_stmt->errorInfo()));
+            throw new QueryExecutionException("Error ejecutando inserción: " . implode(", ", $insert_stmt->errorInfo()));
         }
 
         $new_id = $conn->lastInsertId();
@@ -241,7 +242,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
         $update_stmt = $conn->prepare($update_sql);
         
         if (!$update_stmt) {
-            throw new Exception("Error preparando consulta de actualización: " . implode(", ", $conn->errorInfo()));
+            throw new QueryPrepareException("Error preparando consulta de actualización: " . implode(", ", $conn->errorInfo()));
         }
 
         $update_stmt->bindParam(PARAM_CODIGO, $input['codigo'], PDO::PARAM_STR);
@@ -252,7 +253,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
         $update_stmt->bindParam(PARAM_ID_COMPANIA, $input['id_compania'], PDO::PARAM_INT);
 
         if (!$update_stmt->execute()) {
-            throw new Exception("Error ejecutando actualización: " . implode(", ", $update_stmt->errorInfo()));
+            throw new QueryExecutionException("Error ejecutando actualización: " . implode(", ", $update_stmt->errorInfo()));
         }
 
         if ($update_stmt->rowCount() === 0) {
@@ -319,14 +320,14 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
         $delete_stmt = $conn->prepare($delete_sql);
         
         if (!$delete_stmt) {
-            throw new Exception("Error preparando consulta de eliminación: " . implode(", ", $conn->errorInfo()));
+            throw new QueryPrepareException("Error preparando consulta de eliminación: " . implode(", ", $conn->errorInfo()));
         }
 
         $delete_stmt->bindParam(PARAM_ID_PISCINA, $id_piscina, PDO::PARAM_INT);
         $delete_stmt->bindParam(PARAM_ID_COMPANIA, $id_compania, PDO::PARAM_INT);
 
         if (!$delete_stmt->execute()) {
-            throw new Exception("Error ejecutando eliminación: " . implode(", ", $delete_stmt->errorInfo()));
+            throw new QueryExecutionException("Error ejecutando eliminación: " . implode(", ", $delete_stmt->errorInfo()));
         }
 
         if ($delete_stmt->rowCount() === 0) {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
+import { fetchApi } from '../../../services/api';
 
 // Función para obtener la fecha local en formato YYYY-MM-DD
 const getLocalDateString = () => {
@@ -89,40 +90,25 @@ export default function MuestraForm() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/module/tipos_balanceado.php?id_compania=${idCompania}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
+      const data = await fetchApi(
+        `${API_BASE_URL}/module/tipos_balanceado.php?id_compania=${idCompania}`,
+        "Error al obtener tipos de balanceado"
+      );
       
-      if (result.success && result.data) {
-        setTiposBalanceado(result.data);
-        
-        // Inicializar los campos de balanceado en el formData
-        const balanceadosIniciales = {};
-        result.data.forEach(tipo => {
-          balanceadosIniciales[tipo.id_tipo_balanceado] = '';
-        });
-        
-        setFormData(prev => ({
-          ...prev,
-          balanceados: balanceadosIniciales
-        }));
-        
-        return result.data;
-      } else {
-        console.error("Error al obtener tipos de balanceado:", result.message);
-        setTiposBalanceado([]);
-        return [];
-      }
+      setTiposBalanceado(data);
+      
+      // Inicializar los campos de balanceado en el formData
+      const balanceadosIniciales = {};
+      data.forEach(tipo => {
+        balanceadosIniciales[tipo.id_tipo_balanceado] = '';
+      });
+      
+      setFormData(prev => ({
+        ...prev,
+        balanceados: balanceadosIniciales
+      }));
+      
+      return data;
     } catch (err) {
       console.error("Error fetching tipos balanceado:", err);
       setTiposBalanceado([]);
@@ -141,28 +127,15 @@ export default function MuestraForm() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/module/ciclosproductivos.php?id_compania=${idCompania}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
+      const data = await fetchApi(
+        `${API_BASE_URL}/module/ciclosproductivos.php?id_compania=${idCompania}`,
+        "Error al obtener ciclos productivos"
+      );
       
-      if (result.success) {
-        // Filtrar solo los ciclos que estén EN_CURSO
-        const ciclosEnCurso = result.data.filter(ciclo => ciclo.estado === 'EN_CURSO');
-        setCiclosDisponibles(ciclosEnCurso);
-        setError('');
-      } else {
-        throw new Error(result.message || "Error al obtener ciclos productivos");
-      }
+      // Filtrar solo los ciclos que estén EN_CURSO
+      const ciclosEnCurso = data.filter(ciclo => ciclo.estado === 'EN_CURSO');
+      setCiclosDisponibles(ciclosEnCurso);
+      setError('');
     } catch (err) {
       console.error("Error fetching ciclos:", err);
       setError(err.message || "No se pudieron cargar los ciclos productivos.");
@@ -181,27 +154,15 @@ export default function MuestraForm() {
     try {
       const url = `${API_BASE_URL}/module/muestras.php?id_ciclo=${idCiclo}&ultimo=true`;
       
-      const response = await fetch(url, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
+      const data = await fetchApi(url, "Error al obtener el último muestra");
       
-      if (result.success && result.data && result.data.length > 0) {
+      if (data && data.length > 0) {
         // El backend retorna el muestra más reciente ordenado por:
         // 1. fecha_muestra (DESC) - fecha del muestreo
         // 2. fecha_creacion (DESC) - fecha de creación como criterio de desempate
         // Esto garantiza que si hay múltiples muestras con la misma fecha_muestra,
         // se use el que fue creado más recientemente.
-        setUltimoMuestra(result.data[0]);
+        setUltimoMuestra(data[0]);
       } else {
         // No hay muestras previos para este ciclo
         setUltimoMuestra(null);
@@ -423,7 +384,7 @@ export default function MuestraForm() {
     const supervivenciaDecimal = supervivenciaNum / 100;
     const poblacionActual = cantidadSiembraNum * supervivenciaDecimal;
     
-    return Math.round(poblacionActual); // Redondeamos porque son individuos
+    return String(Math.round(poblacionActual));
   };
 
   // Función para calcular biomasa en libras

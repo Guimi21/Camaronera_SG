@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../helpers/CustomExceptions.php';
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/cors.php';  // Configuración CORS centralizada
@@ -182,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             http_response_code(201);
             echo json_encode($response);
         } else {
-            throw new Exception("Error al insertar el registro");
+            throw new InsertException("Error al insertar el registro");
         }
 
     } catch (Exception $e) {
@@ -329,7 +330,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
             http_response_code(200);
             echo json_encode($response);
         } else {
-            throw new Exception("Error al actualizar el registro");
+            throw new UpdateException("Error al actualizar el registro");
         }
 
     } catch (Exception $e) {

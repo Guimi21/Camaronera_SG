@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import config from '../../../config';
+import { fetchApi } from '../../../services/api';
 
 // Componente para mostrar mensaje de validación
 const ValidationMessage = ({ fieldName }) => (
@@ -54,22 +55,13 @@ export default function PerfilForm() {
     try {
       setLoading(true);
 
-      const response = await fetch(`${API_BASE_URL}/module/perfiles.php?id_perfil=${idPerfil}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      if (result.success && result.data && result.data.length > 0) {
-        const perfil = result.data[0];
+      const data = await fetchApi(
+        `${API_BASE_URL}/module/perfiles.php?id_perfil=${idPerfil}`,
+        "No se pudo cargar el perfil"
+      );
+      
+      if (data && data.length > 0) {
+        const perfil = data[0];
         setFormData({
           nombre: perfil.nombre || '',
           descripcion: perfil.descripcion || '',
@@ -90,23 +82,11 @@ export default function PerfilForm() {
 
   const fetchMenus = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/module/menus.php`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      if (result.success) {
-        setMenusDisponibles(result.data);
-      }
+      const data = await fetchApi(
+        `${API_BASE_URL}/module/menus.php`,
+        "Error al obtener menús"
+      );
+      setMenusDisponibles(data);
     } catch (err) {
       console.error('Error fetching menus:', err);
     }

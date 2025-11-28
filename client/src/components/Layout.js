@@ -1,19 +1,11 @@
-import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Header from "./Header";
-import { FaBars, FaTimes } from "react-icons/fa";
 
 export default function Layout() {
   const { user } = useAuth();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   if (!user) return null;
-
-  // Función para alternar el estado de la barra lateral en móviles y tabletas
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
 
   return (
     <div className="layout h-screen flex flex-col">

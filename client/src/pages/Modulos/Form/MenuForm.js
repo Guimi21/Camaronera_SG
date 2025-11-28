@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import config from '../../../config';
+import { fetchApi } from '../../../services/api';
 
 // Componente para mostrar mensaje de validación
 const ValidationMessage = ({ fieldName }) => (
@@ -57,23 +58,11 @@ export default function MenuForm() {
 
   const fetchModulos = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/module/modulos.php`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      if (result.success) {
-        setModulos(result.data);
-      }
+      const data = await fetchApi(
+        `${API_BASE_URL}/module/modulos.php`,
+        "Error al obtener módulos"
+      );
+      setModulos(data);
     } catch (err) {
       console.error('Error fetching modulos:', err);
     }
@@ -83,22 +72,13 @@ export default function MenuForm() {
     try {
       setLoading(true);
 
-      const response = await fetch(`${API_BASE_URL}/module/menus.php?id_menu=${idMenu}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      if (result.success && result.data && result.data.length > 0) {
-        const menu = result.data[0];
+      const data = await fetchApi(
+        `${API_BASE_URL}/module/menus.php?id_menu=${idMenu}`,
+        "No se pudo cargar el menú"
+      );
+      
+      if (data && data.length > 0) {
+        const menu = data[0];
         setFormData({
           id_modulo: menu.id_modulo || '',
           nombre: menu.nombre || '',

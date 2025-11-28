@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import config from '../../../config';
+import { fetchApi } from '../../../services/api';
 
 // Componente para mostrar mensaje de validación
 const ValidationMessage = ({ fieldName }) => (
@@ -51,22 +52,13 @@ export default function ModuloForm() {
     try {
       setLoading(true);
 
-      const response = await fetch(`${API_BASE_URL}/module/modulos.php?id_modulo=${idModulo}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      if (result.success && result.data && result.data.length > 0) {
-        const modulo = result.data[0];
+      const data = await fetchApi(
+        `${API_BASE_URL}/module/modulos.php?id_modulo=${idModulo}`,
+        "No se pudo cargar el módulo"
+      );
+      
+      if (data && data.length > 0) {
+        const modulo = data[0];
         setFormData({
           nombre: modulo.nombre || '',
           descripcion: modulo.descripcion || '',

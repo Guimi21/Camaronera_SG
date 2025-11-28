@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import config from "../../config";
 import { useAuth } from "../../context/AuthContext";
+import { fetchApi } from "../../services/api";
 
 // Función para obtener la fecha local en formato YYYY-MM-DD
 const getLocalDateString = () => {
@@ -50,30 +51,14 @@ export default function MonitoreoBalanceados() {
     try {
       setLoading(true);
       
-      const queryParams = new URLSearchParams();
-      queryParams.append('id_compania', idCompania);
+      const data = await fetchApi(
+        `${API_BASE_URL}/module/tipos_balanceado.php?id_compania=${idCompania}`,
+        "Error al obtener datos de tipos de balanceado"
+      );
       
-      const response = await fetch(`${API_BASE_URL}/module/tipos_balanceado.php?${queryParams.toString()}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        setTiposBalanceado(result.data);
-        setFilteredTableData(result.data);
-        setError(null);
-      } else {
-        throw new Error(result.message || "Error al obtener datos de tipos de balanceado");
-      }
+      setTiposBalanceado(data);
+      setFilteredTableData(data);
+      setError(null);
       
     } catch (err) {
       console.error("Error fetching tipos balanceado data:", err);
@@ -166,10 +151,6 @@ export default function MonitoreoBalanceados() {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentData = filteredTableData.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredTableData.length / itemsPerPage);
-
-  const goToPage = (page) => {
-    setCurrentPage(page);
-  };
 
   const nextPage = () => {
     if (currentPage < totalPages) {

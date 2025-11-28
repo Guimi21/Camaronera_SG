@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import config from '../../../config';
 import { useAuth } from '../../../context/AuthContext';
 import { handleNavigationByProfile } from '../../../utils/navigationUtils';
+import { usePerfiles, useUserData, useCompanias, useGruposEmpresariales } from '../../../utils/usuarioFormHooks';
+import { 
+  validarFormulario, 
+  construirPayload,
+  extraerPerfilesIds,
+  extraerCompaniasIds,
+  extraerGrupoEmpresarialId
+} from '../../../utils/usuarioFormHelpers';
 
 // Componente para mostrar mensaje de validación
 const ValidationMessage = ({ fieldName }) => (
@@ -21,8 +29,12 @@ ValidationMessage.propTypes = {
 
 export default function UsuarioForm() {
   const navigate = useNavigate();
+  const { idUsuario: idUsuarioParam } = useParams();
   const { API_BASE_URL } = config;
-  const { idUsuario, perfilActivo } = useAuth();
+  const { idUsuario: idUsuarioAuth, perfilActivo, actualizarCompanias } = useAuth();
+
+  // Determinar si es modo edición
+  const isEditMode = !!idUsuarioParam;
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -34,103 +46,78 @@ export default function UsuarioForm() {
     estado: 'ACTIVO'
   });
 
-  const [perfilesDisponibles, setPerfilesDisponibles] = useState([]);
-  const [companiasDisponibles, setCompaniasDisponibles] = useState([]);
-  const [gruposEmpresarialesDisponibles, setGruposEmpresarialesDisponibles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  // Usar hooks personalizados
+  const perfilesDisponibles = usePerfiles(API_BASE_URL);
+  const companiasDisponibles = useCompanias(idUsuarioAuth, API_BASE_URL);
+  const gruposEmpresarialesDisponibles = useGruposEmpresariales(perfilActivo, API_BASE_URL);
+  const userDataResult = useUserData({
+    idUsuarioParam,
+    idUsuarioAuth,
+    isEditMode,
+    perfilesDisponibles,
+    perfilActivo,
+    API_BASE_URL
+  });
+
+  const { usuario, loading: userLoading, error: userError } = userDataResult;
+
+  // Cargar datos del usuario en formData cuando sea necesario
+  useEffect(() => {
+    if (usuario && isEditMode && !loading) {
+      const perfilesIds = usuario.perfiles 
+        ? extraerPerfilesIds(usuario.perfiles, perfilesDisponibles)
+        : [];
+      const companiasIds = usuario.companias 
+        ? extraerCompaniasIds(usuario.companias, companiasDisponibles)
+        : [];
+      const idGrupoEmpresarial = usuario.grupo_empresarial
+        ? extraerGrupoEmpresarialId(usuario.grupo_empresarial, gruposEmpresarialesDisponibles)
+        : '';
+
+      const primerPerfil = perfilesIds.length > 0 ? perfilesIds[0] : '';
+
+      setFormData({
+        nombre: usuario.nombre || '',
+        username: usuario.username || '',
+        password: '',
+        perfil: String(primerPerfil),
+        companias: companiasIds,
+        idGrupoEmpresarial: idGrupoEmpresarial,
+        estado: usuario.estado || 'ACTIVO'
+      });
+    }
+  }, [usuario, isEditMode]);
+
   // Hacer scroll al inicio cuando hay un error
   useEffect(() => {
-    if (error) {
+    if (error || userError) {
+      setError(userError || error);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [error]);
+  }, [error, userError]);
 
-  // Cargar perfiles disponibles
+  // Actualizar loading si hay cambio en userLoading
   useEffect(() => {
-    fetchPerfiles();
-    fetchCompanias();
-    if (perfilActivo === 'Superadministrador') {
-      fetchGruposEmpresariales();
-    }
-  }, [perfilActivo]);
-
-  const fetchPerfiles = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/module/perfiles.php`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
-      if (result.success) {
-        // Filtrar para excluir el perfil "Superadministrador"
-        const perfilesFiltered = result.data.filter(perfil => perfil.nombre !== 'Superadministrador');
-        setPerfilesDisponibles(perfilesFiltered);
-      }
-    } catch (err) {
-      console.error('Error fetching perfiles:', err);
-    }
-  };
-
-  const fetchCompanias = async () => {
-    try {
-      if (!idUsuario) return;
-
-      const response = await fetch(`${API_BASE_URL}/module/companias.php?id_usuario=${idUsuario}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
-      if (result.success) {
-        setCompaniasDisponibles(result.data);
-      }
-    } catch (err) {
-      console.error('Error fetching companias:', err);
-    }
-  };
-
-  const fetchGruposEmpresariales = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/module/grupos_empresariales.php`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
-      if (result.success) {
-        setGruposEmpresarialesDisponibles(result.data);
-      }
-    } catch (err) {
-      console.error('Error fetching grupos empresariales:', err);
-    }
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    setError('');
-  };
+    setLoading(userLoading);
+  }, [userLoading]);
 
   const handlePerfilChange = (id_perfil) => {
     setFormData(prev => ({
       ...prev,
       perfil: String(id_perfil)
+    }));
+    setError('');
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
     }));
     setError('');
   };
@@ -146,77 +133,68 @@ export default function UsuarioForm() {
   };
 
   // Validar formulario según el perfil del usuario
-  const validarFormulario = () => {
-    if (!formData.nombre.trim()) {
-      setError('El nombre es obligatorio');
+  const validar = () => {
+    const result = validarFormulario(formData, isEditMode, perfilActivo, idUsuarioAuth);
+    if (!result.valid) {
+      setError(result.error);
       return false;
     }
-    
-    if (!formData.username.trim()) {
-      setError('El usuario (username) es obligatorio');
-      return false;
-    }
-    
-    if (!formData.password) {
-      setError('La contraseña es obligatoria');
-      return false;
-    }
-
-    if (!formData.perfil) {
-      setError('Debe seleccionar un perfil');
-      return false;
-    }
-
-    if (perfilActivo === 'Superadministrador' && !formData.idGrupoEmpresarial) {
-      setError('Debe seleccionar un grupo empresarial');
-      return false;
-    }
-
-    if (perfilActivo !== 'Superadministrador' && formData.companias.length === 0) {
-      setError('Debe seleccionar al menos una compañía');
-      return false;
-    }
-
-    if (!idUsuario) {
-      setError('No se pudo obtener la información del usuario autenticado');
-      return false;
-    }
-
     return true;
   };
 
   // Construir payload para enviar
-  const construirPayload = () => ({
-    nombre: formData.nombre.trim(),
-    username: formData.username.trim(),
-    password: formData.password,
-    estado: formData.estado,
-    perfiles: [Number.parseInt(formData.perfil)],
-    companias: formData.companias,
-    idGrupoEmpresarial: formData.idGrupoEmpresarial || null,
-    id_usuario: idUsuario
-  });
+  const construir = () => construirPayload(formData, isEditMode, idUsuarioParam, idUsuarioAuth, perfilActivo);
 
-  // Procesar respuesta del servidor
-  const procesarRespuesta = async (response) => {
-    let result;
-    try {
-      const responseText = await response.text();
-      result = JSON.parse(responseText);
-    } catch (jsonErr) {
-      throw new Error(`Error del servidor (${response.status}): No se pudo parsear la respuesta`);
+  // Actualizar contexto si el usuario se edita a sí mismo
+  const actualizarContextoSiNecesario = async () => {
+    if (!isEditMode || Number.parseInt(idUsuarioParam) !== Number.parseInt(idUsuarioAuth)) {
+      return;
     }
 
-    if (result?.success) {
-      return true;
-    } else if (result?.message) {
-      throw new Error(result.message);
-    } else {
-      throw new Error('Error al crear el usuario');
+    try {
+      const usuarioResponse = await fetch(
+        `${API_BASE_URL}/module/usuarios.php?id_usuario=${idUsuarioAuth}`,
+        { method: 'GET', credentials: 'include' }
+      );
+
+      if (!usuarioResponse.ok) return;
+
+      const usuarioResult = await usuarioResponse.json();
+      if (!usuarioResult.success || !usuarioResult.data) return;
+
+      const usuarioActualizado = usuarioResult.data.find(u => Number.parseInt(u.id_usuario) === Number.parseInt(idUsuarioAuth));
+      if (!usuarioActualizado) return;
+
+      const companiasDispResponse = await fetch(
+        `${API_BASE_URL}/module/companias.php?id_usuario=${idUsuarioAuth}`,
+        { method: 'GET', credentials: 'include' }
+      );
+
+      if (!companiasDispResponse.ok) return;
+
+      const companiasDispResult = await companiasDispResponse.json();
+      if (companiasDispResult.success && companiasDispResult.data) {
+        const companiasNombres = usuarioActualizado.companias 
+          ? usuarioActualizado.companias.split(', ').map(n => n.trim()) 
+          : [];
+        
+        const companiasActualizadas = companiasNombres
+          .map(nombre => companiasDispResult.data.find(c => c.nombre === nombre))
+          .filter(c => c !== undefined);
+        
+        actualizarCompanias(companiasActualizadas);
+      }
+    } catch (err) {
+      console.error('Error fetching updated user data:', err);
     }
   };
 
   // Redirigir según perfil
+  const getButtonText = () => {
+    if (loading) return 'Guardando...';
+    return isEditMode ? 'Guardar Cambios' : 'Guardar Usuario';
+  };
+
   const handleCancel = () => {
     handleNavigationByProfile(navigate, perfilActivo);
   };
@@ -224,7 +202,7 @@ export default function UsuarioForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validarFormulario()) {
+    if (!validar()) {
       return;
     }
 
@@ -232,32 +210,68 @@ export default function UsuarioForm() {
     setError('');
 
     try {
-      const payload = construirPayload();
+      const payload = construir();
+      const method = isEditMode ? 'PUT' : 'POST';
 
       const response = await fetch(`${API_BASE_URL}/module/usuarios.php`, {
-        method: 'POST',
+        method: method,
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(payload)
       });
 
-      await procesarRespuesta(response);
-      handleNavigationByProfile(navigate, perfilActivo);
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.message || `Error HTTP: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        await actualizarContextoSiNecesario();
+        handleNavigationByProfile(navigate, perfilActivo);
+      } else {
+        throw new Error(result.message || (isEditMode ? 'Error al actualizar el usuario' : 'Error al crear el usuario'));
+      }
     } catch (err) {
-      console.error('Error creating usuario:', err);
-      setError(err.message || 'No se pudo crear el usuario. Intente nuevamente.');
+      console.error('Error:', err);
+      setError(err.message || (isEditMode ? 'No se pudo actualizar el usuario. Intente nuevamente.' : 'No se pudo crear el usuario. Intente nuevamente.'));
     } finally {
       setLoading(false);
     }
   };
+
+  if (isEditMode && loading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <span className="ml-3">Cargando...</span>
+      </div>
+    );
+  }
+
+  if (isEditMode && !usuario) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="text-red-700">Usuario no encontrado</div>
+      </div>
+    );
+  }
 
   return (
     <div className="form-container min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-blue-800 mb-2">Registrar Nuevo Usuario</h1>
-            <p className="text-gray-600">Complete el formulario para agregar un nuevo usuario al sistema.</p>
+            <h1 className="text-2xl font-bold text-blue-800 mb-2">
+              {isEditMode ? 'Editar Usuario' : 'Registrar Nuevo Usuario'}
+            </h1>
+            <p className="text-gray-600">
+              {isEditMode 
+                ? `Modifique los datos del usuario: ${usuario?.username}`
+                : 'Complete el formulario para agregar un nuevo usuario al sistema.'
+              }
+            </p>
           </div>
 
           {error && (
@@ -279,6 +293,7 @@ export default function UsuarioForm() {
                 <p className="leyenda text-sm text-gray-500 mt-1">Nombre completo del usuario.</p>
               </div>
 
+              {!isEditMode && (
               <div>
                 <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">Usuario (username) *</label>
                 <input id="username" type="text" name="username" value={formData.username} onChange={handleChange}
@@ -286,9 +301,12 @@ export default function UsuarioForm() {
                 {formData.username === '' && <ValidationMessage fieldName="un Usuario (username)" />}
                 <p className="leyenda text-sm text-gray-500 mt-1">Nombre de usuario único para acceder al sistema.</p>
               </div>
+              )}
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">Contraseña *</label>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                  Contraseña {isEditMode ? '(opcional para cambiar)' : '*'}
+                </label>
                 <input 
                   id="password"
                   type={showPassword ? 'text' : 'password'} 
@@ -296,8 +314,8 @@ export default function UsuarioForm() {
                   value={formData.password} 
                   onChange={handleChange}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" 
-                  placeholder="Contraseña" 
-                  required 
+                  placeholder={isEditMode ? "Dejar vacío para mantener la actual" : "Contraseña"} 
+                  required={!isEditMode}
                 />
                 <div className="flex items-center mt-2">
                   <input
@@ -310,8 +328,13 @@ export default function UsuarioForm() {
                     Mostrar contraseña
                   </label>
                 </div>
-                {formData.password === '' && <ValidationMessage fieldName="una Contraseña" />}
-                <p className="leyenda text-sm text-gray-500 mt-1">La contraseña será hasheada con bcrypt en el servidor.</p>
+                {!isEditMode && formData.password === '' && <ValidationMessage fieldName="una Contraseña" />}
+                <p className="leyenda text-sm text-gray-500 mt-1">
+                  {isEditMode 
+                    ? 'Deje vacío para mantener la contraseña actual. La nueva contraseña será hasheada con bcrypt.'
+                    : 'La contraseña será hasheada con bcrypt en el servidor.'
+                  }
+                </p>
               </div>
 
               <fieldset>
@@ -354,7 +377,6 @@ export default function UsuarioForm() {
                           id={`compania-${compania.id_compania}`}
                           checked={formData.companias.includes(compania.id_compania)}
                           onChange={() => handleCompaniaChange(compania.id_compania)}
-                          required
                         />
                         <label htmlFor={`compania-${compania.id_compania}`} className="ml-2 text-sm text-gray-700">
                           {compania.nombre}
@@ -388,7 +410,7 @@ export default function UsuarioForm() {
                   ))}
                 </select>
                 {formData.idGrupoEmpresarial === '' && <ValidationMessage fieldName="un Grupo Empresarial" />}
-                <p className="leyenda text-sm text-gray-500 mt-1">Seleccione el grupo empresarial para el nuevo usuario.</p>
+                <p className="leyenda text-sm text-gray-500 mt-1">{isEditMode ? 'Edite el grupo empresarial del usuario.' : 'Seleccione el grupo empresarial para el nuevo usuario.'}</p>
               </div>
               )}
 
@@ -406,7 +428,7 @@ export default function UsuarioForm() {
             <div className="mt-1 flex flex-col sm:flex-row gap-4 pt-6">
               <button type="submit" disabled={loading}
                 className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50">
-                {loading ? 'Guardando...' : 'Guardar Usuario'}
+                {getButtonText()}
               </button>
 
               <button type="button" onClick={handleCancel} disabled={loading}

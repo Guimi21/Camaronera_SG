@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../helpers/CustomExceptions.php';
 // Incluir archivos necesarios
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../helpers/response.php';
@@ -8,6 +9,14 @@ header('Content-Type: application/json');
 
 // Definir constantes
 define('PARAM_ID_USUARIO', ':id_usuario');
+define('PARAM_USERNAME', ':username');
+define('PARAM_NOMBRE', ':nombre');
+define('PARAM_PASSWORD_HASH', ':password_hash');
+define('PARAM_ESTADO', ':estado');
+define('PARAM_ID_GRUPO_EMPRESARIAL', ':id_grupo_empresarial');
+define('PARAM_ID_PERFIL', ':id_perfil');
+define('PARAM_ID_COMPANIA', ':id_compania');
+define('PARAM_ID_USUARIO_EDIT', ':id_usuario_edit');
 define('ERROR_DB_PREFIX', 'Error en la base de datos: ');
 define('ERROR_SERVER_PREFIX', 'Error del servidor: ');
 define('INPUT_STREAM', 'php://input');
@@ -198,9 +207,9 @@ if ($method === 'POST') {
         $username = trim($input['username']);
         
         // Validar que el username no exista en la base de datos
-        $queryUsernameExists = "SELECT id_usuario FROM usuario WHERE username = :username";
+        $queryUsernameExists = "SELECT id_usuario FROM usuario WHERE username = " . PARAM_USERNAME . "";
         $stmtUsernameExists = $conn->prepare($queryUsernameExists);
-        $stmtUsernameExists->bindParam(':username', $username, PDO::PARAM_STR);
+        $stmtUsernameExists->bindParam(PARAM_USERNAME, $username, PDO::PARAM_STR);
         $stmtUsernameExists->execute();
         
         if ($stmtUsernameExists->rowCount() > 0) {
@@ -217,36 +226,36 @@ if ($method === 'POST') {
 
         // Insertar nuevo usuario
         $insertQuery = "INSERT INTO usuario (nombre, username, password_hash, estado, id_grupo_empresarial, fecha_creacion, fecha_actualizacion)
-                        VALUES (:nombre, :username, :password_hash, :estado, :id_grupo_empresarial, NOW(), NOW())";
+                        VALUES (" . PARAM_NOMBRE . ", " . PARAM_USERNAME . ", " . PARAM_PASSWORD_HASH . ", " . PARAM_ESTADO . ", " . PARAM_ID_GRUPO_EMPRESARIAL . ", NOW(), NOW())";
 
         $insertStmt = $conn->prepare($insertQuery);
-        $insertStmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
-        $insertStmt->bindParam(':username', $username, PDO::PARAM_STR);
-        $insertStmt->bindParam(':password_hash', $password_hash, PDO::PARAM_STR);
-        $insertStmt->bindParam(':estado', $estado, PDO::PARAM_STR);
-        $insertStmt->bindParam(':id_grupo_empresarial', $id_grupo_empresarial, PDO::PARAM_INT);
+        $insertStmt->bindParam(PARAM_NOMBRE, $nombre, PDO::PARAM_STR);
+        $insertStmt->bindParam(PARAM_USERNAME, $username, PDO::PARAM_STR);
+        $insertStmt->bindParam(PARAM_PASSWORD_HASH, $password_hash, PDO::PARAM_STR);
+        $insertStmt->bindParam(PARAM_ESTADO, $estado, PDO::PARAM_STR);
+        $insertStmt->bindParam(PARAM_ID_GRUPO_EMPRESARIAL, $id_grupo_empresarial, PDO::PARAM_INT);
 
         if ($insertStmt->execute()) {
             $new_id = $conn->lastInsertId();
             
             // Insertar relaciones usuario-perfil
-            $insertPerfilQuery = "INSERT INTO usuario_perfil (id_usuario, id_perfil) VALUES (" . PARAM_ID_USUARIO . ", :id_perfil)";
+            $insertPerfilQuery = "INSERT INTO usuario_perfil (id_usuario, id_perfil) VALUES (" . PARAM_ID_USUARIO . ", " . PARAM_ID_PERFIL . ")";
             $insertPerfilStmt = $conn->prepare($insertPerfilQuery);
             
             foreach ($perfiles as $id_perfil) {
                 $insertPerfilStmt->bindParam(PARAM_ID_USUARIO, $new_id, PDO::PARAM_INT);
-                $insertPerfilStmt->bindParam(':id_perfil', $id_perfil, PDO::PARAM_INT);
+                $insertPerfilStmt->bindParam(PARAM_ID_PERFIL, $id_perfil, PDO::PARAM_INT);
                 $insertPerfilStmt->execute();
             }
             
             // Insertar relaciones usuario-compañía (solo si existen compañías)
             if (!empty($companias)) {
-                $insertCompaniaQuery = "INSERT INTO usuario_compania (id_usuario, id_compania) VALUES (" . PARAM_ID_USUARIO . ", :id_compania)";
+                $insertCompaniaQuery = "INSERT INTO usuario_compania (id_usuario, id_compania) VALUES (" . PARAM_ID_USUARIO . ", " . PARAM_ID_COMPANIA . ")";
                 $insertCompaniaStmt = $conn->prepare($insertCompaniaQuery);
                 
                 foreach ($companias as $id_compania) {
                     $insertCompaniaStmt->bindParam(PARAM_ID_USUARIO, $new_id, PDO::PARAM_INT);
-                    $insertCompaniaStmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
+                    $insertCompaniaStmt->bindParam(PARAM_ID_COMPANIA, $id_compania, PDO::PARAM_INT);
                     $insertCompaniaStmt->execute();
                 }
             }
@@ -285,7 +294,7 @@ if ($method === 'POST') {
             ]);
             exit();
         } else {
-            throw new Exception('Error al insertar el usuario en la base de datos');
+            throw new InsertException('Error al insertar el usuario en la base de datos');
         }
 
     } catch (PDOException $e) {
@@ -354,18 +363,35 @@ if ($method === 'PUT') {
         $estado = trim($input['estado']);
         $perfiles = $input['perfiles'];
         $companias = $input['companias'];
+        
+        // Procesar contraseña solo si se proporciona
+        $password_hash = null;
+        if (isset($input['password']) && !empty(trim($input['password']))) {
+            $password_hash = password_hash(trim($input['password']), PASSWORD_BCRYPT);
+        }
 
         // Actualizar datos del usuario
-        $updateQuery = "UPDATE usuario SET nombre = :nombre, estado = :estado, fecha_actualizacion = NOW()
-                        WHERE id_usuario = :id_usuario_edit";
-
-        $updateStmt = $conn->prepare($updateQuery);
-        $updateStmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
-        $updateStmt->bindParam(':estado', $estado, PDO::PARAM_STR);
-        $updateStmt->bindParam(':id_usuario_edit', $id_usuario_edit, PDO::PARAM_INT);
+        if ($password_hash) {
+            // Incluir actualización de contraseña
+            $updateQuery = "UPDATE usuario SET nombre = " . PARAM_NOMBRE . ", estado = " . PARAM_ESTADO . ", password_hash = " . PARAM_PASSWORD_HASH . ", fecha_actualizacion = NOW()
+                            WHERE id_usuario = " . PARAM_ID_USUARIO_EDIT . "";
+            $updateStmt = $conn->prepare($updateQuery);
+            $updateStmt->bindParam(PARAM_NOMBRE, $nombre, PDO::PARAM_STR);
+            $updateStmt->bindParam(PARAM_ESTADO, $estado, PDO::PARAM_STR);
+            $updateStmt->bindParam(PARAM_PASSWORD_HASH, $password_hash, PDO::PARAM_STR);
+            $updateStmt->bindParam(PARAM_ID_USUARIO_EDIT, $id_usuario_edit, PDO::PARAM_INT);
+        } else {
+            // Sin actualización de contraseña
+            $updateQuery = "UPDATE usuario SET nombre = " . PARAM_NOMBRE . ", estado = " . PARAM_ESTADO . ", fecha_actualizacion = NOW()
+                            WHERE id_usuario = " . PARAM_ID_USUARIO_EDIT . "";
+            $updateStmt = $conn->prepare($updateQuery);
+            $updateStmt->bindParam(PARAM_NOMBRE, $nombre, PDO::PARAM_STR);
+            $updateStmt->bindParam(PARAM_ESTADO, $estado, PDO::PARAM_STR);
+            $updateStmt->bindParam(PARAM_ID_USUARIO_EDIT, $id_usuario_edit, PDO::PARAM_INT);
+        }
 
         if (!$updateStmt->execute()) {
-            throw new Exception('Error al actualizar el usuario');
+            throw new UpdateException('Error al actualizar el usuario');
         }
 
         // Eliminar perfiles antiguos
@@ -375,12 +401,12 @@ if ($method === 'PUT') {
         $deletePerfilStmt->execute();
 
         // Insertar nuevos perfiles
-        $insertPerfilQuery = "INSERT INTO usuario_perfil (id_usuario, id_perfil) VALUES (" . PARAM_ID_USUARIO . ", :id_perfil)";
+        $insertPerfilQuery = "INSERT INTO usuario_perfil (id_usuario, id_perfil) VALUES (" . PARAM_ID_USUARIO . ", " . PARAM_ID_PERFIL . ")";
         $insertPerfilStmt = $conn->prepare($insertPerfilQuery);
 
         foreach ($perfiles as $id_perfil) {
             $insertPerfilStmt->bindParam(PARAM_ID_USUARIO, $id_usuario_edit, PDO::PARAM_INT);
-            $insertPerfilStmt->bindParam(':id_perfil', $id_perfil, PDO::PARAM_INT);
+            $insertPerfilStmt->bindParam(PARAM_ID_PERFIL, $id_perfil, PDO::PARAM_INT);
             $insertPerfilStmt->execute();
         }
 
@@ -391,12 +417,12 @@ if ($method === 'PUT') {
         $deleteCompaniaStmt->execute();
 
         // Insertar nuevas compañías
-        $insertCompaniaQuery = "INSERT INTO usuario_compania (id_usuario, id_compania) VALUES (" . PARAM_ID_USUARIO . ", :id_compania)";
+        $insertCompaniaQuery = "INSERT INTO usuario_compania (id_usuario, id_compania) VALUES (" . PARAM_ID_USUARIO . ", " . PARAM_ID_COMPANIA . ")";
         $insertCompaniaStmt = $conn->prepare($insertCompaniaQuery);
 
         foreach ($companias as $id_compania) {
             $insertCompaniaStmt->bindParam(PARAM_ID_USUARIO, $id_usuario_edit, PDO::PARAM_INT);
-            $insertCompaniaStmt->bindParam(':id_compania', $id_compania, PDO::PARAM_INT);
+            $insertCompaniaStmt->bindParam(PARAM_ID_COMPANIA, $id_compania, PDO::PARAM_INT);
             $insertCompaniaStmt->execute();
         }
 

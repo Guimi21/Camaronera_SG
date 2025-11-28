@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import config from "../../config";
+import { fetchApi } from "../../services/api";
 
 // Función para obtener la fecha local en formato YYYY-MM-DD
 const getLocalDateString = () => {
@@ -45,27 +46,14 @@ export default function Modulos() {
     try {
       setLoading(true);
 
-      const response = await fetch(`${API_BASE_URL}/module/modulos.php`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      if (result.success) {
-        setModulos(result.data);
-        setFilteredModulos(result.data);
-        setError(null);
-      } else {
-        throw new Error(result.message || "Error al obtener módulos");
-      }
+      const data = await fetchApi(
+        `${API_BASE_URL}/module/modulos.php`,
+        "Error al obtener módulos"
+      );
+      
+      setModulos(data);
+      setFilteredModulos(data);
+      setError(null);
 
     } catch (err) {
       console.error("Error fetching modulos:", err);

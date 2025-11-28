@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../helpers/CustomExceptions.php';
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/cors.php';  // Configuración CORS centralizada
@@ -52,13 +53,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
-            throw new Exception("Error preparando consulta: " . implode(", ", $conn->errorInfo()));
+            throw new QueryPrepareException("Error preparando consulta: " . implode(", ", $conn->errorInfo()));
         }
 
         $stmt->bindParam(PARAM_ID_COMPANIA, $id_compania, PDO::PARAM_INT);
         
         if (!$stmt->execute()) {
-            throw new Exception("Error ejecutando consulta: " . implode(", ", $stmt->errorInfo()));
+            throw new QueryExecutionException("Error ejecutando consulta: " . implode(", ", $stmt->errorInfo()));
         }
 
         $tipos_balanceado = [];
@@ -188,7 +189,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
             http_response_code(201);
             echo json_encode($response);
         } else {
-            throw new Exception("Error al insertar tipo de balanceado");
+            throw new InsertException("Error al insertar tipo de balanceado");
         }
 
     } catch (Exception $e) {
@@ -266,7 +267,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
             ];
             echo json_encode($response);
         } else {
-            throw new Exception("Error al actualizar tipo de balanceado");
+            throw new UpdateException("Error al actualizar tipo de balanceado");
         }
 
     } catch (Exception $e) {
@@ -307,7 +308,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
             ];
             echo json_encode($response);
         } else {
-            throw new Exception("Error al eliminar tipo de balanceado");
+            throw new DeleteException("Error al eliminar tipo de balanceado");
         }
 
     } catch (Exception $e) {
