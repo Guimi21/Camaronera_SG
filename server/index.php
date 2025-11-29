@@ -6,7 +6,7 @@ require_once __DIR__ . '/vendor/autoload.php';  // Asegúrate de que este sea el
 require_once 'config/config.php';
 
 // Incluir configuración CORS centralizada
-require_once 'helpers/cors.php';
+require_once 'helpers/Cors.php';
 
 // Obtener la URL y el método de la solicitud (POST, GET, etc.)
 $requestMethod = $_SERVER['REQUEST_METHOD'];

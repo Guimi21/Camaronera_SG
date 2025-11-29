@@ -36,7 +36,7 @@ require_once __DIR__ . '/helpers/RequestValidator.php';
 require_once __DIR__ . '/helpers/DatabaseQueryBuilder.php';
 
 // Incluir configuración CORS
-require_once __DIR__ . '/helpers/cors.php';
+require_once __DIR__ . '/helpers/Cors.php';
 
 // Establecer headers JSON por defecto
 header('Content-Type: application/json; charset=utf-8');

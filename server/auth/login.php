@@ -1,129 +1,99 @@
 <?php
-define('RESPONSE_SUCCESS', 'success');
-define('RESPONSE_ERROR', 'error');
-define('RESPONSE_MESSAGE', 'message');
-define('PARAM_USER_ID', ':userId');
+// Bootstrap - Incluir todas las dependencias centralizadas
+require_once __DIR__ . '/../bootstrap.php';
 
-require_once __DIR__ . '/../config/config.php';  // Incluir configuración
-require_once __DIR__ . '/../helpers/response.php';  // Función para enviar respuestas
-require_once __DIR__ . '/../helpers/cors.php';  // Configuración CORS centralizada
+// Validar conexión a base de datos
+RequestValidator::validateDbConnection($conn);
 
-// Obtener los datos enviados (usuario y contraseña)
-$data = json_decode(file_get_contents("php://input"));
+try {
+    // Validar entrada JSON
+    $input = RequestValidator::validateJsonInput();
 
-// Depuración: muestra los datos recibidos
-error_log("Datos recibidos del frontend: " . print_r($data, true));
+    // Validar campos requeridos
+    RequestValidator::validateJsonFields($input, ['username', 'password']);
 
-// Validar que se hayan recibido los datos
-if (!isset($data->username) || !isset($data->password)) {
-    http_response_code(400);  // Código de estado 400 Bad Request
-    echo json_encode([RESPONSE_ERROR => 'Faltan datos']);
-    exit;
+    $username = trim($input['username']);
+    $password = trim($input['password']);
+
+    // Verificar si las credenciales son correctas
+    $query = "SELECT u.id_usuario, u.nombre, u.username, u.password_hash, u.id_grupo_empresarial
+              FROM usuario u
+              WHERE u.username = :username";
+
+    $qb = new DatabaseQueryBuilder($conn);
+    $users = $qb->executeQuery($query, [':username' => $username], true);
+
+    // Si no se encuentra el usuario
+    if (empty($users)) {
+        ErrorHandler::handleValidationError('Credenciales incorrectas', HTTP_UNAUTHORIZED);
+        exit();
+    }
+
+    $user = $users[0];
+
+    // Verificar la contraseña usando password_verify()
+    if (!password_verify($password, $user['password_hash'])) {
+        ErrorHandler::handleValidationError('Credenciales incorrectas', HTTP_UNAUTHORIZED);
+        exit();
+    }
+
+    // Obtener el grupo empresarial
+    $grupo_empresarial_nombre = null;
+    if ($user['id_grupo_empresarial']) {
+        $query_grupo = "SELECT nombre FROM grupo_empresarial WHERE id_grupo_empresarial = :id_grupo";
+        $grupos = $qb->executeQuery($query_grupo, [':id_grupo' => $user['id_grupo_empresarial']], true);
+        $grupo_empresarial_nombre = $grupos[0]['nombre'] ?? null;
+    }
+
+    // Obtener los perfiles asociados al usuario
+    $query_perfiles = "
+        SELECT p.id_perfil, p.nombre
+        FROM perfil p
+        JOIN usuario_perfil up ON p.id_perfil = up.id_perfil
+        WHERE up.id_usuario = :userId
+        ORDER BY p.nombre
+    ";
+    $perfiles = $qb->executeQuery($query_perfiles, [':userId' => $user['id_usuario']], true);
+
+    // Obtener todas las compañías asociadas al usuario
+    $query_companias = "
+        SELECT c.id_compania, c.nombre
+        FROM compania c
+        JOIN usuario_compania uc ON c.id_compania = uc.id_compania
+        WHERE uc.id_usuario = :userId
+        ORDER BY c.nombre
+    ";
+    $companias = $qb->executeQuery($query_companias, [':userId' => $user['id_usuario']], true);
+
+    // Obtener los menús asociados al perfil del usuario
+    $query_menus = "
+        SELECT DISTINCT m.id_menu, m.nombre, m.ruta, m.icono, m.estado, modu.nombre AS modulo
+        FROM menu m
+        JOIN modulo modu ON m.id_modulo = modu.id_modulo
+        JOIN menu_perfil mp ON m.id_menu = mp.id_menu
+        WHERE m.estado = 'ACTIVO'
+        AND mp.id_perfil IN (
+            SELECT id_perfil FROM usuario_perfil WHERE id_usuario = :userId
+        )
+        ORDER BY modu.nombre, m.nombre
+    ";
+    $menus = $qb->executeQuery($query_menus, [':userId' => $user['id_usuario']], true);
+
+    // Respuesta con los datos del usuario, el grupo empresarial, la compañía, los perfiles y los menús
+    $response = [
+        'id_usuario' => intval($user['id_usuario']),
+        'nombre' => $user['nombre'],
+        'usuario' => $user['username'],
+        'perfiles' => $perfiles,
+        'grupo_empresarial' => $grupo_empresarial_nombre,
+        'companias' => $companias,
+        'compania' => $companias[0]['nombre'] ?? null,
+        'id_compania' => !empty($companias) ? intval($companias[0]['id_compania']) : null,
+        'menus' => $menus
+    ];
+
+    ErrorHandler::sendSuccessResponse($response);
+
+} catch (Exception $e) {
+    ErrorHandler::handleException($e);
 }
-
-$username = $data->username;
-$password = $data->password;
-
-// Verificar si las credenciales son correctas (esto debe hacerlo con tu base de datos)
-$query = "SELECT u.id_usuario, u.nombre, u.username, u.password_hash, u.id_grupo_empresarial
-          FROM usuario u
-          WHERE u.username = :username";
-
-$stmt = $conn->prepare($query);
-$stmt->bindParam(':username', $username);
-$stmt->execute();
-
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-// Depuración: imprimir lo que se trae de la base de datos
-error_log("Datos del usuario desde la base de datos: " . print_r($user, true));
-
-// Si no se encuentra el usuario
-if (!$user) {
-    http_response_code(401);  // Código de estado 401 Unauthorized
-    echo json_encode([RESPONSE_ERROR => 'Credenciales incorrectas']);
-    exit;
-}
-
-// Verificar la contraseña usando password_verify()
-if (!password_verify($password, $user['password_hash'])) {
-    http_response_code(401);  // Código de estado 401 Unauthorized
-    echo json_encode([RESPONSE_ERROR => 'Credenciales incorrectas']);
-    exit;
-}
-
-// Obtener el grupo empresarial
-$grupo_empresarial_nombre = null;
-if ($user['id_grupo_empresarial']) {
-    $query_grupo = "SELECT nombre FROM grupo_empresarial WHERE id_grupo_empresarial = :id_grupo";
-    $stmt_grupo = $conn->prepare($query_grupo);
-    $stmt_grupo->bindParam(':id_grupo', $user['id_grupo_empresarial'], PDO::PARAM_INT);
-    $stmt_grupo->execute();
-    $grupo = $stmt_grupo->fetch(PDO::FETCH_ASSOC);
-    $grupo_empresarial_nombre = $grupo['nombre'] ?? null;
-}
-
-// Obtener los perfiles asociados al usuario
-$query_perfiles = "
-    SELECT p.id_perfil, p.nombre
-    FROM perfil p
-    JOIN usuario_perfil up ON p.id_perfil = up.id_perfil
-    WHERE up.id_usuario = " . PARAM_USER_ID . "
-    ORDER BY p.nombre
-";
-$stmt_perfiles = $conn->prepare($query_perfiles);
-$stmt_perfiles->bindParam(PARAM_USER_ID, $user['id_usuario']);
-$stmt_perfiles->execute();
-
-$perfiles = $stmt_perfiles->fetchAll(PDO::FETCH_ASSOC);
-
-// Obtener todas las compañías asociadas al usuario
-$query_companias = "
-    SELECT c.id_compania, c.nombre
-    FROM compania c
-    JOIN usuario_compania uc ON c.id_compania = uc.id_compania
-    WHERE uc.id_usuario = " . PARAM_USER_ID . "
-    ORDER BY c.nombre
-";
-$stmt_companias = $conn->prepare($query_companias);
-$stmt_companias->bindParam(PARAM_USER_ID, $user['id_usuario']);
-$stmt_companias->execute();
-
-$companias = $stmt_companias->fetchAll(PDO::FETCH_ASSOC);
-
-// Obtener los menús asociados al perfil del usuario
-$query_menus = "
-    SELECT DISTINCT m.id_menu, m.nombre, m.ruta, m.icono, m.estado, modu.nombre AS modulo
-    FROM menu m
-    JOIN modulo modu ON m.id_modulo = modu.id_modulo
-    JOIN menu_perfil mp ON m.id_menu = mp.id_menu
-    WHERE m.estado = 'ACTIVO'
-    AND mp.id_perfil IN (
-        SELECT id_perfil FROM usuario_perfil WHERE id_usuario = " . PARAM_USER_ID . "
-    )
-    ORDER BY modu.nombre, m.nombre
-";
-$stmt_menus = $conn->prepare($query_menus);
-$stmt_menus->bindParam(PARAM_USER_ID, $user['id_usuario']);
-$stmt_menus->execute();
-
-$menus = $stmt_menus->fetchAll(PDO::FETCH_ASSOC);
-
-// Respuesta con los datos del usuario, el grupo empresarial, la compañía, los perfiles y los menús
-$response = [
-    'id_usuario' => $user['id_usuario'],  // ID del usuario
-    'nombre' => $user['nombre'],  // Nombre del usuario
-    'usuario' => $user['username'], // Nickname del usuario
-    'perfiles' => $perfiles,  // Array de perfiles del usuario
-    'grupo_empresarial' => $grupo_empresarial_nombre,  // Nombre del grupo empresarial
-    'companias' => $companias,  // Array de todas las compañías del usuario
-    'compania' => $companias[0]['nombre'] ?? null,  // Nombre de la primera compañía
-    'id_compania' => $companias[0]['id_compania'] ?? null,  // ID de la primera compañía
-    'menus' => $menus  // Agregar los menús a la respuesta
-];
-
-// Imprimir la respuesta antes de enviarla
-error_log("Respuesta enviada al frontend: " . print_r($response, true));
-
-http_response_code(200);  // Código de estado 200 OK
-echo json_encode($response);

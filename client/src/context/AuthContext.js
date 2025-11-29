@@ -106,21 +106,24 @@ export const AuthProvider = ({ children }) => {
         throw new Error("La respuesta no es un JSON válido.");
       }
 
-      if (!response.ok) {
-        throw new Error(jsonResponse.error || "Credenciales incorrectas");
+      if (!response.ok || !jsonResponse.success) {
+        throw new Error(jsonResponse.message || "Credenciales incorrectas");
       }
 
-      setNombre(jsonResponse.nombre); // Guardamos el nombre del usuario
-      setUser(jsonResponse.usuario);  // Guardamos el nickname del usuario
-      setPerfiles(jsonResponse.perfiles || []); // Guardamos los perfiles del usuario
-      setPerfilActivo(jsonResponse.perfiles && jsonResponse.perfiles.length > 0 ? jsonResponse.perfiles[0].nombre : null); // Primer perfil como activo
-      setMenus(jsonResponse.menus); // Guardamos los menús
-      setGrupoEmpresarial(jsonResponse.grupo_empresarial); // Guardamos grupo empresarial
-      setCompanias(jsonResponse.companias || []); // Guardamos todas las compañías
-      setCompania(jsonResponse.compania); // Guardamos compañía activa
-      setIdCompania(jsonResponse.id_compania); // Guardamos ID compañía activa
-      setIdUsuario(jsonResponse.id_usuario); // Guardamos ID usuario
-      localStorage.setItem("authData", JSON.stringify(jsonResponse));
+      // Extraer los datos del nuevo formato de respuesta
+      const userData = jsonResponse.data || jsonResponse;
+
+      setNombre(userData.nombre); // Guardamos el nombre del usuario
+      setUser(userData.usuario);  // Guardamos el nickname del usuario
+      setPerfiles(userData.perfiles || []); // Guardamos los perfiles del usuario
+      setPerfilActivo(userData.perfiles && userData.perfiles.length > 0 ? userData.perfiles[0].nombre : null); // Primer perfil como activo
+      setMenus(userData.menus); // Guardamos los menús
+      setGrupoEmpresarial(userData.grupo_empresarial); // Guardamos grupo empresarial
+      setCompanias(userData.companias || []); // Guardamos todas las compañías
+      setCompania(userData.compania); // Guardamos compañía activa
+      setIdCompania(userData.id_compania); // Guardamos ID compañía activa
+      setIdUsuario(userData.id_usuario); // Guardamos ID usuario
+      localStorage.setItem("authData", JSON.stringify(userData));
 
       return { success: true };
     } catch (error) {
