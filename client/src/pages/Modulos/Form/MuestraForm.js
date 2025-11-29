@@ -423,6 +423,11 @@ export default function MuestraForm() {
     return true;
   };
 
+  // Validar que al menos un balanceado tenga consumo
+  const validarAlMenosUnBalanceado = (balanceados) => {
+    return Object.values(balanceados).some(val => val !== '' && val !== null && val !== undefined && Number.parseFloat(val) > 0);
+  };
+
   // Procesar cambio de ciclo productivo
   const procesarCambioCiclo = (value, newFormData) => {
     const cicloSeleccionado = ciclosDisponibles.find(ciclo => ciclo.id_ciclo == value);
@@ -541,6 +546,14 @@ export default function MuestraForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validar que al menos un balanceado tenga consumo
+    if (!validarAlMenosUnBalanceado(formData.balanceados)) {
+      setError('Por favor, ingresa el consumo de al menos un tipo de balanceado.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -635,12 +648,14 @@ export default function MuestraForm() {
       );
     }
 
+    const tieneAlMenosUnBalanceado = validarAlMenosUnBalanceado(formData.balanceados);
+
     return (
       <>
         {tiposBalanceado.map((tipo) => (
           <div key={tipo.id_tipo_balanceado}>
             <label htmlFor={`balanceado_${tipo.id_tipo_balanceado}`} className="block text-sm font-medium text-gray-700 mb-2">
-              {tipo.nombre}
+              {tipo.nombre} *
             </label>
             <input
               id={`balanceado_${tipo.id_tipo_balanceado}`}
@@ -665,6 +680,16 @@ export default function MuestraForm() {
             </p>
           </div>
         ))}
+        {!tieneAlMenosUnBalanceado && (
+          <div className="col-span-full">
+            <div className="validation-message">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Ingresa el consumo de al menos un tipo de balanceado</span>
+            </div>
+          </div>
+        )}
       </>
     );
   };
@@ -679,6 +704,19 @@ export default function MuestraForm() {
           Selecciona un ciclo productivo existente y completa los campos de muestra para agregar un nuevo registro.
         </p>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-300 rounded-lg p-4 mb-6">
+          <div className="header-user flex items-start gap-3">
+            <svg className="info w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            <div>
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {!loadingCiclos && ciclosDisponibles.length === 0 && !error && (
         <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-4 mb-6">
@@ -981,7 +1019,7 @@ export default function MuestraForm() {
                 <option value="ACTIVA">Activa</option>
                 <option value="INACTIVA">Inactiva</option>
               </select>
-              <p className="text-xs text-gray-500 mt-1">Estado de la muestra en el sistema</p>
+              <p className="text-xs text-gray-500 mt-1 leyenda">Estado de la muestra en el sistema</p>
             </div>
 
             {/* Botones de acción */}
