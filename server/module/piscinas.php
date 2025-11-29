@@ -12,8 +12,8 @@ try {
     // GET - Obtener piscinas
     if ($method === 'GET') {
         $id_compania = RequestValidator::validateIntegerParam('id_compania');
-        
-        $sql = "SELECT 
+
+        $sql = "SELECT
                     p.id_piscina,
                     p.codigo,
                     p.hectareas,
@@ -23,11 +23,11 @@ try {
                     p.fecha_creacion,
                     p.fecha_actualizacion
                 FROM piscina p
-                WHERE p.id_compania = :id_compania
+                WHERE p.id_compania = " . PARAM_ID_COMPANIA_LITERAL . "
                 ORDER BY p.id_piscina";
 
-        $records = $qb->executeQuery($sql, [':id_compania' => $id_compania], true);
-        
+        $records = $qb->executeQuery($sql, [PARAM_ID_COMPANIA_LITERAL => $id_compania], true);
+
         // Formatear datos
         $piscinas = array_map(function($row) {
             return [
@@ -41,28 +41,28 @@ try {
                 'fecha_actualizacion' => $row['fecha_actualizacion']
             ];
         }, $records);
-        
+
         ErrorHandler::sendSuccessResponseWithTotal($piscinas, count($piscinas));
-        
+
     // POST - Crear piscina
     } elseif ($method === 'POST') {
         $input = RequestValidator::validateJsonInput();
-        
+
         $requiredFields = ['codigo', 'hectareas', 'ubicacion', 'id_compania', 'id_usuario_crea', 'id_usuario_actualiza'];
         RequestValidator::validateJsonFields($input, $requiredFields);
-        
+
         // Validar que el código no exista
         $count = $qb->countRecords('piscina',
-            'codigo = :codigo AND id_compania = :id_compania',
-            [':codigo' => $input['codigo'], ':id_compania' => $input['id_compania']]);
-        
+            'codigo = :codigo AND id_compania = ' . PARAM_ID_COMPANIA_LITERAL,
+            [':codigo' => $input['codigo'], PARAM_ID_COMPANIA_LITERAL => $input['id_compania']]);
+
         if ($count > 0) {
             ErrorHandler::handleValidationError('Ya existe una piscina con este código en la compañía');
             exit();
         }
-        
+
         $estado = isset($input['estado']) && !empty(trim($input['estado'])) ? trim($input['estado']) : 'ACTIVA';
-        
+
         $id_piscina = $qb->insertRecord('piscina', [
             'codigo' => $input['codigo'],
             'hectareas' => $input['hectareas'],
@@ -71,73 +71,73 @@ try {
             'id_compania' => intval($input['id_compania']),
             'id_usuario_crea' => intval($input['id_usuario_crea']),
             'id_usuario_actualiza' => intval($input['id_usuario_actualiza']),
-            'fecha_creacion' => date('Y-m-d H:i:s'),
-            'fecha_actualizacion' => date('Y-m-d H:i:s')
+            'fecha_creacion' => date(DATETIME_FORMAT),
+            'fecha_actualizacion' => date(DATETIME_FORMAT)
         ]);
-        
+
         ErrorHandler::sendCreatedResponse(['id_piscina' => $id_piscina]);
-        
+
     // PUT - Actualizar piscina
     } elseif ($method === 'PUT') {
         $input = RequestValidator::validateJsonInput();
-        
+
         $requiredFields = ['id_piscina', 'codigo', 'hectareas', 'ubicacion', 'id_compania'];
         RequestValidator::validateJsonFields($input, $requiredFields);
-        
+
         $id_piscina = intval($input['id_piscina']);
         $id_compania = intval($input['id_compania']);
-        
+
         // Validar que el código no exista en otra piscina
         $count = $qb->countRecords('piscina',
-            'codigo = :codigo AND id_compania = :id_compania AND id_piscina != :id_piscina',
-            [':codigo' => $input['codigo'], ':id_compania' => $id_compania, ':id_piscina' => $id_piscina]);
-        
+            'codigo = :codigo AND id_compania = ' . PARAM_ID_COMPANIA_LITERAL . ' AND id_piscina != ' . PARAM_ID_PISCINA,
+            [':codigo' => $input['codigo'], PARAM_ID_COMPANIA_LITERAL => $id_compania, PARAM_ID_PISCINA => $id_piscina]);
+
         if ($count > 0) {
             ErrorHandler::handleValidationError('Ya existe otra piscina con este código en la compañía');
             exit();
         }
-        
+
         $estado = isset($input['estado']) && !empty(trim($input['estado'])) ? trim($input['estado']) : 'ACTIVA';
-        
+
         $qb->updateRecord('piscina', [
             'codigo' => $input['codigo'],
             'hectareas' => $input['hectareas'],
             'ubicacion' => $input['ubicacion'],
             'estado' => $estado,
-            'fecha_actualizacion' => date('Y-m-d H:i:s')
-        ], 'id_piscina = :id_piscina AND id_compania = :id_compania', 
-           [':id_piscina' => $id_piscina, ':id_compania' => $id_compania]);
-        
+            'fecha_actualizacion' => date(DATETIME_FORMAT)
+        ], WHERE_ID_PISCINA . ' AND id_compania = ' . PARAM_ID_COMPANIA_LITERAL,
+           [PARAM_ID_PISCINA => $id_piscina, PARAM_ID_COMPANIA_LITERAL => $id_compania]);
+
         ErrorHandler::sendUpdatedResponse();
-        
+
     // DELETE - Eliminar piscina
     } elseif ($method === 'DELETE') {
         $id_piscina = RequestValidator::validateIntegerParam('id_piscina');
         $id_compania = RequestValidator::validateIntegerParam('id_compania');
-        
+
         // Verificar si tiene ciclos asociados
-        $cycle_count = $qb->countRecords('ciclo', 'id_piscina = :id_piscina', [':id_piscina' => $id_piscina]);
-        
+        $cycle_count = $qb->countRecords('ciclo', WHERE_ID_PISCINA, [PARAM_ID_PISCINA => $id_piscina]);
+
         if ($cycle_count > 0) {
             ErrorHandler::handleValidationError('No se puede eliminar la piscina porque tiene ciclos asociados');
             exit();
         }
-        
+
         // Eliminar piscina
-        $deleted = $qb->deleteRecord('piscina', 
-            'id_piscina = :id_piscina AND id_compania = :id_compania',
-            [':id_piscina' => $id_piscina, ':id_compania' => $id_compania]);
-        
+        $deleted = $qb->deleteRecord('piscina',
+            WHERE_ID_PISCINA . ' AND id_compania = ' . PARAM_ID_COMPANIA_LITERAL,
+            [PARAM_ID_PISCINA => $id_piscina, PARAM_ID_COMPANIA_LITERAL => $id_compania]);
+
         if ($deleted === 0) {
             ErrorHandler::sendErrorResponse('No se encontró la piscina', HTTP_NOT_FOUND);
         } else {
             ErrorHandler::sendDeletedResponse();
         }
-        
+
     } else {
         ErrorHandler::sendErrorResponse('Método no permitido', HTTP_METHOD_NOT_ALLOWED);
     }
-    
+
 } catch (Exception $e) {
     ErrorHandler::handleException($e);
 }

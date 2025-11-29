@@ -41,7 +41,7 @@ export default function CompaniaForm() {
     estado: 'ACTIVA'
   });
   
-  const [loading, setLoading] = useState(isEditMode ? true : false);
+  const [loading, setLoading] = useState(isEditMode);
   const [error, setError] = useState('');
 
   // Hacer scroll al inicio cuando hay un error

@@ -12,7 +12,7 @@ import {
 
 // Hook para cargar datos del ciclo
 export const useCicloData = (idCompania, idCicloParam, isEditMode, API_BASE_URL, onFormDataLoaded) => {
-  const [loadingCiclo, setLoadingCiclo] = useState(isEditMode ? true : false);
+  const [loadingCiclo, setLoadingCiclo] = useState(isEditMode);
   const [error, setError] = useState('');
   const [tieneMuestras, setTieneMuestras] = useState(false);
 

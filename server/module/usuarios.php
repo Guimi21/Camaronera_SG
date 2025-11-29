@@ -16,7 +16,7 @@ if ($method === 'GET') {
 
         // Consulta para obtener usuarios del mismo grupo empresarial
         $query = "
-            SELECT 
+            SELECT
                 u.id_usuario,
                 u.nombre,
                 u.username,
@@ -32,8 +32,8 @@ if ($method === 'GET') {
             LEFT JOIN usuario_compania uc ON u.id_usuario = uc.id_usuario
             LEFT JOIN compania c ON uc.id_compania = c.id_compania
             WHERE u.id_grupo_empresarial = (
-                SELECT id_grupo_empresarial 
-                FROM usuario 
+                SELECT id_grupo_empresarial
+                FROM usuario
                 WHERE id_usuario = :id_usuario
             )
             GROUP BY u.id_usuario, u.nombre, u.username, u.estado, u.id_grupo_empresarial, u.fecha_creacion, u.fecha_actualizacion
@@ -41,7 +41,7 @@ if ($method === 'GET') {
         ";
 
         $qb = new DatabaseQueryBuilder($conn);
-        $usuarios = $qb->executeQuery($query, [':id_usuario' => $id_usuario], true);
+        $usuarios = $qb->executeQuery($query, [PARAM_ID_USUARIO => $id_usuario], true);
 
         ErrorHandler::sendSuccessResponse($usuarios);
 
@@ -86,7 +86,7 @@ if ($method === 'POST') {
         // Obtener el id_grupo_empresarial
         if (isset($input['idGrupoEmpresarial']) && !empty($input['idGrupoEmpresarial'])) {
             $id_grupo_empresarial = intval($input['idGrupoEmpresarial']);
-            
+
             // Validar que el grupo empresarial existe
             $grupoExists = $qb->countRecords('grupo_empresarial', 'id_grupo_empresarial = :id_grupo', [':id_grupo' => $id_grupo_empresarial]);
             if ($grupoExists === 0) {
@@ -119,8 +119,8 @@ if ($method === 'POST') {
             'password_hash' => $password_hash,
             'estado' => $estado,
             'id_grupo_empresarial' => $id_grupo_empresarial,
-            'fecha_creacion' => date('Y-m-d H:i:s'),
-            'fecha_actualizacion' => date('Y-m-d H:i:s')
+            'fecha_creacion' => date(DATETIME_FORMAT),
+            'fecha_actualizacion' => date(DATETIME_FORMAT)
         ]);
 
         // Insertar relaciones usuario-perfil
@@ -140,14 +140,14 @@ if ($method === 'POST') {
         }
 
         // Obtener datos del usuario creado
-        $perfilesNombres = $qb->getRecords('perfil', 'nombre', 
-            'id_perfil IN (SELECT id_perfil FROM usuario_perfil WHERE id_usuario = :id_usuario)',
-            [':id_usuario' => $new_id]);
+        $perfilesNombres = $qb->getRecords('perfil', 'nombre',
+            'id_perfil IN (SELECT id_perfil FROM usuario_perfil WHERE id_usuario = ' . PARAM_ID_USUARIO . ')',
+            [PARAM_ID_USUARIO => $new_id]);
         $perfilesArray = array_column($perfilesNombres, 'nombre');
 
         $companiasNombres = $qb->getRecords('compania', 'nombre',
-            'id_compania IN (SELECT id_compania FROM usuario_compania WHERE id_usuario = :id_usuario)',
-            [':id_usuario' => $new_id]);
+            'id_compania IN (SELECT id_compania FROM usuario_compania WHERE id_usuario = ' . PARAM_ID_USUARIO . ')',
+            [PARAM_ID_USUARIO => $new_id]);
         $companiasArray = array_column($companiasNombres, 'nombre');
 
         $usuarioCreado = [
@@ -206,7 +206,7 @@ if ($method === 'PUT') {
         $updateData = [
             'nombre' => $nombre,
             'estado' => $estado,
-            'fecha_actualizacion' => date('Y-m-d H:i:s')
+            'fecha_actualizacion' => date(DATETIME_FORMAT)
         ];
 
         if (isset($input['password']) && !empty(trim($input['password']))) {
@@ -217,7 +217,7 @@ if ($method === 'PUT') {
         $qb->updateRecord('usuario', $updateData, 'id_usuario = :id_usuario_edit', [':id_usuario_edit' => $id_usuario_edit]);
 
         // Eliminar perfiles antiguos e insertar nuevos
-        $qb->deleteRecord('usuario_perfil', 'id_usuario = :id_usuario', [':id_usuario' => $id_usuario_edit]);
+        $qb->deleteRecord('usuario_perfil', 'id_usuario = ' . PARAM_ID_USUARIO, [PARAM_ID_USUARIO => $id_usuario_edit]);
         foreach ($perfiles as $id_perfil) {
             $qb->insertRecord('usuario_perfil', [
                 'id_usuario' => $id_usuario_edit,
@@ -226,7 +226,7 @@ if ($method === 'PUT') {
         }
 
         // Eliminar compañías antiguas e insertar nuevas
-        $qb->deleteRecord('usuario_compania', 'id_usuario = :id_usuario', [':id_usuario' => $id_usuario_edit]);
+        $qb->deleteRecord('usuario_compania', 'id_usuario = ' . PARAM_ID_USUARIO, [PARAM_ID_USUARIO => $id_usuario_edit]);
         foreach ($companias as $id_compania) {
             $qb->insertRecord('usuario_compania', [
                 'id_usuario' => $id_usuario_edit,
@@ -236,13 +236,13 @@ if ($method === 'PUT') {
 
         // Obtener datos actualizados
         $perfilesNombres = $qb->getRecords('perfil', 'nombre',
-            'id_perfil IN (SELECT id_perfil FROM usuario_perfil WHERE id_usuario = :id_usuario)',
-            [':id_usuario' => $id_usuario_edit]);
+            'id_perfil IN (SELECT id_perfil FROM usuario_perfil WHERE id_usuario = ' . PARAM_ID_USUARIO . ')',
+            [PARAM_ID_USUARIO => $id_usuario_edit]);
         $perfilesArray = array_column($perfilesNombres, 'nombre');
 
         $companiasNombres = $qb->getRecords('compania', 'nombre',
-            'id_compania IN (SELECT id_compania FROM usuario_compania WHERE id_usuario = :id_usuario)',
-            [':id_usuario' => $id_usuario_edit]);
+            'id_compania IN (SELECT id_compania FROM usuario_compania WHERE id_usuario = ' . PARAM_ID_USUARIO . ')',
+            [PARAM_ID_USUARIO => $id_usuario_edit]);
         $companiasArray = array_column($companiasNombres, 'nombre');
 
         $usuarioActualizado = [

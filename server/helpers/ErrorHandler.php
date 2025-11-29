@@ -10,7 +10,7 @@ class ErrorHandler
 {
     /**
      * Maneja errores de validación
-     * 
+     *
      * @param string $message Mensaje de error
      * @param int $httpCode Código HTTP
      */
@@ -21,7 +21,7 @@ class ErrorHandler
 
     /**
      * Maneja errores de base de datos
-     * 
+     *
      * @param Exception $e Excepción lanzada
      * @param int $httpCode Código HTTP
      * @param bool $debug Si debe mostrar detalles en desarrollo
@@ -40,7 +40,7 @@ class ErrorHandler
 
     /**
      * Maneja errores del servidor
-     * 
+     *
      * @param Exception $e Excepción lanzada
      * @param int $httpCode Código HTTP
      * @param bool $debug Si debe mostrar detalles en desarrollo
@@ -59,7 +59,7 @@ class ErrorHandler
 
     /**
      * Maneja excepciones personalizadas
-     * 
+     *
      * @param Exception $exception Excepción capturada
      * @param int $defaultHttpCode Código HTTP por defecto
      * @param bool $debug Si debe mostrar detalles en desarrollo
@@ -92,14 +92,14 @@ class ErrorHandler
 
     /**
      * Envía una respuesta de error JSON
-     * 
+     *
      * @param string $message Mensaje de error
      * @param int $httpCode Código HTTP
      */
     public static function sendErrorResponse($message, $httpCode = HTTP_INTERNAL_SERVER_ERROR)
     {
         http_response_code($httpCode);
-        header('Content-Type: application/json; charset=utf-8');
+        header(HEADER_CONTENT_TYPE_JSON);
 
         echo json_encode([
             RESPONSE_SUCCESS => false,
@@ -109,7 +109,7 @@ class ErrorHandler
 
     /**
      * Envía una respuesta de éxito JSON
-     * 
+     *
      * @param mixed $data Datos a enviar
      * @param string $message Mensaje de éxito
      * @param int $httpCode Código HTTP
@@ -117,7 +117,7 @@ class ErrorHandler
     public static function sendSuccessResponse($data = null, $message = SUCCESS_DATA_RETRIEVED, $httpCode = HTTP_OK)
     {
         http_response_code($httpCode);
-        header('Content-Type: application/json; charset=utf-8');
+        header(HEADER_CONTENT_TYPE_JSON);
 
         $response = [
             RESPONSE_SUCCESS => true,
@@ -133,7 +133,7 @@ class ErrorHandler
 
     /**
      * Envía una respuesta de éxito JSON con datos y total
-     * 
+     *
      * @param mixed $data Datos a enviar
      * @param int $total Total de registros
      * @param string $message Mensaje de éxito
@@ -142,7 +142,7 @@ class ErrorHandler
     public static function sendSuccessResponseWithTotal($data, $total, $message = SUCCESS_DATA_RETRIEVED, $httpCode = HTTP_OK)
     {
         http_response_code($httpCode);
-        header('Content-Type: application/json; charset=utf-8');
+        header(HEADER_CONTENT_TYPE_JSON);
 
         echo json_encode([
             RESPONSE_SUCCESS => true,
@@ -154,7 +154,7 @@ class ErrorHandler
 
     /**
      * Envía una respuesta de creación exitosa
-     * 
+     *
      * @param mixed $data Datos creados
      * @param string $message Mensaje de éxito
      */
@@ -165,7 +165,7 @@ class ErrorHandler
 
     /**
      * Envía una respuesta de actualización exitosa
-     * 
+     *
      * @param mixed $data Datos actualizados
      * @param string $message Mensaje de éxito
      */
@@ -176,7 +176,7 @@ class ErrorHandler
 
     /**
      * Envía una respuesta de eliminación exitosa
-     * 
+     *
      * @param mixed $data Datos
      * @param string $message Mensaje de éxito
      */
@@ -187,7 +187,7 @@ class ErrorHandler
 
     /**
      * Registra un error en un archivo de log
-     * 
+     *
      * @param string $message Mensaje a registrar
      * @param string $level Nivel (ERROR, WARNING, INFO)
      */

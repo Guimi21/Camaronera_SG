@@ -36,7 +36,7 @@ export const useUserData = ({
   API_BASE_URL
 }) => {
   const [usuario, setUsuario] = useState(null);
-  const [loading, setLoading] = useState(isEditMode ? true : false);
+  const [loading, setLoading] = useState(isEditMode);
   const [error, setError] = useState('');
 
   useEffect(() => {

@@ -13,7 +13,7 @@ try {
         // Obtener tipos de alimentación de una compañía
         $id_compania = RequestValidator::getRequiredParamInt('id_compania', 'GET');
 
-        $query = "SELECT 
+        $query = "SELECT
             id_tipo_alimentacion, nombre, id_compania, estado, fecha_creacion, fecha_actualizacion
         FROM tipo_alimentacion
         WHERE id_compania = :id_compania
@@ -32,11 +32,11 @@ try {
         $estado = isset($input['estado']) ? trim($input['estado']) : 'ACTIVO';
 
         // Verificar si ya existe
-        $count = $qb->countRecords('tipo_alimentacion', 
-            'nombre = :nombre AND id_compania = :id_compania', 
+        $count = $qb->countRecords('tipo_alimentacion',
+            'nombre = :nombre AND id_compania = :id_compania',
             [':nombre' => $nombre, ':id_compania' => $id_compania]
         );
-        
+
         if ($count > 0) {
             ErrorHandler::handleValidationError('Ya existe un tipo de alimentación con ese nombre en esta compañía', HTTP_CONFLICT);
             exit();
@@ -46,8 +46,8 @@ try {
             'nombre' => $nombre,
             'id_compania' => $id_compania,
             'estado' => $estado,
-            'fecha_creacion' => date('Y-m-d H:i:s'),
-            'fecha_actualizacion' => date('Y-m-d H:i:s')
+            'fecha_creacion' => date(DATETIME_FORMAT),
+            'fecha_actualizacion' => date(DATETIME_FORMAT)
         ]);
 
         ErrorHandler::sendCreatedResponse(['id_tipo_alimentacion' => $id]);
@@ -77,7 +77,7 @@ try {
         }
 
         $updates[] = 'fecha_actualizacion = :fecha_actualizacion';
-        $params[':fecha_actualizacion'] = date('Y-m-d H:i:s');
+        $params[':fecha_actualizacion'] = date(DATETIME_FORMAT);
 
         $query = "UPDATE tipo_alimentacion SET " . implode(', ', $updates) . " WHERE id_tipo_alimentacion = :id";
         $qb->executeQuery($query, $params, false);
@@ -87,7 +87,7 @@ try {
     } elseif ($method === 'DELETE') {
         // Eliminar tipo de alimentación
         $input = RequestValidator::validateJsonInput();
-        
+
         if (!isset($input['id_tipo_alimentacion'])) {
             ErrorHandler::handleValidationError('ID de tipo de alimentación requerido');
             exit();

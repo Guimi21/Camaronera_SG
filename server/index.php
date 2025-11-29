@@ -3,7 +3,7 @@
 require_once __DIR__ . '/vendor/autoload.php';  // Asegúrate de que este sea el camino correcto hacia el autoload
 
 // Incluir la configuración global
-require_once 'config/config.php'; 
+require_once 'config/config.php';
 
 // Incluir configuración CORS centralizada
 require_once 'helpers/cors.php';
@@ -40,4 +40,3 @@ switch ($requestUri) {
         header("HTTP/1.1 404 Not Found");
         echo json_encode(['error' => 'Ruta no encontrada']);
 }
-?>

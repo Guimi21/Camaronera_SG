@@ -99,13 +99,13 @@ export default function MonitoreoCiclos() {
   // Helper para obtener valores únicos para selects
   const uniqueValues = (key) => {
     const set = new Set();
-    ciclos.forEach(c => {
+    for (const c of ciclos) {
       let v = c[key];
       if (key === 'tipo_alimentacion') {
         v = c.nombre_tipo_alimentacion;
       }
       if (v !== null && v !== undefined && String(v).trim() !== '') set.add(String(v));
-    });
+    }
     return Array.from(set).sort((a, b) => a.localeCompare(b, 'es'));
   };
 
@@ -120,14 +120,14 @@ export default function MonitoreoCiclos() {
 
   // Formatear fecha para mostrar
   const formatDate = (dateString, includeTime = true) => {
-    if (!dateString || dateString === null || dateString === undefined || dateString === 'null') return "N/A";
+    if (dateString === null || dateString === undefined || dateString === '' || dateString === 'null') return "N/A";
     
     try {
-      if (!includeTime) {
+      if (includeTime === false) {
         // Para fechas sin hora, extraer solo la parte de fecha para evitar problemas de zona horaria
         const dateStr = String(dateString).trim();
         
-        if (!dateStr) return "N/A";
+        if (dateStr === '' || dateStr === null) return "N/A";
         
         // Extraer solo la parte de fecha (YYYY-MM-DD)
         let datePart = dateStr.split('T')[0]; // Maneja formato ISO
@@ -138,7 +138,7 @@ export default function MonitoreoCiclos() {
         const [year, month, day] = datePart.split('-');
         
         // Validar que los valores sean válidos
-        if (!year || !month || !day || Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
+        if (year === undefined || month === undefined || day === undefined || Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
           return "N/A";
         }
         

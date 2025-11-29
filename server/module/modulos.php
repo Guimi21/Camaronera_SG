@@ -31,7 +31,7 @@ try {
     // POST - Crear nuevo módulo
     } elseif ($method === 'POST') {
         $input = RequestValidator::validateJsonInput();
-        
+
         $nombre = isset($input['nombre']) ? trim($input['nombre']) : null;
         if (!$nombre) {
             ErrorHandler::handleValidationError('El nombre del módulo es requerido');
@@ -45,8 +45,8 @@ try {
             'nombre' => $nombre,
             'descripcion' => $descripcion,
             'estado' => $estado,
-            'fecha_creacion' => date('Y-m-d H:i:s'),
-            'fecha_actualizacion' => date('Y-m-d H:i:s')
+            'fecha_creacion' => date(DATETIME_FORMAT),
+            'fecha_actualizacion' => date(DATETIME_FORMAT)
         ]);
 
         $data = [
@@ -72,7 +72,7 @@ try {
             'nombre' => $nombre,
             'descripcion' => $descripcion,
             'estado' => $estado,
-            'fecha_actualizacion' => date('Y-m-d H:i:s')
+            'fecha_actualizacion' => date(DATETIME_FORMAT)
         ], 'id_modulo = :id_modulo', [':id_modulo' => $id_modulo]);
 
         ErrorHandler::sendUpdatedResponse();
@@ -86,7 +86,3 @@ try {
 } catch (Exception $e) {
     ErrorHandler::handleException($e);
 }
-echo json_encode([
-    RESPONSE_SUCCESS => false,
-    RESPONSE_MESSAGE => 'Método no permitido'
-]);

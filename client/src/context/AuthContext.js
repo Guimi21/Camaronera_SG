@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }) => {
       }
       
       setIdUsuario(parsedData.id_usuario); // Guardamos ID usuario
-    } catch (error) {
+    } catch {
       logout();
     } finally {
       setLoading(false);
@@ -102,7 +102,7 @@ export const AuthProvider = ({ children }) => {
       let jsonResponse;
       try {
         jsonResponse = JSON.parse(responseText);
-      } catch (error) {
+      } catch {
         throw new Error("La respuesta no es un JSON válido.");
       }
 

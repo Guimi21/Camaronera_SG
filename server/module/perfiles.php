@@ -12,23 +12,23 @@ try {
     // GET - Obtener perfiles
     if ($method === 'GET') {
         $id_perfil = RequestValidator::getParamWithDefault('id_perfil', null, 'GET');
-        
+
         if ($id_perfil) {
             $id_perfil = (int)$id_perfil;
             // Obtener perfil específico con sus menús
-            $query = "SELECT 
+            $query = "SELECT
                 p.id_perfil, p.nombre, p.descripcion, p.estado, p.fecha_creacion, p.fecha_actualizacion,
                 m.id_menu, m.nombre as menu_nombre, m.ruta, m.icono
             FROM perfil p
             LEFT JOIN menu_perfil mp ON p.id_perfil = mp.id_perfil
             LEFT JOIN menu m ON mp.id_menu = m.id_menu
-            WHERE p.id_perfil = :id_perfil
+            WHERE p.id_perfil = " . PARAM_ID_PERFIL . "
             ORDER BY m.nombre";
 
-            $rows = $qb->executeQuery($query, [':id_perfil' => $id_perfil], true);
+            $rows = $qb->executeQuery($query, [PARAM_ID_PERFIL => $id_perfil], true);
         } else {
             // Obtener todos los perfiles con sus menús
-            $query = "SELECT 
+            $query = "SELECT
                 p.id_perfil, p.nombre, p.descripcion, p.estado, p.fecha_creacion, p.fecha_actualizacion,
                 m.id_menu, m.nombre as menu_nombre, m.ruta, m.icono
             FROM perfil p
@@ -43,7 +43,7 @@ try {
         $perfiles = [];
         foreach ($rows as $row) {
             $perfilId = $row['id_perfil'];
-            
+
             if (!isset($perfiles[$perfilId])) {
                 $perfiles[$perfilId] = [
                     'id_perfil' => $row['id_perfil'],
@@ -55,7 +55,7 @@ try {
                     'menus' => []
                 ];
             }
-            
+
             // Agregar menú si existe
             if ($row['id_menu'] !== null) {
                 $perfiles[$perfilId]['menus'][] = [
@@ -75,7 +75,7 @@ try {
     } elseif ($method === 'POST') {
         $input = RequestValidator::validateJsonInput();
         $nombre = isset($input['nombre']) ? trim($input['nombre']) : null;
-        
+
         if (!$nombre) {
             ErrorHandler::handleValidationError('El nombre del perfil es requerido');
             exit();
@@ -90,8 +90,8 @@ try {
             'nombre' => $nombre,
             'descripcion' => $descripcion,
             'estado' => $estado,
-            'fecha_creacion' => date('Y-m-d H:i:s'),
-            'fecha_actualizacion' => date('Y-m-d H:i:s')
+            'fecha_creacion' => date(DATETIME_FORMAT),
+            'fecha_actualizacion' => date(DATETIME_FORMAT)
         ]);
 
         // Insertar menús asociados
@@ -99,8 +99,8 @@ try {
             $qb->insertRecord('menu_perfil', [
                 'id_menu' => (int)$id_menu,
                 'id_perfil' => $newPerfilId,
-                'fecha_creacion' => date('Y-m-d H:i:s'),
-                'fecha_actualizacion' => date('Y-m-d H:i:s')
+                'fecha_creacion' => date(DATETIME_FORMAT),
+                'fecha_actualizacion' => date(DATETIME_FORMAT)
             ]);
         }
 
@@ -118,7 +118,7 @@ try {
     } elseif ($method === 'PUT') {
         $input = RequestValidator::validateJsonInput();
         RequestValidator::validateJsonFields($input, ['id_perfil', 'nombre']);
-        
+
         $id_perfil = (int)$input['id_perfil'];
         $nombre = trim($input['nombre']);
         $descripcion = isset($input['descripcion']) ? trim($input['descripcion']) : null;
@@ -130,17 +130,17 @@ try {
             'nombre' => $nombre,
             'descripcion' => $descripcion,
             'estado' => $estado,
-            'fecha_actualizacion' => date('Y-m-d H:i:s')
-        ], 'id_perfil = :id_perfil', [':id_perfil' => $id_perfil]);
+            'fecha_actualizacion' => date(DATETIME_FORMAT)
+        ], WHERE_ID_PERFIL, [PARAM_ID_PERFIL => $id_perfil]);
 
         // Eliminar menús antiguos e insertar nuevos
-        $qb->deleteRecord('menu_perfil', 'id_perfil = :id_perfil', [':id_perfil' => $id_perfil]);
+        $qb->deleteRecord('menu_perfil', WHERE_ID_PERFIL, [PARAM_ID_PERFIL => $id_perfil]);
         foreach ($menus as $id_menu) {
             $qb->insertRecord('menu_perfil', [
                 'id_menu' => (int)$id_menu,
                 'id_perfil' => $id_perfil,
-                'fecha_creacion' => date('Y-m-d H:i:s'),
-                'fecha_actualizacion' => date('Y-m-d H:i:s')
+                'fecha_creacion' => date(DATETIME_FORMAT),
+                'fecha_actualizacion' => date(DATETIME_FORMAT)
             ]);
         }
 
@@ -149,13 +149,13 @@ try {
     // DELETE - Eliminar perfil
     } elseif ($method === 'DELETE') {
         $id_perfil = RequestValidator::validateIntegerParam('id_perfil');
-        
+
         // Eliminar menús asociados
-        $qb->deleteRecord('menu_perfil', 'id_perfil = :id_perfil', [':id_perfil' => $id_perfil]);
-        
+        $qb->deleteRecord('menu_perfil', WHERE_ID_PERFIL, [PARAM_ID_PERFIL => $id_perfil]);
+
         // Eliminar perfil
-        $qb->deleteRecord('perfil', 'id_perfil = :id_perfil', [':id_perfil' => $id_perfil]);
-        
+        $qb->deleteRecord('perfil', WHERE_ID_PERFIL, [PARAM_ID_PERFIL => $id_perfil]);
+
         ErrorHandler::sendDeletedResponse();
 
     } else {

@@ -11,7 +11,7 @@ $qb = new DatabaseQueryBuilder($conn);
 try {
     if ($method === 'GET') {
         // Obtener todos los grupos empresariales
-        $query = "SELECT 
+        $query = "SELECT
             id_grupo_empresarial, nombre, descripcion, estado, fecha_creacion, fecha_actualizacion
         FROM grupo_empresarial
         ORDER BY fecha_actualizacion DESC";
@@ -22,7 +22,7 @@ try {
     } elseif ($method === 'POST') {
         // Crear nuevo grupo empresarial
         $input = RequestValidator::validateJsonInput();
-        
+
         if (!isset($input['nombre']) || empty(trim($input['nombre']))) {
             ErrorHandler::handleValidationError('El nombre del grupo empresarial es obligatorio');
             exit();

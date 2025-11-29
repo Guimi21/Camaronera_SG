@@ -51,7 +51,7 @@ export default function MuestraForm() {
   
   const [ciclosDisponibles, setCiclosDisponibles] = useState([]);
   const [tiposBalanceado, setTiposBalanceado] = useState([]); // Tipos de balanceado de la compañía
-  const [ultimoMuestra, setUltimoMuestraState] = useState(null);
+  const [ultimoMuestra, setUltimoMuestra] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingCiclos, setLoadingCiclos] = useState(true);
   const [loadingTipos, setLoadingTipos] = useState(true);
@@ -63,11 +63,6 @@ export default function MuestraForm() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [error]);
-
-  // Wrapper para trackear cambios en ultimoMuestra
-  const setUltimoMuestra = (valor) => {
-    setUltimoMuestraState(valor);
-  };
 
   // Referencias para inputs numéricos
   const inputRef1 = useRef(null); // Peso (g)
@@ -99,9 +94,9 @@ export default function MuestraForm() {
       
       // Inicializar los campos de balanceado en el formData
       const balanceadosIniciales = {};
-      data.forEach(tipo => {
+      for (const tipo of data) {
         balanceadosIniciales[tipo.id_tipo_balanceado] = '';
-      });
+      }
       
       setFormData(prev => ({
         ...prev,

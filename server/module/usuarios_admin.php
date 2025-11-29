@@ -17,14 +17,14 @@ try {
 
     // Parámetro id_usuario requerido
     $id_usuario = RequestValidator::getParamWithDefault('id_usuario', null, 'GET');
-    
+
     if (!$id_usuario) {
         ErrorHandler::handleValidationError('ID de usuario requerido');
         exit();
     }
 
     // Obtener usuarios con perfil "Administrador"
-    $query = "SELECT 
+    $query = "SELECT
         u.id_usuario,
         u.nombre,
         u.username,

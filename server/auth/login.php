@@ -9,10 +9,10 @@ require_once __DIR__ . '/../helpers/response.php';  // Función para enviar resp
 require_once __DIR__ . '/../helpers/cors.php';  // Configuración CORS centralizada
 
 // Obtener los datos enviados (usuario y contraseña)
-$data = json_decode(file_get_contents("php://input"));  
+$data = json_decode(file_get_contents("php://input"));
 
 // Depuración: muestra los datos recibidos
-error_log("Datos recibidos del frontend: " . print_r($data, true));  
+error_log("Datos recibidos del frontend: " . print_r($data, true));
 
 // Validar que se hayan recibido los datos
 if (!isset($data->username) || !isset($data->password)) {
@@ -36,7 +36,7 @@ $stmt->execute();
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // Depuración: imprimir lo que se trae de la base de datos
-error_log("Datos del usuario desde la base de datos: " . print_r($user, true));  
+error_log("Datos del usuario desde la base de datos: " . print_r($user, true));
 
 // Si no se encuentra el usuario
 if (!$user) {
@@ -94,9 +94,9 @@ $companias = $stmt_companias->fetchAll(PDO::FETCH_ASSOC);
 // Obtener los menús asociados al perfil del usuario
 $query_menus = "
     SELECT DISTINCT m.id_menu, m.nombre, m.ruta, m.icono, m.estado, modu.nombre AS modulo
-    FROM menu m 
+    FROM menu m
     JOIN modulo modu ON m.id_modulo = modu.id_modulo
-    JOIN menu_perfil mp ON m.id_menu = mp.id_menu 
+    JOIN menu_perfil mp ON m.id_menu = mp.id_menu
     WHERE m.estado = 'ACTIVO'
     AND mp.id_perfil IN (
         SELECT id_perfil FROM usuario_perfil WHERE id_usuario = " . PARAM_USER_ID . "
@@ -123,7 +123,7 @@ $response = [
 ];
 
 // Imprimir la respuesta antes de enviarla
-error_log("Respuesta enviada al frontend: " . print_r($response, true));  
+error_log("Respuesta enviada al frontend: " . print_r($response, true));
 
 http_response_code(200);  // Código de estado 200 OK
 echo json_encode($response);

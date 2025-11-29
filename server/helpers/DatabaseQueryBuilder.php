@@ -14,7 +14,7 @@ class DatabaseQueryBuilder
 
     /**
      * Constructor
-     * 
+     *
      * @param PDO $connection Conexión PDO
      */
     public function __construct($connection)
@@ -24,7 +24,7 @@ class DatabaseQueryBuilder
 
     /**
      * Obtiene el ID de grupo empresarial de un usuario
-     * 
+     *
      * @param int $userId ID del usuario
      * @return int ID del grupo empresarial
      * @throws QueryExecutionException
@@ -32,7 +32,7 @@ class DatabaseQueryBuilder
     public function getUserGroupId($userId)
     {
         $query = "SELECT id_grupo_empresarial FROM usuario WHERE id_usuario = " . PARAM_ID_USUARIO;
-        
+
         try {
             $stmt = $this->conn->prepare($query);
             if (!$stmt) {
@@ -40,7 +40,7 @@ class DatabaseQueryBuilder
             }
 
             $stmt->bindParam(PARAM_ID_USUARIO, $userId, PDO::PARAM_INT);
-            
+
             if (!$stmt->execute()) {
                 throw new QueryExecutionException(ERROR_DB_QUERY_EXECUTE);
             }
@@ -55,7 +55,7 @@ class DatabaseQueryBuilder
 
     /**
      * Obtiene registros de una tabla con condiciones
-     * 
+     *
      * @param string $table Nombre de la tabla
      * @param string $selectClause Campos a seleccionar (ej: "id, nombre, estado")
      * @param string $whereClause Condición WHERE (sin la palabra WHERE)
@@ -110,7 +110,7 @@ class DatabaseQueryBuilder
 
     /**
      * Obtiene un único registro
-     * 
+     *
      * @param string $table Nombre de la tabla
      * @param string $whereClause Condición WHERE
      * @param array $params Parámetros para bindear
@@ -147,7 +147,7 @@ class DatabaseQueryBuilder
 
     /**
      * Cuenta registros en una tabla
-     * 
+     *
      * @param string $table Nombre de la tabla
      * @param string $whereClause Condición WHERE (opcional)
      * @param array $params Parámetros para bindear
@@ -188,7 +188,7 @@ class DatabaseQueryBuilder
 
     /**
      * Inserta un registro
-     * 
+     *
      * @param string $table Nombre de la tabla
      * @param array $data Array asociativo con los datos
      * @return int ID del registro insertado
@@ -230,7 +230,7 @@ class DatabaseQueryBuilder
 
     /**
      * Actualiza registros
-     * 
+     *
      * @param string $table Nombre de la tabla
      * @param array $data Array asociativo con los datos a actualizar
      * @param string $whereClause Condición WHERE
@@ -280,7 +280,7 @@ class DatabaseQueryBuilder
 
     /**
      * Elimina registros
-     * 
+     *
      * @param string $table Nombre de la tabla
      * @param string $whereClause Condición WHERE
      * @param array $whereParams Parámetros para la condición WHERE
@@ -320,7 +320,7 @@ class DatabaseQueryBuilder
 
     /**
      * Ejecuta una consulta personalizada
-     * 
+     *
      * @param string $query Consulta SQL
      * @param array $params Parámetros para bindear
      * @param bool $fetchAll Si debe traer todos los registros

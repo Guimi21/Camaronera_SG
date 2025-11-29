@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { FaUserCircle, FaSignOutAlt, FaBars, FaBuilding } from "react-icons/fa";
 import * as FaIcons from "react-icons/fa";
 import * as MdIcons from "react-icons/md";

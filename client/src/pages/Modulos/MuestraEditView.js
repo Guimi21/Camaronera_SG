@@ -42,16 +42,12 @@ export default function MuestraEditView() {
   
   const [ciclosDisponibles, setCiclosDisponibles] = useState([]);
   const [tiposBalanceado, setTiposBalanceado] = useState([]);
-  const [ultimoMuestra, setUltimoMuestraState] = useState(null);
+  const [ultimoMuestra, setUltimoMuestra] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingCiclos, setLoadingCiclos] = useState(true);
   const [loadingTipos, setLoadingTipos] = useState(true);
   const [loadingMuestra, setLoadingMuestra] = useState(true);
   const [error, setError] = useState('');
-
-  const setUltimoMuestra = (valor) => {
-    setUltimoMuestraState(valor);
-  };
 
   const inputRef1 = useRef(null);
   const inputRef2 = useRef(null);
@@ -132,10 +128,10 @@ export default function MuestraEditView() {
         
         // Normalizar balanceados por ID de tipo
         const balanceadosObj = {};
-        tipos.forEach(tipo => {
+        for (const tipo of tipos) {
           const nombreBalanceado = tipo.nombre;
           balanceadosObj[tipo.id_tipo_balanceado] = muestraData[nombreBalanceado] || '';
-        });
+        }
 
         setFormData({
           id_muestra: muestraData.id_muestra,

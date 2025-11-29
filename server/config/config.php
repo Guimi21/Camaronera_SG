@@ -4,7 +4,7 @@ $isProduction = false;
 
 // Detectar el dominio/host
 if (isset($_SERVER['HTTP_HOST'])) {
-    $isProduction = $_SERVER['HTTP_HOST'] === 'camaron360.com' || 
+    $isProduction = $_SERVER['HTTP_HOST'] === 'camaron360.com' ||
                    $_SERVER['HTTP_HOST'] === 'www.camaron360.com' ||
                    strpos($_SERVER['HTTP_HOST'], 'camaron360.com') !== false;
 }
@@ -33,11 +33,11 @@ try {
     $conn = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME, DB_USER, DB_PASS);
     // Establecer el modo de errores de PDO
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    
+
     // Si la conexión es exitosa
    // echo "Conexión exitosa a la base de datos!";
 } catch (PDOException $e) {
     // Si hay un error, mostrarlo
-   
+
     die();
 }

@@ -16,7 +16,7 @@ try {
         if ($id_menu) {
             $id_menu = (int)$id_menu;
             // Obtener menú específico con su módulo
-            $query = "SELECT 
+            $query = "SELECT
                 m.id_menu, m.id_modulo, mo.nombre as nombre_modulo,
                 m.nombre, m.ruta, m.icono, m.estado,
                 m.fecha_creacion, m.fecha_actualizacion
@@ -27,7 +27,7 @@ try {
             $menus = $qb->executeQuery($query, [':id_menu' => $id_menu], true);
         } else {
             // Obtener todos los menús
-            $query = "SELECT 
+            $query = "SELECT
                 m.id_menu, m.id_modulo, mo.nombre as nombre_modulo,
                 m.nombre, m.ruta, m.icono, m.estado,
                 m.fecha_creacion, m.fecha_actualizacion
@@ -43,7 +43,7 @@ try {
     } elseif ($method === 'POST') {
         // Crear nuevo menú
         $input = RequestValidator::validateJsonInput();
-        
+
         $nombre = isset($input['nombre']) ? trim($input['nombre']) : null;
         if (!$nombre) {
             ErrorHandler::handleValidationError('El nombre del menú es requerido');
@@ -61,8 +61,8 @@ try {
             'ruta' => $ruta,
             'icono' => $icono,
             'estado' => $estado,
-            'fecha_creacion' => date('Y-m-d H:i:s'),
-            'fecha_actualizacion' => date('Y-m-d H:i:s')
+            'fecha_creacion' => date(DATETIME_FORMAT),
+            'fecha_actualizacion' => date(DATETIME_FORMAT)
         ]);
 
         $data = [
@@ -94,7 +94,7 @@ try {
             'ruta' => $ruta,
             'icono' => $icono,
             'estado' => $estado,
-            'fecha_actualizacion' => date('Y-m-d H:i:s')
+            'fecha_actualizacion' => date(DATETIME_FORMAT)
         ], 'id_menu = :id_menu', [':id_menu' => $id_menu]);
 
         ErrorHandler::sendUpdatedResponse();
