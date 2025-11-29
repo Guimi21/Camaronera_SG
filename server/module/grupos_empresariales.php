@@ -1,98 +1,61 @@
 <?php
-require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../helpers/response.php';
-require_once __DIR__ . '/../helpers/cors.php';
+// Bootstrap - Incluir todas las dependencias centralizadas
+require_once __DIR__ . '/../bootstrap.php';
 
-// Detectar el método HTTP
+// Validar conexión a base de datos
+RequestValidator::validateDbConnection($conn);
+
 $method = $_SERVER['REQUEST_METHOD'];
+$qb = new DatabaseQueryBuilder($conn);
 
-if ($method === 'GET') {
-    // Obtener todos los grupos empresariales
-    $query = "SELECT 
-        id_grupo_empresarial,
-        nombre,
-        descripcion,
-        estado,
-        fecha_creacion,
-        fecha_actualizacion
-    FROM grupo_empresarial
-    ORDER BY fecha_actualizacion DESC";
+try {
+    if ($method === 'GET') {
+        // Obtener todos los grupos empresariales
+        $query = "SELECT 
+            id_grupo_empresarial, nombre, descripcion, estado, fecha_creacion, fecha_actualizacion
+        FROM grupo_empresarial
+        ORDER BY fecha_actualizacion DESC";
 
-    try {
-        $stmt = $conn->prepare($query);
-        $stmt->execute();
-        $grupos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $grupos = $qb->executeQuery($query, [], true);
+        ErrorHandler::sendSuccessResponse($grupos);
 
-        echo json_encode([
-            'success' => true,
-            'data' => $grupos
-        ]);
-        http_response_code(200);
-    } catch (PDOException $e) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Error al obtener grupos empresariales: ' . $e->getMessage()
-        ]);
-        http_response_code(500);
-    }
-} elseif ($method === 'POST') {
-    // Crear nuevo grupo empresarial
-    $data = json_decode(file_get_contents("php://input"));
+    } elseif ($method === 'POST') {
+        // Crear nuevo grupo empresarial
+        $input = RequestValidator::validateJsonInput();
+        
+        if (!isset($input['nombre']) || empty(trim($input['nombre']))) {
+            ErrorHandler::handleValidationError('El nombre del grupo empresarial es obligatorio');
+            exit();
+        }
 
-    // Validar que se hayan recibido los datos requeridos
-    if (!isset($data->nombre) || empty(trim($data->nombre))) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'El nombre del grupo empresarial es obligatorio']);
-        exit;
-    }
+        $nombre = trim($input['nombre']);
+        $descripcion = isset($input['descripcion']) && !empty(trim($input['descripcion'])) ? trim($input['descripcion']) : null;
+        $estado = isset($input['estado']) && !empty(trim($input['estado'])) ? trim($input['estado']) : 'ACTIVO';
 
-    $nombre = trim($data->nombre);
-    $descripcion = isset($data->descripcion) && !empty(trim($data->descripcion)) ? trim($data->descripcion) : null;
-
-    try {
         // Verificar si ya existe un grupo con el mismo nombre
-        $checkQuery = "SELECT COUNT(*) as count FROM grupo_empresarial WHERE nombre = :nombre";
-        $checkStmt = $conn->prepare($checkQuery);
-        $checkStmt->bindParam(':nombre', $nombre);
-        $checkStmt->execute();
-        $result = $checkStmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($result['count'] > 0) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Ya existe un grupo empresarial con el nombre: ' . htmlspecialchars($nombre),
-                'code' => 'DUPLICATE_NAME'
-            ]);
-            http_response_code(409); // Conflict
-            exit;
+        $count = $qb->countRecords('grupo_empresarial', 'nombre = :nombre', [':nombre' => $nombre]);
+        if ($count > 0) {
+            ErrorHandler::handleValidationError('Ya existe un grupo empresarial con el nombre: ' . htmlspecialchars($nombre), HTTP_BAD_REQUEST);
+            exit();
         }
 
         // Insertar nuevo grupo empresarial
-        $estado = isset($data->estado) && !empty(trim($data->estado)) ? trim($data->estado) : 'ACTIVO';
-        $query = "INSERT INTO grupo_empresarial (nombre, descripcion, estado, fecha_creacion, fecha_actualizacion) 
-                  VALUES (:nombre, :descripcion, :estado, NOW(), NOW())";
-        
-        $stmt = $conn->prepare($query);
-        $stmt->bindParam(':nombre', $nombre);
-        $stmt->bindParam(':descripcion', $descripcion);
-        $stmt->bindParam(':estado', $estado);
-        $stmt->execute();
+        $id_grupo = $qb->insertRecord('grupo_empresarial', [
+            'nombre' => $nombre,
+            'descripcion' => $descripcion,
+            'estado' => $estado,
+            'fecha_creacion' => date('Y-m-d H:i:s'),
+            'fecha_actualizacion' => date('Y-m-d H:i:s')
+        ]);
 
-        echo json_encode([
-            'success' => true,
-            'message' => 'Grupo empresarial creado exitosamente',
-            'id' => $conn->lastInsertId(),
-            'estado' => $estado
-        ]);
-        http_response_code(201);
-    } catch (PDOException $e) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Error al crear el grupo empresarial: ' . $e->getMessage()
-        ]);
-        http_response_code(500);
+        ErrorHandler::sendCreatedResponse(['id' => $id_grupo, 'estado' => $estado]);
+
+    } else {
+        ErrorHandler::sendErrorResponse('Método no permitido', HTTP_METHOD_NOT_ALLOWED);
     }
-} else {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Método HTTP no permitido']);
+
+    exit();
+
+} catch (Exception $e) {
+    ErrorHandler::handleException($e);
 }

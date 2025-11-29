@@ -163,7 +163,7 @@ export default function MenuForm() {
   };
 
   const handleCancel = () => {
-    navigate('/directivo/menus');
+    navigate('/layout/dashboard/menus');
   };
 
   const getButtonText = () => {

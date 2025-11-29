@@ -161,7 +161,7 @@ export default function PerfilForm() {
   };
 
   const handleCancel = () => {
-    navigate('/directivo/perfiles');
+    navigate('/layout/dashboard/perfiles');
   };
 
   const getButtonText = () => {

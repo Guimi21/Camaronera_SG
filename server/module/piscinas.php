@@ -1,45 +1,18 @@
 <?php
-require_once __DIR__ . '/../helpers/CustomExceptions.php';
-require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../helpers/response.php';
-require_once __DIR__ . '/../helpers/cors.php';  // Configuración CORS centralizada
+// Bootstrap - Incluir todas las dependencias centralizadas
+require_once __DIR__ . '/../bootstrap.php';
 
-// Constantes para parámetros SQL
-define('PARAM_ID_COMPANIA', ':id_compania');
-define('PARAM_ID_PISCINA', ':id_piscina');
-define('PARAM_CODIGO', ':codigo');
-define('ERROR_PREFIX', 'Error: ');
-define('AND_ID_COMPANIA', ' AND id_compania = ');
+// Validar conexión a base de datos
+RequestValidator::validateDbConnection($conn);
 
-// Verificar que la conexión a la base de datos esté establecida
-if (!isset($conn)) {
-    $response = [
-        'success' => false,
-        'message' => 'Error de conexión a la base de datos'
-    ];
-    http_response_code(500);
-    echo json_encode($response);
-    exit();
-}
+$method = $_SERVER['REQUEST_METHOD'];
+$qb = new DatabaseQueryBuilder($conn);
 
-// Manejar solicitudes GET para obtener piscinas
-if ($_SERVER['REQUEST_METHOD'] == 'GET') {
-    try {
-        // Obtener parámetros de consulta
-        $id_compania = isset($_GET['id_compania']) ? intval($_GET['id_compania']) : null;
+try {
+    // GET - Obtener piscinas
+    if ($method === 'GET') {
+        $id_compania = RequestValidator::validateIntegerParam('id_compania');
         
-        // Validar que se proporcione el id_compania
-        if (!$id_compania) {
-            $response = [
-                'success' => false,
-                'message' => 'ID de compañía requerido'
-            ];
-            http_response_code(400);
-            echo json_encode($response);
-            exit();
-        }
-
-        // Construir la consulta SQL simplificada
         $sql = "SELECT 
                     p.id_piscina,
                     p.codigo,
@@ -50,24 +23,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                     p.fecha_creacion,
                     p.fecha_actualizacion
                 FROM piscina p
-                WHERE p.id_compania = " . PARAM_ID_COMPANIA . "
+                WHERE p.id_compania = :id_compania
                 ORDER BY p.id_piscina";
 
-        $stmt = $conn->prepare($sql);
-        if (!$stmt) {
-            throw new QueryPrepareException("Error preparando consulta: " . implode(", ", $conn->errorInfo()));
-        }
-
-        $stmt->bindParam(PARAM_ID_COMPANIA, $id_compania, PDO::PARAM_INT);
+        $records = $qb->executeQuery($sql, [':id_compania' => $id_compania], true);
         
-        if (!$stmt->execute()) {
-            throw new QueryExecutionException("Error ejecutando consulta: " . implode(", ", $stmt->errorInfo()));
-        }
-
-        $piscinas = [];
-
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $piscinas[] = [
+        // Formatear datos
+        $piscinas = array_map(function($row) {
+            return [
                 'id_piscina' => $row['id_piscina'],
                 'codigo' => $row['codigo'],
                 'hectareas' => floatval($row['hectareas']),
@@ -77,290 +40,104 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                 'fecha_creacion' => $row['fecha_creacion'],
                 'fecha_actualizacion' => $row['fecha_actualizacion']
             ];
-        }
-
-        $response = [
-            'success' => true,
-            'data' => $piscinas,
-            'message' => 'Piscinas obtenidas exitosamente',
-            'total' => count($piscinas)
-        ];
-
-        echo json_encode($response);
-
-    } catch (Exception $e) {
-        $response = [
-            'success' => false,
-            'message' => ERROR_PREFIX . $e->getMessage()
-        ];
-        http_response_code(500);
-        echo json_encode($response);
-    }
-}
-
-// Manejar solicitudes POST para crear nueva piscina
-elseif ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    try {
-        // Obtener datos del cuerpo de la solicitud
-        $input = json_decode(file_get_contents('php://input'), true);
+        }, $records);
         
-        if (!$input) {
-            $response = [
-                'success' => false,
-                'message' => 'Datos no válidos'
-            ];
-            http_response_code(400);
-            echo json_encode($response);
-            exit();
-        }
-
-        // Validar campos requeridos
-        $required_fields = ['codigo', 'hectareas', 'ubicacion', 'id_compania', 'id_usuario_crea', 'id_usuario_actualiza'];
-        foreach ($required_fields as $field) {
-            if (!isset($input[$field]) || empty($input[$field])) {
-                $response = [
-                    'success' => false,
-                    'message' => "Campo requerido: $field"
-                ];
-                http_response_code(400);
-                echo json_encode($response);
-                exit();
-            }
-        }
-
-        // Validar que el código no exista para la misma compañía
-        $check_sql = "SELECT id_piscina FROM piscina WHERE codigo = " . PARAM_CODIGO . AND_ID_COMPANIA . PARAM_ID_COMPANIA . "";
-        $check_stmt = $conn->prepare($check_sql);
-        $check_stmt->bindParam(PARAM_CODIGO, $input['codigo'], PDO::PARAM_STR);
-        $check_stmt->bindParam(PARAM_ID_COMPANIA, $input['id_compania'], PDO::PARAM_INT);
-        $check_stmt->execute();
-        $check_result = $check_stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        if (count($check_result) > 0) {
-            $response = [
-                'success' => false,
-                'message' => 'Ya existe una piscina con este código en la compañía'
-            ];
-            http_response_code(400);
-            echo json_encode($response);
-            exit();
-        }
-
-        // Insertar nueva piscina
-        $estado = isset($input['estado']) ? trim($input['estado']) : 'ACTIVA';
-        $insert_sql = "INSERT INTO piscina (codigo, hectareas, ubicacion, estado, id_compania, id_usuario_crea, id_usuario_actualiza) VALUES (" . PARAM_CODIGO . ", :hectareas, :ubicacion, :estado, " . PARAM_ID_COMPANIA . ", :id_usuario_crea, :id_usuario_actualiza)";
-        $insert_stmt = $conn->prepare($insert_sql);
+        ErrorHandler::sendSuccessResponseWithTotal($piscinas, count($piscinas));
         
-        if (!$insert_stmt) {
-            throw new QueryPrepareException("Error preparando consulta de inserción: " . implode(", ", $conn->errorInfo()));
-        }
-
-        $insert_stmt->bindParam(PARAM_CODIGO, $input['codigo'], PDO::PARAM_STR);
-        $insert_stmt->bindParam(':hectareas', $input['hectareas'], PDO::PARAM_STR);
-        $insert_stmt->bindParam(':ubicacion', $input['ubicacion'], PDO::PARAM_STR);
-        $insert_stmt->bindParam(':estado', $estado, PDO::PARAM_STR);
-        $insert_stmt->bindParam(PARAM_ID_COMPANIA, $input['id_compania'], PDO::PARAM_INT);
-        $insert_stmt->bindParam(':id_usuario_crea', $input['id_usuario_crea'], PDO::PARAM_INT);
-        $insert_stmt->bindParam(':id_usuario_actualiza', $input['id_usuario_actualiza'], PDO::PARAM_INT);
-
-        if (!$insert_stmt->execute()) {
-            throw new QueryExecutionException("Error ejecutando inserción: " . implode(", ", $insert_stmt->errorInfo()));
-        }
-
-        $new_id = $conn->lastInsertId();
-
-        $response = [
-            'success' => true,
-            'message' => 'Piscina creada exitosamente',
-            'id_piscina' => $new_id
-        ];
-
-        echo json_encode($response);
-
-    } catch (Exception $e) {
-        $response = [
-            'success' => false,
-            'message' => ERROR_PREFIX . $e->getMessage()
-        ];
-        http_response_code(500);
-        echo json_encode($response);
-    }
-}
-
-// Manejar solicitudes PUT para actualizar piscina
-elseif ($_SERVER['REQUEST_METHOD'] == 'PUT') {
-    try {
-        // Obtener datos del cuerpo de la solicitud
-        $input = json_decode(file_get_contents('php://input'), true);
+    // POST - Crear piscina
+    } elseif ($method === 'POST') {
+        $input = RequestValidator::validateJsonInput();
         
-        if (!$input) {
-            $response = [
-                'success' => false,
-                'message' => 'Datos no válidos'
-            ];
-            http_response_code(400);
-            echo json_encode($response);
-            exit();
-        }
-
-        // Validar campos requeridos
-        $required_fields = ['id_piscina', 'codigo', 'hectareas', 'ubicacion', 'id_compania'];
-        foreach ($required_fields as $field) {
-            if (!isset($input[$field]) || empty($input[$field])) {
-                $response = [
-                    'success' => false,
-                    'message' => "Campo requerido: $field"
-                ];
-                http_response_code(400);
-                echo json_encode($response);
-                exit();
-            }
-        }
-
-        // Validar que el código no exista para otra piscina de la misma compañía
-        $check_sql = "SELECT id_piscina FROM piscina WHERE codigo = " . PARAM_CODIGO . AND_ID_COMPANIA . PARAM_ID_COMPANIA . " AND id_piscina != " . PARAM_ID_PISCINA . "";
-        $check_stmt = $conn->prepare($check_sql);
-        $check_stmt->bindParam(PARAM_CODIGO, $input['codigo'], PDO::PARAM_STR);
-        $check_stmt->bindParam(PARAM_ID_COMPANIA, $input['id_compania'], PDO::PARAM_INT);
-        $check_stmt->bindParam(PARAM_ID_PISCINA, $input['id_piscina'], PDO::PARAM_INT);
-        $check_stmt->execute();
-        $check_result = $check_stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        if (count($check_result) > 0) {
-            $response = [
-                'success' => false,
-                'message' => 'Ya existe otra piscina con este código en la compañía'
-            ];
-            http_response_code(400);
-            echo json_encode($response);
-            exit();
-        }
-
-        // Actualizar piscina
-        $estado = isset($input['estado']) ? trim($input['estado']) : 'ACTIVA';
-        $update_sql = "UPDATE piscina SET codigo = " . PARAM_CODIGO . ", hectareas = :hectareas, ubicacion = :ubicacion, estado = :estado WHERE id_piscina = " . PARAM_ID_PISCINA . AND_ID_COMPANIA . PARAM_ID_COMPANIA . "";
-        $update_stmt = $conn->prepare($update_sql);
+        $requiredFields = ['codigo', 'hectareas', 'ubicacion', 'id_compania', 'id_usuario_crea', 'id_usuario_actualiza'];
+        RequestValidator::validateJsonFields($input, $requiredFields);
         
-        if (!$update_stmt) {
-            throw new QueryPrepareException("Error preparando consulta de actualización: " . implode(", ", $conn->errorInfo()));
-        }
-
-        $update_stmt->bindParam(PARAM_CODIGO, $input['codigo'], PDO::PARAM_STR);
-        $update_stmt->bindParam(':hectareas', $input['hectareas'], PDO::PARAM_STR);
-        $update_stmt->bindParam(':ubicacion', $input['ubicacion'], PDO::PARAM_STR);
-        $update_stmt->bindParam(':estado', $estado, PDO::PARAM_STR);
-        $update_stmt->bindParam(PARAM_ID_PISCINA, $input['id_piscina'], PDO::PARAM_INT);
-        $update_stmt->bindParam(PARAM_ID_COMPANIA, $input['id_compania'], PDO::PARAM_INT);
-
-        if (!$update_stmt->execute()) {
-            throw new QueryExecutionException("Error ejecutando actualización: " . implode(", ", $update_stmt->errorInfo()));
-        }
-
-        if ($update_stmt->rowCount() === 0) {
-            $response = [
-                'success' => false,
-                'message' => 'No se encontró la piscina o no se realizaron cambios'
-            ];
-            http_response_code(404);
-            echo json_encode($response);
-        } else {
-            $response = [
-                'success' => true,
-                'message' => 'Piscina actualizada exitosamente'
-            ];
-            echo json_encode($response);
-        }
-
-    } catch (Exception $e) {
-        $response = [
-            'success' => false,
-            'message' => ERROR_PREFIX . $e->getMessage()
-        ];
-        http_response_code(500);
-        echo json_encode($response);
-    }
-}
-
-// Manejar solicitudes DELETE para eliminar piscina
-elseif ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
-    try {
-        // Obtener el ID de la piscina de los parámetros de consulta
-        $id_piscina = isset($_GET['id_piscina']) ? intval($_GET['id_piscina']) : null;
-        $id_compania = isset($_GET['id_compania']) ? intval($_GET['id_compania']) : null;
+        // Validar que el código no exista
+        $count = $qb->countRecords('piscina',
+            'codigo = :codigo AND id_compania = :id_compania',
+            [':codigo' => $input['codigo'], ':id_compania' => $input['id_compania']]);
         
-        if (!$id_piscina || !$id_compania) {
-            $response = [
-                'success' => false,
-                'message' => 'ID de piscina e ID de compañía requeridos'
-            ];
-            http_response_code(400);
-            echo json_encode($response);
+        if ($count > 0) {
+            ErrorHandler::handleValidationError('Ya existe una piscina con este código en la compañía');
             exit();
         }
-
-        // Verificar si la piscina tiene ciclos asociados
-        $check_cycles_sql = "SELECT COUNT(*) as cycle_count FROM ciclo WHERE id_piscina = " . PARAM_ID_PISCINA . "";
-        $check_cycles_stmt = $conn->prepare($check_cycles_sql);
-        $check_cycles_stmt->bindParam(PARAM_ID_PISCINA, $id_piscina, PDO::PARAM_INT);
-        $check_cycles_stmt->execute();
-        $cycles_row = $check_cycles_stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($cycles_row['cycle_count'] > 0) {
-            $response = [
-                'success' => false,
-                'message' => 'No se puede eliminar la piscina porque tiene ciclos asociados'
-            ];
-            http_response_code(400);
-            echo json_encode($response);
+        
+        $estado = isset($input['estado']) && !empty(trim($input['estado'])) ? trim($input['estado']) : 'ACTIVA';
+        
+        $id_piscina = $qb->insertRecord('piscina', [
+            'codigo' => $input['codigo'],
+            'hectareas' => $input['hectareas'],
+            'ubicacion' => $input['ubicacion'],
+            'estado' => $estado,
+            'id_compania' => intval($input['id_compania']),
+            'id_usuario_crea' => intval($input['id_usuario_crea']),
+            'id_usuario_actualiza' => intval($input['id_usuario_actualiza']),
+            'fecha_creacion' => date('Y-m-d H:i:s'),
+            'fecha_actualizacion' => date('Y-m-d H:i:s')
+        ]);
+        
+        ErrorHandler::sendCreatedResponse(['id_piscina' => $id_piscina]);
+        
+    // PUT - Actualizar piscina
+    } elseif ($method === 'PUT') {
+        $input = RequestValidator::validateJsonInput();
+        
+        $requiredFields = ['id_piscina', 'codigo', 'hectareas', 'ubicacion', 'id_compania'];
+        RequestValidator::validateJsonFields($input, $requiredFields);
+        
+        $id_piscina = intval($input['id_piscina']);
+        $id_compania = intval($input['id_compania']);
+        
+        // Validar que el código no exista en otra piscina
+        $count = $qb->countRecords('piscina',
+            'codigo = :codigo AND id_compania = :id_compania AND id_piscina != :id_piscina',
+            [':codigo' => $input['codigo'], ':id_compania' => $id_compania, ':id_piscina' => $id_piscina]);
+        
+        if ($count > 0) {
+            ErrorHandler::handleValidationError('Ya existe otra piscina con este código en la compañía');
             exit();
         }
-
+        
+        $estado = isset($input['estado']) && !empty(trim($input['estado'])) ? trim($input['estado']) : 'ACTIVA';
+        
+        $qb->updateRecord('piscina', [
+            'codigo' => $input['codigo'],
+            'hectareas' => $input['hectareas'],
+            'ubicacion' => $input['ubicacion'],
+            'estado' => $estado,
+            'fecha_actualizacion' => date('Y-m-d H:i:s')
+        ], 'id_piscina = :id_piscina AND id_compania = :id_compania', 
+           [':id_piscina' => $id_piscina, ':id_compania' => $id_compania]);
+        
+        ErrorHandler::sendUpdatedResponse();
+        
+    // DELETE - Eliminar piscina
+    } elseif ($method === 'DELETE') {
+        $id_piscina = RequestValidator::validateIntegerParam('id_piscina');
+        $id_compania = RequestValidator::validateIntegerParam('id_compania');
+        
+        // Verificar si tiene ciclos asociados
+        $cycle_count = $qb->countRecords('ciclo', 'id_piscina = :id_piscina', [':id_piscina' => $id_piscina]);
+        
+        if ($cycle_count > 0) {
+            ErrorHandler::handleValidationError('No se puede eliminar la piscina porque tiene ciclos asociados');
+            exit();
+        }
+        
         // Eliminar piscina
-        $delete_sql = "DELETE FROM piscina WHERE id_piscina = " . PARAM_ID_PISCINA . AND_ID_COMPANIA . PARAM_ID_COMPANIA . "";
-        $delete_stmt = $conn->prepare($delete_sql);
+        $deleted = $qb->deleteRecord('piscina', 
+            'id_piscina = :id_piscina AND id_compania = :id_compania',
+            [':id_piscina' => $id_piscina, ':id_compania' => $id_compania]);
         
-        if (!$delete_stmt) {
-            throw new QueryPrepareException("Error preparando consulta de eliminación: " . implode(", ", $conn->errorInfo()));
-        }
-
-        $delete_stmt->bindParam(PARAM_ID_PISCINA, $id_piscina, PDO::PARAM_INT);
-        $delete_stmt->bindParam(PARAM_ID_COMPANIA, $id_compania, PDO::PARAM_INT);
-
-        if (!$delete_stmt->execute()) {
-            throw new QueryExecutionException("Error ejecutando eliminación: " . implode(", ", $delete_stmt->errorInfo()));
-        }
-
-        if ($delete_stmt->rowCount() === 0) {
-            $response = [
-                'success' => false,
-                'message' => 'No se encontró la piscina'
-            ];
-            http_response_code(404);
-            echo json_encode($response);
+        if ($deleted === 0) {
+            ErrorHandler::sendErrorResponse('No se encontró la piscina', HTTP_NOT_FOUND);
         } else {
-            $response = [
-                'success' => true,
-                'message' => 'Piscina eliminada exitosamente'
-            ];
-            echo json_encode($response);
+            ErrorHandler::sendDeletedResponse();
         }
-
-    } catch (Exception $e) {
-        $response = [
-            'success' => false,
-            'message' => ERROR_PREFIX . $e->getMessage()
-        ];
-        http_response_code(500);
-        echo json_encode($response);
+        
+    } else {
+        ErrorHandler::sendErrorResponse('Método no permitido', HTTP_METHOD_NOT_ALLOWED);
     }
-}
-
-// Método no permitido
-else {
-    $response = [
-        'success' => false,
-        'message' => 'Método no permitido'
-    ];
-    http_response_code(405);
-    echo json_encode($response);
+    
+} catch (Exception $e) {
+    ErrorHandler::handleException($e);
 }

@@ -134,7 +134,7 @@ export default function ModuloForm() {
   };
 
   const handleCancel = () => {
-    navigate('/directivo/modulos');
+    navigate('/layout/dashboard/modulos');
   };
 
   const getButtonText = () => {
